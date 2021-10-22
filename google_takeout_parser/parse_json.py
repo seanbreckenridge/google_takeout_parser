@@ -5,13 +5,12 @@ Lots of functions to transform the JSON from the Takeout to useful information
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Iterator, Any, Optional
+from typing import Iterator
 
 from .time_utils import parse_datetime_millis
 from .models import (
     Activity,
     LikedYoutubeVideo,
-    HangoutsMessage,
     ChromeHistory,
     PlayStoreAppInstall,
     Location,
@@ -80,29 +79,6 @@ def _parse_location_history(p: Path) -> Iterator[Location]:
             lat=float(japp["latitudeE7"]) / 1e7,
             dt=parse_datetime_millis(japp["timestampMs"]),
         )
-
-
-# Note: not used
-def _parse_hangouts(p: Path) -> Iterator[Any]:
-    for item in json.loads(p.read_text())["conversations"]:
-        for event in item["events"]:
-            if "chat_message" in event and "message_content" in event["chat_message"]:
-
-                ts_naive = datetime.fromtimestamp(int(event["timestamp"]) / 1e6)
-                ts = ts_naive.replace(tzinfo=timezone.utc)
-
-                msg: Optional[str] = None
-                link: Optional[str] = None
-                chat_msg = event["chat_message"]
-                msg_content = chat_msg["message_content"]
-                if "segment" in msg_content:
-                    for sc in msg_content["segment"]:
-                        if sc["type"] == "TEXT":
-                            msg = sc["text"]
-                        elif sc["type"] == "LINK":
-                            if "link_data" in sc:
-                                link = sc["link_data"].get("link_target")
-                    yield HangoutsMessage(text=msg, link=link, dt=ts)
 
 
 def _parse_chrome_history(p: Path) -> Iterator[ChromeHistory]:

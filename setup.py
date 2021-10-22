@@ -17,7 +17,9 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="MIT",
-    packages=find_packages(include=[pkg]),
+    packages=find_packages(
+        include=["google_takeout_parser", "google_takeout_parser.parse_html"]
+    ),
     install_requires=reqs,
     package_data={pkg: ["py.typed"]},
     zip_safe=False,

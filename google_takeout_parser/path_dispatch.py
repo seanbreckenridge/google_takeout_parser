@@ -6,7 +6,7 @@ to the corresponding functions
 import os
 import re
 from pathlib import Path
-from typing import Iterator, Union, Dict, Callable, Optional, List
+from typing import Iterator, Dict, Callable, Optional, List
 
 from cachew import cachew
 
@@ -14,14 +14,7 @@ from .common import Res
 from .cache import takeout_cache_path
 from .log import logger
 
-from .models import (
-    Activity,
-    YoutubeComment,
-    LikedYoutubeVideo,
-    PlayStoreAppInstall,
-    ChromeHistory,
-    Location,
-)
+from .models import Event
 
 from .parse_html.activity import _parse_html_activity
 from .parse_html.comment import _parse_html_comment_file
@@ -33,14 +26,6 @@ from .parse_json import (
     _parse_chrome_history,
 )
 
-Event = Union[
-    Activity,
-    YoutubeComment,
-    LikedYoutubeVideo,
-    PlayStoreAppInstall,
-    Location,
-    ChromeHistory,
-]
 
 Results = Iterator[Res[Event]]
 
@@ -112,6 +97,15 @@ class TakeoutParser:
         )
         self.raise_exceptions = raise_exceptions
         self.warn_exceptions = warn_exceptions
+
+    def _warn_if_no_activity(self) -> None:
+        # most common is probably 'My Activity'?
+        # can be used as a check to see if the user passed a wrong directory
+        expected = self.takeout_dir / "My Activity"
+        if not expected.exists():
+            logger.warning(
+                f"Warning: given {self.takeout_dir}, expected a directory at {expected}"
+            )
 
     @staticmethod
     def _match_handler(p: Path, handler: HandlerMap) -> HandlerMatch:

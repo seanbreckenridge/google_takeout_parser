@@ -1,5 +1,12 @@
+"""
+Models for the data parsed by this module
+
+Each top-level NamedTuple here has a 'key' property
+which determines unique events while merging
+"""
+
 from datetime import datetime
-from typing import NamedTuple, Optional, List
+from typing import NamedTuple, Optional, List, Tuple, Union
 
 
 class Subtitles(NamedTuple):
@@ -31,11 +38,27 @@ class Activity(NamedTuple):
     locationInfos: List[LocationInfo]
     products: List[str]
 
+    @property
+    def dt(self) -> datetime:
+        return self.time
+
+    @property
+    def products_desc(self) -> str:
+        return ", ".join(sorted(self.products))
+
+    @property
+    def key(self) -> Tuple[str, str, int, str]:
+        return (self.header, self.title, int(self.time.timestamp()), self.products_desc)
+
 
 class YoutubeComment(NamedTuple):
     content: str
     dt: datetime
     urls: List[str]
+
+    @property
+    def key(self) -> int:
+        return int(self.dt.timestamp())
 
 
 class LikedYoutubeVideo(NamedTuple):
@@ -44,11 +67,19 @@ class LikedYoutubeVideo(NamedTuple):
     link: str
     dt: datetime
 
+    @property
+    def key(self) -> int:
+        return int(self.dt.timestamp())
+
 
 class PlayStoreAppInstall(NamedTuple):
     title: str
     device_name: Optional[str]
     dt: datetime
+
+    @property
+    def key(self) -> int:
+        return int(self.dt.timestamp())
 
 
 class Location(NamedTuple):
@@ -56,14 +87,26 @@ class Location(NamedTuple):
     lat: float
     dt: datetime
 
+    @property
+    def key(self) -> Tuple[float, float, int]:
+        return (self.lng, self.lat, int(self.dt.timestamp()))
+
 
 class ChromeHistory(NamedTuple):
     title: str
     url: str
     dt: datetime
 
+    @property
+    def key(self) -> Tuple[str, int]:
+        return (self.url, int(self.dt.timestamp()))
 
-class HangoutsMessage(NamedTuple):
-    text: Optional[str]
-    link: Optional[str]
-    dt: datetime
+
+Event = Union[
+    Activity,
+    YoutubeComment,
+    LikedYoutubeVideo,
+    PlayStoreAppInstall,
+    Location,
+    ChromeHistory,
+]

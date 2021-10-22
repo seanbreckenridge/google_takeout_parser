@@ -4,7 +4,7 @@ WIP
 
 - [x] parse both the Historical HTML and new JSON format for Google Takeouts
 - [x] cache individual takeout results behind [cachew](https://github.com/karlicoss/cachew)
-- [ ] merge takeouts into unique events
+- [x] merge takeouts into unique events
 - [ ] CLI interface/Usage examples
 - [ ] push to pypi?
 
