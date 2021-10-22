@@ -25,7 +25,7 @@ jobs:
           pip install '.[testing]'
       - name: Run mypy
         run: |
-          mypy ./google_takeout_parser
+          mypy --install-types --non-interactive ./google_takeout_parser
       - name: Run pytest
         run: |
           pytest
