@@ -187,7 +187,7 @@ class TakeoutParser:
 
     @staticmethod
     def _depends_on(instance: "TakeoutParser") -> List[str]:
-        return list(sorted([str(p) for p in instance.takeout_dir.rglob("*")]))
+        return list(sorted([str(p.name) for p in instance.takeout_dir.rglob("*")]))
 
     @staticmethod
     def _determine_cache_path(instance: "TakeoutParser") -> str:
@@ -207,7 +207,6 @@ class TakeoutParser:
     @cachew(
         depends_on=lambda s: TakeoutParser._depends_on(s),
         cache_path=lambda s: TakeoutParser._determine_cache_path(s),
-        force_file=True,
         logger=logger,
     )
     def cached_parse(self) -> Results:
