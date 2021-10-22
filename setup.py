@@ -21,7 +21,8 @@ setup(
     install_requires=reqs,
     package_data={pkg: ["py.typed"]},
     zip_safe=False,
-    keywords="",
+    keywords="google data parsing",
+    python_requires=">=3.7",
     entry_points={
         "console_scripts": [
             "google_takeout_parser = google_takeout_parser.__main__:main"
@@ -37,7 +38,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
