@@ -9,20 +9,17 @@ from datetime import datetime
 from typing import NamedTuple, Optional, List, Tuple, Union
 
 
-class Subtitles(NamedTuple):
-    name: str
-    url: Optional[str]
+Details = str
 
 
-class Details(NamedTuple):
-    name: str
+# beacuse of https://github.com/karlicoss/cachew/issues/28, need
+# to do these as tuples instead of NamedTuples
+MetaData = Optional[str]
+# name, url, source, sourceUrl
+LocationInfo = Tuple[MetaData, MetaData, MetaData, MetaData]
 
-
-class LocationInfo(NamedTuple):
-    name: Optional[str]
-    url: Optional[str]
-    source: Optional[str]
-    sourceUrl: Optional[str]
+# name, url
+Subtitles = Tuple[str, MetaData]
 
 
 class Activity(NamedTuple):

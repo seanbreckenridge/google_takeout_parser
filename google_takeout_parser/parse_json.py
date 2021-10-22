@@ -14,9 +14,6 @@ from .models import (
     ChromeHistory,
     PlayStoreAppInstall,
     Location,
-    Subtitles,
-    Details,
-    LocationInfo,
 )
 from .time_utils import parse_json_utc_date
 
@@ -32,16 +29,14 @@ def _parse_json_activity(p: Path) -> Iterator[Activity]:
             titleUrl=blob.get("titleUrl"),
             description=blob.get("description"),
             time=parse_json_utc_date(blob["time"]),
-            subtitles=[
-                Subtitles(s["name"], s.get("url")) for s in blob.get("subtitles", [])
-            ],
-            details=[Details(d["name"]) for d in blob.get("details", [])],
+            subtitles=[(s["name"], s.get("url")) for s in blob.get("subtitles", [])],
+            details=[d["name"] for d in blob.get("details", [])],
             locationInfos=[
-                LocationInfo(
-                    name=l.get("name"),
-                    url=l.get("url"),
-                    source=l.get("source"),
-                    sourceUrl=l.get("sourceUrl"),
+                (
+                    l.get("name"),
+                    l.get("url"),
+                    l.get("source"),
+                    l.get("sourceUrl"),
                 )
                 for l in blob.get("locationInfos", [])
             ],

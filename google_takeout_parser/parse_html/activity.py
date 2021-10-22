@@ -81,7 +81,7 @@ def _parse_subtitles(
             else:
                 raise RuntimeError(f"Unexpected Type {tag} {type(tag)}")
 
-        parsed_subs.append(Subtitles(name=clean_latin1_chars(buf), url=url))
+        parsed_subs.append((clean_latin1_chars(buf), url))
 
     return parsed_subs, parse_html_dt(dt_raw)
 
@@ -224,11 +224,11 @@ def _parse_caption(
                     source = textbuf
 
                 locationInfos.append(
-                    LocationInfo(
-                        name=name,
-                        url=url,
-                        source=source,
-                        sourceUrl=sourceUrl,
+                    (
+                        name,
+                        url,
+                        source,
+                        sourceUrl,
                     )
                 )
             elif header == "Details:":
@@ -295,8 +295,8 @@ def _parse_activity_div(div: bs4.element.Tag) -> Activity:
 
     return Activity(
         header=header,
-        title=title_info.name,
-        titleUrl=title_info.url,  # could be None, matched by model
+        title=title_info[0],
+        titleUrl=title_info[1],  # could be None, matched by model
         description=None,  # always none since we can't differentiate in HTML parsing
         time=dtime,
         locationInfos=locationInfos,

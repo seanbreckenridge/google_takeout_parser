@@ -1,6 +1,5 @@
 import bs4  # type: ignore[import]
 
-from ..models import Subtitles, Details, LocationInfo
 from .activity import _parse_subtitles, _parse_caption, _is_location_api_link
 
 # bring into scope
@@ -18,9 +17,9 @@ def test_parse_subtitles() -> None:
     )
     subs, dt = _parse_subtitles(content)
     assert subs == [
-        Subtitles(
-            name="Visited Get support with Premium memberships & purchases - YouTube Help",
-            url="https://support.google.com/youtube/answer/7071292?hl=en",
+        (
+            "Visited Get support with Premium memberships & purchases - YouTube Help",
+            "https://support.google.com/youtube/answer/7071292?hl=en",
         )
     ]
     assert dt is not None
@@ -29,7 +28,7 @@ def test_parse_subtitles() -> None:
         """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">6 cards in your feed<br/>Sep 4, 2020, 11:01:46 AM PDT</div>"""
     )
     subs, dt = _parse_subtitles(content)
-    assert subs == [Subtitles(name="6 cards in your feed", url=None)]
+    assert subs == [("6 cards in your feed", None)]
     # parses into a DstTzInfo timezone, so just testing that it parsed
     assert int(dt.timestamp()) == 1599242506
 
@@ -40,11 +39,11 @@ def test_parse_subtitles() -> None:
 
     # how multiple lines of body look in subtitles
     assert subs == [
-        Subtitles(name="1 notification", url=None),
-        Subtitles(name="Including topics:", url=None),
-        Subtitles(
-            name="Emergency resources and information",
-            url="https://www.google.com/maps/place/?q=place_id:XX",
+        ("1 notification", None),
+        ("Including topics:", None),
+        (
+            "Emergency resources and information",
+            "https://www.google.com/maps/place/?q=place_id:XX",
         ),
     ]
     assert dt is not None
@@ -57,7 +56,7 @@ def test_parse_captions() -> None:
 
     details, locationInfos, products = _parse_caption(content)
 
-    assert details == [Details(name="From IP 8.8.8.8")]
+    assert details == ["From IP 8.8.8.8"]
     assert products == ["Drive"]
     assert locationInfos == []
 
@@ -74,11 +73,11 @@ def test_parse_locations() -> None:
     assert products == ["Discover"]
 
     assert locationInfos == [
-        LocationInfo(
-            name="At this general area",
-            url="https://www.google.com/maps/@?something",
-            source="From your places (Home)",
-            sourceUrl="https://support.google.com/maps/answer/1",
+        (
+            "At this general area",
+            "https://www.google.com/maps/@?something",
+            "From your places (Home)",
+            "https://support.google.com/maps/answer/1",
         )
     ]
 
@@ -92,11 +91,11 @@ def test_parse_locations() -> None:
     assert products == ["Maps"]
 
     assert locationInfos == [
-        LocationInfo(
-            name="At this general area",
-            url="https://www.google.com/maps/@?api=1&map_action=map&center=3,-18&zoom=11",
-            source="Based on your past activity",
-            sourceUrl=None,
+        (
+            "At this general area",
+            "https://www.google.com/maps/@?api=1&map_action=map&center=3,-18&zoom=11",
+            "Based on your past activity",
+            None,
         )
     ]
 
