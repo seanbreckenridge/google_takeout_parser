@@ -47,8 +47,8 @@ class Activity(NamedTuple):
         return ", ".join(sorted(self.products))
 
     @property
-    def key(self) -> Tuple[str, str, int, str]:
-        return (self.header, self.title, int(self.time.timestamp()), self.products_desc)
+    def key(self) -> Tuple[str, str, int]:
+        return (self.header, self.title, int(self.time.timestamp()))
 
 
 class YoutubeComment(NamedTuple):
