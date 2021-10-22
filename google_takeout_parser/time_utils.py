@@ -11,7 +11,7 @@ def parse_datetime_millis(d: Union[str, float, int]) -> datetime:
 
 
 def parse_json_utc_date(ds: str) -> datetime:
-    utc_naive = datetime.strptime("%Y-%m-%dT%H:%M:%S.%fZ", ds)
+    utc_naive = datetime.fromisoformat(ds.rstrip("Z"))
     return utc_naive.replace(tzinfo=timezone.utc)
 
 
