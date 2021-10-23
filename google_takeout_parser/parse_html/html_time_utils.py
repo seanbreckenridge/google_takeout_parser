@@ -1,6 +1,6 @@
 """
 Taken from https://github.com/karlicoss/HPI/blob/4a04c09f314e10a4db8f35bf1ecc10e4d0203223/my/core/time.py
-For backwards compatability, used to parse HTML datetimes with non-standard timezones
+For backwards compatibility, used to parse HTML datetimes with non-standard timezones
 """
 
 from typing import Dict, Any

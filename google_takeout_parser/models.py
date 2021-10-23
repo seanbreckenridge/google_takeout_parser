@@ -12,7 +12,7 @@ from typing import NamedTuple, Optional, List, Tuple, Union
 Details = str
 
 
-# beacuse of https://github.com/karlicoss/cachew/issues/28, need
+# because of https://github.com/karlicoss/cachew/issues/28, need
 # to do these as tuples instead of NamedTuples
 MetaData = Optional[str]
 # name, url, source, sourceUrl

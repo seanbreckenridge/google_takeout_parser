@@ -19,8 +19,8 @@ Since the Takeout slowly removes old events over time, I would recommend periodi
 - My Activity
   - Select JSON as format
 - Youtube and Youtube Music
-  - go to options and select JSON instead of HTML
-  - deselect music-library-songs, music-uploads and videos
+  - Select JSON as format
+  - In options, deselect `music-library-songs`, `music-uploads` and `videos`
 
 The process for getting these isn't that great -- you have to manually go to takeout.google.com every few months, select what you want to export info for, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
 
