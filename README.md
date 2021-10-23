@@ -6,7 +6,7 @@
 
 Parses data out of your [Google Takeout](https://takeout.google.com/) (History, Activity, Youtube, Locations, etc...)
 
-This doesn't handle all cases, but I have yet to find a parser that does, so here is my attempt at parsing what I see as the most useful info there. The Google Takeout is pretty particular, and the contents of the directory depend on what you select while exporting. Unhandled files will warn, though feel free to PR a parser or create an issue if this doesn't parse some part you want.
+This doesn't handle all cases, but I have yet to find a parser that does, so here is my attempt at parsing what I see as the most useful info from it. The Google Takeout is pretty particular, and the contents of the directory depend on what you select while exporting. Unhandled files will warn, though feel free to [PR a parser](#contributing) or create an issue if this doesn't parse some part you want.
 
 This can take a few minutes to parse depending on what you have in your Takeout (especially while using the old HTML format), so this uses [cachew](https://github.com/karlicoss/cachew) to cache the function result for each Takeout you may have. That means this'll take a few minutes the first time parsing a takeout, but then only a few seconds every subsequent time.
 
