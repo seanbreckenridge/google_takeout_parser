@@ -88,7 +88,7 @@ To merge takeouts:
 ```python
 from pathlib import Path
 from google_takeout.merge import cached_merge_takeouts
-results = list(cached_merge_takeouts(["/full/path/to/Takeout-1599315526", "/full/path/to/Takeout-1634971143"]))
+results = list(cached_merge_takeouts([Path("/full/path/to/Takeout-1599315526"), Path("/full/path/to/Takeout-1634971143")]))
 ```
 
 The events this returns is a combination of all types in the [`models.py`](google_takeout_parser/models.py) (to support easy serialization with cachew), to filter to a particular just do an `isinstance` check:
