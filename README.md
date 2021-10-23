@@ -80,6 +80,16 @@ from google_takeout.merge import cached_merge_takeouts
 results = list(cached_merge_takeouts(["/full/path/to/Takeout-1599315526", "/full/path/to/Takeout-1634971143"]))
 ```
 
+The events this returns is a combination of all types in the [`models.py`](google_takeout_parser/models.py) (to support easy serialization with cachew), to filter to a particular just do an `isinstance` check:
+
+```python
+from google_takeout_parser.models import Location
+takeout_generator = TakeoutParser(Path("/full/path/to/Takeout")).cached_parse()
+locations = list(filter(lambda e: isinstance(e, Location), takeout_generator))
+>>> len(locations)
+99913
+```
+
 I personally exclusively use this through my [HPI google takeout](https://github.com/seanbreckenridge/HPI/blob/master/my/google_takeout.py) file, as a configuration layer to locate where my takeouts are on disk, and since that 'automatically' unzips the takeouts (I store them as the zips), i.e., doesn't require me to maintain an unpacked view
 
 ### Contributing
