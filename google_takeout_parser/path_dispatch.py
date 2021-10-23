@@ -41,9 +41,6 @@ HandlerMap = Dict[str, Optional[HandlerFunction]]
 # 'None' if you don't want a certain part to be parsed,
 # or by passing your own function which parses the file into Results
 
-# TODO: add parsers for:
-#   subscriptions.json
-
 # Setting 'None' in the handler map specifies that we should ignore this file
 DEFAULT_HANDLER_MAP: HandlerMap = {
     "Chrome/BrowserHistory\.json": _parse_chrome_history,
@@ -62,7 +59,6 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     # basic list item files which have chat messages/comments
     "YouTube and YouTube Music/my-comments/.*?\.html": _parse_html_comment_file,
     "YouTube and YouTube Music/my-live-chat-messages/.*?\.html": _parse_html_comment_file,
-    # TODO: likes used to be JSON, is now CSV, need to support both
     "YouTube and YouTube Music/playlists/likes.json": _parse_likes,
     "YouTube and YouTube Music/playlists/": None,  # dicts are ordered, so the rest of the stuff is ignored
     "My Activity/Takeout": None,  # activity for when you made takeouts, dont need
@@ -81,6 +77,7 @@ class TakeoutParser:
         cachew_identifier: Optional[str] = None,
         warn_exceptions: bool = True,
         raise_exceptions: bool = False,
+        drop_exceptions: bool = False,
         additional_handlers: Optional[HandlerMap] = None,
     ) -> None:
         """
@@ -97,6 +94,7 @@ class TakeoutParser:
         )
         self.raise_exceptions = raise_exceptions
         self.warn_exceptions = warn_exceptions
+        self.drop_exceptions = drop_exceptions
 
     def _warn_if_no_activity(self) -> None:
         # most common is probably 'My Activity'?
@@ -164,7 +162,6 @@ class TakeoutParser:
         """
 
         for f, handler in self.dispatch_map().items():
-            # TODO: add cachew here to cache results
             yield from handler(f)
 
     def parse(self) -> Results:
@@ -178,7 +175,9 @@ class TakeoutParser:
                 else:
                     if self.warn_exceptions:
                         logger.warning(str(r))
-                    # use didn't specify to raise, so return
+                    if self.drop_exceptions:
+                        continue
+                    # use didn't specify to raise or drop, so return
                     # exceptions as part of the result
                     yield r
             else:

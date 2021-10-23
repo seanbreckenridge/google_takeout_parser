@@ -1,17 +1,12 @@
 # google_takeout_parser
 
-Currently a WIP
-
-- [x] parse both the Historical HTML and new JSON format for Google Takeouts
-- [x] cache individual takeout results behind [cachew](https://github.com/karlicoss/cachew)
-- [x] merge takeouts into unique events
-- [x] Usage examples
-- [ ] CLI interface
-- [ ] push to pypi?
+- parses both the Historical HTML and new JSON format for Google Takeouts
+- caches individual takeout results behind [`cachew`](https://github.com/karlicoss/cachew)
+- merge multiple takeouts into unique events
 
 Parses data out of your [Google Takeout](https://takeout.google.com/) (History, Activity, Youtube, Locations, etc...)
 
-This doesn't handle all cases, but I have yet to find a parser that does, so here is my attempt. The Google Takeout is pretty particular, and the contents of the directory depend on what you select [while exporting](https://takeout.google.com/). Unhandled files will warn, though feel free to PR a parser or create an issue if this doesn't parse some part you want.
+This doesn't handle all cases, but I have yet to find a parser that does, so here is my attempt at parsing what I see as the most useful info there. The Google Takeout is pretty particular, and the contents of the directory depend on what you select while exporting. Unhandled files will warn, though feel free to PR a parser or create an issue if this doesn't parse some part you want.
 
 This can take a few minutes to parse depending on what you have in your Takeout (especially while using the old HTML format), so this uses [cachew](https://github.com/karlicoss/cachew) to cache the function result for each Takeout you may have. That means this'll take a few minutes the first time parsing a takeout, but then only a few seconds every subsequent time.
 
@@ -43,7 +38,23 @@ To install with pip, run:
 
 ### CLI Usage
 
-TODO: add
+Can be executing `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse a takeout and interact with it in a REPL:
+
+To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
+
+To parse a takeout:
+
+```
+$ google_takeout_parser parse ~/data/Unpacked_Takout --cache
+Parsing...
+Interact with the export using res
+
+In [1]: res[-2]
+Out[1]: PlayStoreAppInstall(title='Hangouts', device_name='motorola moto g(7) play', dt=datetime.datetime(2020, 8, 2, 15, 51, 50, 180000, tzinfo=datetime.timezone.utc))
+
+In [2]: len(res)
+Out[2]: 236654
+```
 
 ### Library Usage
 
