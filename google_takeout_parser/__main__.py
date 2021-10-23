@@ -1,4 +1,8 @@
+import os
 import shutil
+import time
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import List
 
@@ -64,6 +68,58 @@ def parse(cache: bool, takeout_dir: str) -> None:
     click.echo(f"Interact with the export using {click.style('res', 'green')}")
 
     IPython.embed()
+
+
+@main.command(name="move", short_help="move new google takeouts")
+@click.option(
+    "--from",
+    "from_",
+    required=True,
+    help="Google takeout zip file",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+)
+@click.option(
+    "--to-dir",
+    required=True,
+    type=click.Path(file_okay=False, dir_okay=True, exists=True),
+    help="Directory which contains your Takeout files"
+)
+@click.option(
+    "--extract/--no-extract",
+    required=False,
+    default=True,
+    help="Whether or not to extract the zipfile",
+)
+def move(from_: str, to_dir: str, extract: bool) -> None:
+    """
+    Utility command to help move/extract takeouts into the correct location
+    """
+    ts = int(time.time())
+    target = f"{to_dir}/Takeout-{ts}"
+    if not extract:
+        target += ".zip"
+        _safe_shutil_mv(from_, target)
+    else:
+        assert from_.endswith("zip")
+        zf = zipfile.ZipFile(from_)
+        with tempfile.TemporaryDirectory() as td:
+            click.echo(f"Extracting {from_} to {td}")
+            zf.extractall(path=td)
+            zipped_files = os.listdir(td)
+            if os.listdir(td) == ["Takeout"]:
+                from_ = os.path.join(td, "Takeout")
+                _safe_shutil_mv(from_, target)
+            else:
+                raise RuntimeError(
+                    f"Expected top-level 'Takeout' folder in extracted folder, contents are {os.listdir(td)}"
+                )
+
+
+def _safe_shutil_mv(from_: str, to: str) -> None:
+    click.echo(f"Moving {from_} to {to}")
+    assert os.path.exists(from_)
+    assert not os.path.exists(to)
+    shutil.move(from_, to)
 
 
 if __name__ == "__main__":

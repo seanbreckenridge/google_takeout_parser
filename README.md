@@ -56,6 +56,21 @@ In [2]: len(res)
 Out[2]: 236654
 ```
 
+Also contains a small utility command to help move/extract the google takeout:
+
+```bash
+$ google_takeout_parser move --from ~/Downloads/takeout*.zip --to-dir ~/data/google_takeout --extract
+Extracting /home/sean/Downloads/takeout-20211023T070558Z-001.zip to /tmp/tmp07ua_0id
+Moving /tmp/tmp07ua_0id/Takeout to /home/sean/data/google_takeout/Takeout-1634993897
+$ ls -1 ~/data/google_takeout/Takeout-1634993897
+archive_browser.html
+Chrome
+'Google Play Store'
+'Location History'
+'My Activity'
+'YouTube and YouTube Music'
+```
+
 ### Library Usage
 
 Assuming you maintain an unpacked view, e.g. like:
