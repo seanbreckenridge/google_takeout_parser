@@ -5,7 +5,8 @@ Currently a WIP
 - [x] parse both the Historical HTML and new JSON format for Google Takeouts
 - [x] cache individual takeout results behind [cachew](https://github.com/karlicoss/cachew)
 - [x] merge takeouts into unique events
-- [ ] CLI interface/Usage examples
+- [x] Usage examples
+- [ ] CLI interface
 - [ ] push to pypi?
 
 Parses data out of your Google Takeout (History, Activity, Youtube, Locations, etc...)
@@ -14,7 +15,7 @@ This doesn't handle all cases, but I have yet to find a parser that does, so her
 
 This can take a few minutes to parse depending on what you have in your Takeout (especially while using the old HTML format), so this uses [cachew](https://github.com/karlicoss/cachew) to cache the function result for each Takeout you may have. That means this'll take a few minutes the first time parsing a takeout, but then only a few seconds every subsequent time.
 
-Since the Takeout slowly removes old events over time, I would recommend periodically (personally I do it once every few months) backing up your data, to not lose any new events and get data from new ones. To use, go to [takeout.google.com](https://takeout.google.com/); For Reference, I select:
+Since the Takeout slowly removes old events over time, I would recommend periodically (personally I do it once every few months) backing up your data, to not lose any new events and get data from new ones. To use, go to [takeout.google.com](https://takeout.google.com/); For Reference, once on that page, I hit `Deselect All`, then select:
 
 - Chrome
 - Google Play Store
@@ -24,7 +25,7 @@ Since the Takeout slowly removes old events over time, I would recommend periodi
   - Select JSON as format
 - Youtube and Youtube Music
   - go to options and select JSON instead of HTML
-  - deselect music-library-songs, music-uploads and videos)
+  - deselect music-library-songs, music-uploads and videos
 
 The process for getting these isn't that great -- you have to manually go to takeout.google.com every few months, select what you want to export manually info, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
 
