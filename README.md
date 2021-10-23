@@ -10,7 +10,7 @@ This doesn't handle all cases, but I have yet to find a parser that does, so her
 
 This can take a few minutes to parse depending on what you have in your Takeout (especially while using the old HTML format), so this uses [cachew](https://github.com/karlicoss/cachew) to cache the function result for each Takeout you may have. That means this'll take a few minutes the first time parsing a takeout, but then only a few seconds every subsequent time.
 
-Since the Takeout slowly removes old events over time, I would recommend periodically (personally I do it once every few months) backing up your data, to not lose any new events and get data from new ones. To use, go to [takeout.google.com](https://takeout.google.com/); For Reference, once on that page, I hit `Deselect All`, then select:
+Since the Takeout slowly removes old events over time, I would recommend periodically (personally I do it once every few months) backing up your data, to not lose any old events and get data from new ones. To use, go to [takeout.google.com](https://takeout.google.com/); For Reference, once on that page, I hit `Deselect All`, then select:
 
 - Chrome
 - Google Play Store
@@ -38,7 +38,7 @@ To install with pip, run:
 
 ### CLI Usage
 
-Can be executing `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse a takeout and interact with it in a REPL:
+Can be access by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse a takeout and interact with it in a REPL:
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
