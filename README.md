@@ -9,7 +9,7 @@ Currently a WIP
 - [ ] CLI interface
 - [ ] push to pypi?
 
-Parses data out of your Google Takeout (History, Activity, Youtube, Locations, etc...)
+Parses data out of your [Google Takeout](https://takeout.google.com/) (History, Activity, Youtube, Locations, etc...)
 
 This doesn't handle all cases, but I have yet to find a parser that does, so here is my attempt. The Google Takeout is pretty particular, and the contents of the directory depend on what you select [while exporting](https://takeout.google.com/). Unhandled files will warn, though feel free to PR a parser or create an issue if this doesn't parse some part you want.
 
