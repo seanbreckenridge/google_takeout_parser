@@ -51,7 +51,6 @@ Assuming you maintain an unpacked view, e.g. like:
 ```
  $ tree -L 1 ./Takeout-1599315526
 ./Takeout-1599315526
-├── Google Photos
 ├── Google Play Store
 ├── Location History
 ├── My Activity
