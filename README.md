@@ -16,16 +16,15 @@ This can take a few minutes to parse depending on what you have in your Takeout 
 
 To use, go to [takeout.google.com](https://takeout.google.com/); For Reference, I select:
 
-Chrome
-Google Play Store
-Location History
-
-- Select JSON as format
-  My Activity
-- Select JSON as format
-  Youtube and Youtube Music
-- go to options and select JSON instead of HTML
-- deselect music-library-songs, music-uploads and videos)
+- Chrome
+- Google Play Store
+- Location History
+  - Select JSON as format
+- My Activity
+  - Select JSON as format
+- Youtube and Youtube Music
+  - go to options and select JSON instead of HTML
+  - deselect music-library-songs, music-uploads and videos)
 
 The process for getting these isn't that great -- you have to manually go to takeout.google.com every few months, select what you want to export manually info, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
 
