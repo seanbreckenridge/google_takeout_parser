@@ -82,7 +82,7 @@ def parse(cache: bool, takeout_dir: str) -> None:
     "--to-dir",
     required=True,
     type=click.Path(file_okay=False, dir_okay=True, exists=True),
-    help="Directory which contains your Takeout files"
+    help="Directory which contains your Takeout files",
 )
 @click.option(
     "--extract/--no-extract",
@@ -105,13 +105,13 @@ def move(from_: str, to_dir: str, extract: bool) -> None:
         with tempfile.TemporaryDirectory() as td:
             click.echo(f"Extracting {from_} to {td}")
             zf.extractall(path=td)
-            zipped_files = os.listdir(td)
-            if os.listdir(td) == ["Takeout"]:
-                from_ = os.path.join(td, "Takeout")
+            top_level = [f for f in os.listdir(td) if not f.startswith(".")]
+            if len(top_level) == 1 and top_level[0].lower().startswith("takeout"):
+                from_ = os.path.join(td, top_level[0])
                 _safe_shutil_mv(from_, target)
             else:
                 raise RuntimeError(
-                    f"Expected top-level 'Takeout' folder in extracted folder, contents are {os.listdir(td)}"
+                    f"Expected top-level 'Takeout' folder in extracted folder, contents are {top_level}"
                 )
 
 
