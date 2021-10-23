@@ -72,7 +72,7 @@ Assuming you maintain an unpacked view, e.g. like:
 To parse one takeout:
 
 ```python
-fro pathlib import Path
+from pathlib import Path
 from google_takeout.path_dispatch import TakeoutParser
 tp = TakeoutParser(Path("/full/path/to/Takeout-1599315526"))
 # to check if files are all handled
