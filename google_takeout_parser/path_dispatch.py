@@ -88,6 +88,8 @@ class TakeoutParser:
             Takeout dir path isn't at its regular location
         """
         self.takeout_dir = takeout_dir.absolute()
+        if not self.takeout_dir.exists():
+            raise FileNotFoundError(f"{self.takeout_dir} does not exist!")
         self.cachew_identifier: Optional[str] = cachew_identifier
         self.additional_handlers = (
             {} if additional_handlers is None else additional_handlers
