@@ -106,16 +106,18 @@ from google_takeout.merge import cached_merge_takeouts
 results = list(cached_merge_takeouts([Path("/full/path/to/Takeout-1599315526"), Path("/full/path/to/Takeout-1634971143")]))
 ```
 
-If you don't want to cache the results, can do something custom by using the `merge_events` functions:
+If you don't want to cache the results, can do something custom by directly using the `merge_events` functions:
 
 ```python
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, List
 from google_takeout_parser.merge import merge_events
-from google_takeout_parser.path_dispatch import TakeoutParser, Event
-itrs: List[Iterator[Event]] = []  # list of iterators of google events
+from google_takeout_parser.path_dispatch import TakeoutParser
+itrs = []  # list of iterators of google events
 for pth in [Path('/full/path/to/Takeout-1599315526'), Path('/full/path/to/Takeout-1616796262')]:
-    itrs.append(TakeoutParser(pth).parse())  # parse instead of cached_parse
+    tk = TakeoutParser(pth)
+    # remove any exceptions from the results
+    itrs.append(filter(lambda e: not isinstance(e, Exception), tk.parse()))
 res = list(merge_events(*itrs))
 ```
 
