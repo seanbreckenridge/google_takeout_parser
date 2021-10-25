@@ -117,6 +117,7 @@ itrs = []  # list of iterators of google events
 for pth in [Path('/full/path/to/Takeout-1599315526'), Path('/full/path/to/Takeout-1616796262')]:
     tk = TakeoutParser(pth)
     # remove any exceptions from the results
+    # use .parse() instead .cached_parse()
     itrs.append(filter(lambda e: not isinstance(e, Exception), tk.parse()))
 res = list(merge_events(*itrs))
 ```
