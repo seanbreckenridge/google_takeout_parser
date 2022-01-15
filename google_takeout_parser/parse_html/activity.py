@@ -25,7 +25,7 @@ TextOrEl = Union[bs4.element.Tag, bs4.element.NavigableString]
 ListOfTags = List[List[TextOrEl]]
 
 
-def _group_by_brs(els: Union[TextOrEl]) -> ListOfTags:
+def _group_by_brs(els: TextOrEl) -> ListOfTags:
     """
     splits elements (children of some top-level div)
     into groups of elements, separated by 'br' elements
