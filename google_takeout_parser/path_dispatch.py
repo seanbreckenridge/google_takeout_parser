@@ -52,7 +52,9 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     "YouTube and YouTube Music/subscriptions": None,  # TODO: parse
     "YouTube and YouTube Music/videos": None,
     "Location History/Semantic Location History": None,  # not that much data here. maybe parse it?
-    "Location History/Location History.json": _parse_location_history,
+    "Location History/Location History.json": _parse_location_history,  # old path to Location History
+    "Location History/Records.json": _parse_location_history,  # new path to Location History
+    "Location History/Settings.json": None,
     # HTML/JSON activity-like files which aren't in 'My Activity'
     "YouTube and YouTube Music/history/.*?.html": _parse_html_activity,
     "YouTube and YouTube Music/history/.*?.json": _parse_json_activity,
