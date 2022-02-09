@@ -43,7 +43,7 @@ HandlerMap = Dict[str, Optional[HandlerFunction]]
 
 # Setting 'None' in the handler map specifies that we should ignore this file
 DEFAULT_HANDLER_MAP: HandlerMap = {
-    "Chrome/BrowserHistory\.json": _parse_chrome_history,
+    r"Chrome/BrowserHistory\.json": _parse_chrome_history,
     "Chrome": None,  # Ignore rest of Chrome stuff
     "Google Photos": None,  # has images/some metadata on each of them
     "archive_browser.html": None,  # description of takeout, not that useful
@@ -57,8 +57,8 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     "YouTube and YouTube Music/history/.*?.html": _parse_html_activity,
     "YouTube and YouTube Music/history/.*?.json": _parse_json_activity,
     # basic list item files which have chat messages/comments
-    "YouTube and YouTube Music/my-comments/.*?\.html": _parse_html_comment_file,
-    "YouTube and YouTube Music/my-live-chat-messages/.*?\.html": _parse_html_comment_file,
+    r"YouTube and YouTube Music/my-comments/.*?\.html": _parse_html_comment_file,
+    r"YouTube and YouTube Music/my-live-chat-messages/.*?\.html": _parse_html_comment_file,
     "YouTube and YouTube Music/playlists/likes.json": _parse_likes,
     "YouTube and YouTube Music/playlists/": None,  # dicts are ordered, so the rest of the stuff is ignored
     "My Activity/Takeout": None,  # activity for when you made takeouts, dont need
@@ -104,7 +104,7 @@ class TakeoutParser:
         expected = self.takeout_dir / "My Activity"
         if not expected.exists():
             logger.warning(
-                f"Warning: given {self.takeout_dir}, expected a directory at {expected}"
+                f"Warning: given '{self.takeout_dir}', expected the 'My Actitivity' directory at '{expected}'. Perhaps you passed the wrong location?"
             )
 
     @staticmethod
@@ -162,7 +162,7 @@ class TakeoutParser:
         """
         Parse the entire Takeout -- no cache
         """
-
+        self._warn_if_no_activity()
         for f, handler in self.dispatch_map().items():
             yield from handler(f)
 
