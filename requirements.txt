@@ -1,7 +1,7 @@
 click>=7.0
 logzero
 lxml
-bs4
+beautifulsoup4
 cachew
 pytz
 IPython
