@@ -5,7 +5,7 @@ Lots of functions to transform the JSON from the Takeout to useful information
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Iterator
+from typing import Iterator, Any, Dict
 
 from .time_utils import parse_datetime_millis
 from .models import (
@@ -65,6 +65,15 @@ def _parse_app_installs(p: Path) -> Iterator[PlayStoreAppInstall]:
         )
 
 
+def _parse_location_timestamp(d: Dict[str, Any]) -> datetime:
+    # old timestamp was an int
+    if "timestampMs" in d:
+        return parse_datetime_millis(d["timestampMs"])
+    else:
+        # else should be the isoformat
+        return parse_json_utc_date(d["timestamp"])
+
+
 def _parse_location_history(p: Path) -> Iterator[Location]:
     ### HMMM, seems that all the locations are right after one another. broken? May just be all the location history that google has on me
     ### see numpy.diff(list(map(lambda yy: y.at, filter(lambda y: isinstance(Location), events()))))
@@ -72,13 +81,13 @@ def _parse_location_history(p: Path) -> Iterator[Location]:
         yield Location(
             lng=float(japp["longitudeE7"]) / 1e7,
             lat=float(japp["latitudeE7"]) / 1e7,
-            dt=parse_datetime_millis(japp["timestampMs"]),
+            dt=_parse_location_timestamp(japp),
         )
 
 
 def _parse_chrome_history(p: Path) -> Iterator[ChromeHistory]:
     for item in json.loads(p.read_text())["Browser History"]:
-        time_naive = datetime.utcfromtimestamp(item["time_usec"] / 10 ** 6)
+        time_naive = datetime.utcfromtimestamp(item["time_usec"] / 10**6)
         yield ChromeHistory(
             title=item["title"],
             url=item["url"],
