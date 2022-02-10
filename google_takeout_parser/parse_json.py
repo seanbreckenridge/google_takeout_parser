@@ -29,12 +29,23 @@ def _parse_json_activity(p: Path) -> Iterator[Activity]:
                 # sometimes it's just empty ("My Activity/Assistant" data circa 2018)
                 continue
             subtitles.append((s["name"], s.get("url")))
+
+        # till at least 2017
+        old_format = "snippet" in blob
+        if old_format:
+            blob = blob["snippet"]
+            header = "YouTube"  # didn't have header
+            time_str = blob["publishedAt"]
+        else:
+            header = blob["header"]
+            time_str = blob["time"]
+
         yield Activity(
-            header=blob["header"],
+            header=header,
             title=blob["title"],
             titleUrl=blob.get("titleUrl"),
             description=blob.get("description"),
-            time=parse_json_utc_date(blob["time"]),
+            time=parse_json_utc_date(time_str),
             subtitles=subtitles,
             details=[d["name"] for d in blob.get("details", [])],
             locationInfos=[

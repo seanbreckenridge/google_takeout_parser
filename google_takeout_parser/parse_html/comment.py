@@ -10,8 +10,12 @@ from ..common import Res
 from .activity import _group_by_brs, clean_latin1_chars
 
 # seems to always be in UTC?
+# new format:
+# 2020-05-06 19:32:44 UTC
+# old format (pre-2019?):
+# 2016-06-15T08:50:49Z
 COMMENT_DATE_REGEX = re.compile(
-    r"([0-9]{4})\-([0-9]{2})\-([0-9]{2})\s*([0-9]{2})\:([0-9]{2})\:([0-9]{2})"
+    r"([0-9]{4})\-([0-9]{2})\-([0-9]{2})(?:\s*|T)([0-9]{2})\:([0-9]{2})\:([0-9]{2})"
 )
 
 # for YoutubeComment
