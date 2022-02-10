@@ -137,7 +137,7 @@ COMMON_GMAPS_QUERY_PARAMS = set(
         "api",
         "map_action",
         "center",
-        "zooom",
+        "zoom",
     ]
 )
 
