@@ -23,13 +23,19 @@ from .time_utils import parse_json_utc_date
 # This is also the 'My Activity' JSON format
 def _parse_json_activity(p: Path) -> Iterator[Activity]:
     for blob in json.loads(p.read_text()):
+        subtitles = []
+        for s in blob.get("subtitles", []):
+            if s == {}:
+                # sometimes it's just empty ("My Activity/Assistant" data circa 2018)
+                continue
+            subtitles.append((s["name"], s.get("url")))
         yield Activity(
             header=blob["header"],
             title=blob["title"],
             titleUrl=blob.get("titleUrl"),
             description=blob.get("description"),
             time=parse_json_utc_date(blob["time"]),
-            subtitles=[(s["name"], s.get("url")) for s in blob.get("subtitles", [])],
+            subtitles=subtitles,
             details=[d["name"] for d in blob.get("details", [])],
             locationInfos=[
                 (
