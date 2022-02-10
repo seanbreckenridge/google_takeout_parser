@@ -30,7 +30,7 @@ def main(verbose: Optional[bool]) -> None:
         if verbose:
             log.logger = log.setup(level=logging.DEBUG)
         else:
-            log.logger = log.setup(level=logging.WARNING)
+            log.logger = log.setup(level=logging.ERROR)
 
 
 @main.group(
