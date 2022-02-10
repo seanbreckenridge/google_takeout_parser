@@ -169,6 +169,9 @@ class TakeoutParser:
         """
         self._warn_if_no_activity()
         for f, handler in self.dispatch_map().items():
+            rel_path = str(f)[len(str(self.takeout_dir)) + 1:]
+            func_name: str = handler.__name__
+            logger.info(f"Parsing '{rel_path}' using '{func_name}'")
             yield from handler(f)
 
     def parse(self) -> Results:
