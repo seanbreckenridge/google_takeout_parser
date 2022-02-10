@@ -57,7 +57,6 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     "Location History/Records.json": _parse_location_history,  # new path to Location History
     "Location History/Settings.json": None,
     # HTML/JSON activity-like files which aren't in 'My Activity'
-
     # optional " and Youtube Music" to handle pre-2017 data
     r"YouTube( and YouTube Music)?/history/.*?.html": _parse_html_activity,
     r"YouTube( and YouTube Music)?/history/.*?.json": _parse_json_activity,
@@ -169,7 +168,7 @@ class TakeoutParser:
         """
         self._warn_if_no_activity()
         for f, handler in self.dispatch_map().items():
-            rel_path = str(f)[len(str(self.takeout_dir)) + 1:]
+            rel_path = str(f)[len(str(self.takeout_dir)) + 1 :]
             func_name: str = handler.__name__
             logger.info(f"Parsing '{rel_path}' using '{func_name}'")
             yield from handler(f)

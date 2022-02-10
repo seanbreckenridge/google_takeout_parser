@@ -1,23 +1,36 @@
 import os
+import logging
 import shutil
 import time
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import click
 
+from . import log
 from .cache import takeout_cache_path
 from .path_dispatch import TakeoutParser, Results, Event, Res
 
 
 @click.group()
-def main() -> None:
+@click.option(
+    "--verbose/--quiet",
+    default=None,
+    is_flag=True,
+    show_default=True,
+    help="Change default log level",
+)
+def main(debug: Optional[bool]) -> None:
     """
     Parse a google takeout!
     """
-    pass
+    if debug is not None:
+        if debug:
+            log.logger = log.setup(level=logging.DEBUG)
+        else:
+            log.logger = log.setup(level=logging.WARNING)
 
 
 @main.group(
@@ -61,7 +74,6 @@ def parse(cache: bool, takeout_dir: str) -> None:
         ires = tp.cached_parse()
     else:
         ires = tp.parse()
-    click.echo("Parsing...")
     # note: actually no exceptions since since they're dropped
     res: List[Res[Event]] = list(ires)
 
