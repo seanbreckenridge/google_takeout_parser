@@ -22,12 +22,12 @@ from .path_dispatch import TakeoutParser, Results, Event, Res
     show_default=True,
     help="Change default log level",
 )
-def main(debug: Optional[bool]) -> None:
+def main(verbose: Optional[bool]) -> None:
     """
     Parse a google takeout!
     """
-    if debug is not None:
-        if debug:
+    if verbose is not None:
+        if verbose:
             log.logger = log.setup(level=logging.DEBUG)
         else:
             log.logger = log.setup(level=logging.WARNING)
