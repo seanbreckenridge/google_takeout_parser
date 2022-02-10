@@ -52,17 +52,20 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     "YouTube and YouTube Music/subscriptions": None,  # TODO: parse
     "YouTube and YouTube Music/videos": None,
     "Location History/Semantic Location History": None,  # not that much data here. maybe parse it?
-    "Location History/Location History.json": _parse_location_history,  # old path to Location History
+    # optional space to handle pre-2017 data
+    "Location History/Location( )?History.json": _parse_location_history,  # old path to Location History
     "Location History/Records.json": _parse_location_history,  # new path to Location History
     "Location History/Settings.json": None,
     # HTML/JSON activity-like files which aren't in 'My Activity'
-    "YouTube and YouTube Music/history/.*?.html": _parse_html_activity,
-    "YouTube and YouTube Music/history/.*?.json": _parse_json_activity,
+
+    # optional " and Youtube Music" to handle pre-2017 data
+    r"YouTube( and YouTube Music)?/history/.*?.html": _parse_html_activity,
+    r"YouTube( and YouTube Music)?/history/.*?.json": _parse_json_activity,
     # basic list item files which have chat messages/comments
-    r"YouTube and YouTube Music/my-comments/.*?\.html": _parse_html_comment_file,
-    r"YouTube and YouTube Music/my-live-chat-messages/.*?\.html": _parse_html_comment_file,
-    "YouTube and YouTube Music/playlists/likes.json": _parse_likes,
-    "YouTube and YouTube Music/playlists/": None,  # dicts are ordered, so the rest of the stuff is ignored
+    r"YouTube( and YouTube Music)?/my-comments/.*?\.html": _parse_html_comment_file,
+    r"YouTube( and YouTube Music)?/my-live-chat-messages/.*?\.html": _parse_html_comment_file,
+    r"YouTube( and YouTube Music)?/playlists/likes.json": _parse_likes,
+    r"YouTube( and YouTube Music)?/playlists/": None,  # dicts are ordered, so the rest of the stuff is ignored
     "My Activity/Takeout": None,  # activity for when you made takeouts, dont need
     # HTML 'My Activity' Files
     r"My Activity/.*?My\s*Activity.html": _parse_html_activity,
