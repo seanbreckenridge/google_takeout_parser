@@ -54,8 +54,7 @@ def _parse_html_comment_file(p: Path) -> Iterator[Res[YoutubeComment]]:
     for li in soup.select("li"):
         try:
             yield _parse_html_li(li)
-        # catch expected errors are yield them as part of the union type
-        except (AssertionError, RuntimeError) as e:
+        except Exception as e:
             yield e
 
 

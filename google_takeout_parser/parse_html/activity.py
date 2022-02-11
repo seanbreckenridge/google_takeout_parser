@@ -309,8 +309,7 @@ def _parse_activity_div(div: bs4.element.Tag) -> Activity:
 def _parse_html_activity(p: Path) -> Iterator[Res[Activity]]:
     soup = bs4.BeautifulSoup(p.read_text(), "lxml")
     for outer_div in soup.select("div.outer-cell"):
-        # wrap assertion (parsing) errors and return them directly
         try:
             yield _parse_activity_div(outer_div)
-        except AssertionError as ae:
+        except Exception as ae:
             yield ae
