@@ -24,6 +24,8 @@ from .time_utils import parse_json_utc_date
 # This is also the 'My Activity' JSON format
 def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
     json_data = json.loads(p.read_text())
+    if not isinstance(json_data, list):
+        yield RuntimeError(f"Activity: Top level item in '{p}' isn't a list")
     for blob in json_data:
         try:
             subtitles = []
@@ -68,6 +70,8 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
 
 def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
     json_data = json.loads(p.read_text())
+    if not isinstance(json_data, list):
+        yield RuntimeError(f"Likes: Top level item in '{p}' isn't a list")
     for jlike in json_data:
         try:
             yield LikedYoutubeVideo(
@@ -84,6 +88,8 @@ def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
 
 def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
     json_data = json.loads(p.read_text())
+    if not isinstance(json_data, list):
+        yield RuntimeError(f"App installs: Top level item in '{p}' isn't a list")
     for japp in json_data:
         try:
             yield PlayStoreAppInstall(
@@ -108,6 +114,8 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
     ### HMMM, seems that all the locations are right after one another. broken? May just be all the location history that google has on me
     ### see numpy.diff(list(map(lambda yy: y.at, filter(lambda y: isinstance(Location), events()))))
     json_data = json.loads(p.read_text())
+    if "locations" not in json_data:
+        yield RuntimeError(f"Locations: no 'locations' key in '{p}'")
     for loc in json_data.get("locations", []):
         try:
             yield Location(
@@ -121,6 +129,8 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
 
 def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
     json_data = json.loads(p.read_text())
+    if "Browser History" not in json_data:
+        yield RuntimeError(f"Chrome/BrowserHistory: no 'Browser History' key in '{p}'")
     for item in json_data.get("Browser History", []):
         try:
             time_naive = datetime.utcfromtimestamp(item["time_usec"] / 10**6)
