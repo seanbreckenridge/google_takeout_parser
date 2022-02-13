@@ -34,7 +34,10 @@ setup(
         "testing": [
             "pytest",
             "mypy",
-        ]
+        ],
+        ':python_version<"3.7"': [
+            "typing_extensions",
+        ],
     },
     classifiers=[
         "License :: OSI Approved :: MIT License",
