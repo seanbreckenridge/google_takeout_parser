@@ -15,11 +15,9 @@ from typing import (
     List,
     Type,
     Tuple,
-    Union,
     cast,
 )
 
-import collections.abc as abc
 from collections import defaultdict
 
 from cachew import cachew
@@ -47,17 +45,12 @@ BaseResults = Iterator[Res[BaseEvent]]
 HandlerFunction = Callable[[Path], BaseResults]
 HandlerMap = Dict[str, Optional[HandlerFunction]]
 
-# A return value for one of the HandlerFunctions
-# multiple matches in the HandlerMap can return the same data,
-# so this acts as a unique key to Cache the results using cachew
 _CacheKeySingle = Type[BaseEvent]
-_CacheKeyTuple = Tuple[_CacheKeySingle, ...]
-CacheKey = Union[_CacheKeyTuple, _CacheKeySingle]
+CacheKey = _CacheKeySingle
 
 
 def _cache_key_to_str(c: CacheKey) -> str:
-    c_key: str = "_".join([str(t.__name__) for t in c]) if isinstance(c, tuple) else str(c.__name__)
-    return c_key.casefold()
+    return str(c.__name__).casefold()
 
 
 # If parsed, should mention:
@@ -275,15 +268,9 @@ class TakeoutParser:
             handler, "return_type"
         ), f"Handler functions should have an 'return_type' property which specifies what types this produces. See parse_json.py for an example. No handler on {handler}"
         val: Any = getattr(handler, "return_type")
-        if isinstance(val, abc.Iterable):
-            for v in val:
-                assert isinstance(v, type), f"{val} not a type"
-                assert BaseEvent in v.__mro__, f"{val} not a subclass of BaseEvent"
-            return cast(_CacheKeyTuple, tuple(val))
-        else:
-            assert isinstance(val, type), f"{val} is not  a type"
-            assert BaseEvent in val.__mro__, f"{val} not a subclass of BaseEvent"
-            return cast(_CacheKeySingle, val)
+        assert isinstance(val, type), f"{val} is not  a type"
+        assert BaseEvent in val.__mro__, f"{val} not a subclass of BaseEvent"
+        return cast(_CacheKeySingle, val)
 
     def _group_by_return_type(self) -> Dict[CacheKey, List[Tuple[Path, BaseResults]]]:
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
@@ -319,9 +306,6 @@ class TakeoutParser:
         for cache_key, result_tuples in self._group_by_return_type().items():
             # Hmm -- I think this should work with CacheKeys that have multiple
             # types but it may fail -- need to check if one is added
-            #
-            # Currently it would set cache_key as a tuple of types,
-            # but we likely want a Union
             #
             # create a function which groups the iterators for this return type
             # that all gets stored in one database
