@@ -11,12 +11,13 @@ import pytz
 
 
 # Can modify this by appending to the global variable before _abbr_to_timezone_map runs
-ALL_TIMEZONES: List[str] = list(pytz.all_timezones) + ["UTC"]
+ABBR_TIMEZONES: List[str] = list(pytz.all_timezones)
+ABBR_TIMEZONES.append("UTC")
 
 
 @lru_cache(1)
 def _abbr_to_timezone_map() -> Dict[str, tzinfo]:
-    timezones = list(ALL_TIMEZONES)
+    timezones = list(ABBR_TIMEZONES)
 
     res: Dict[str, tzinfo] = {}
     for tzname in timezones:
