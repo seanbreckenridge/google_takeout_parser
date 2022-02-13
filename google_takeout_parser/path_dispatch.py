@@ -93,8 +93,6 @@ def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
 DEFAULT_HANDLER_MAP: HandlerMap = {
     r"Chrome/BrowserHistory\.json": _parse_chrome_history,
     r"Chrome": None,  # Ignore rest of Chrome stuff
-    r"Google Photos": None,  # has images/some metadata on each of them
-    r"archive_browser.html": None,  # description of takeout, not that useful
     r"Google Play Store/Installs.json": _parse_app_installs,
     r"Google Play Store/": None,  # ignore anything else in Play Store
     r"Location History/Semantic Location History/.*": None,  # not that much data here. maybe parse it?
@@ -117,16 +115,37 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     # HTML 'My Activity' Files
     r"My Activity/.*?My\s*Activity.html": _parse_html_activity,
     r"My Activity/.*?My\s*Activity.json": _parse_json_activity,
-    # Files to ignore
-    r"Drive": None,
-    r"Contacts": None,
-    r"Android Device Configuration": None,
-    r"Blogger/Profile": None,
-    r"Calendar": None,
-    r"Cloud Print": None,
     # Maybe parse these?
     r"Access Log Activity": None,
     r"Blogger/Comments/.*?feed.atom": None,
+    r"Groups": None,
+    r"Hangouts": None,
+    r"Keep": None,
+    r"Maps \(your places\)": None,
+    r"Tasks": None,
+    # Files to ignore
+    r"Android Device Configuration Service/": None,
+    r"Blogger/Profile": None,
+    r"Calendar/": None,
+    r"Cloud Print/": None,
+    r"Contacts/": None,
+    r"Drive/": None,
+    r"Google Account/": None,
+    r"Google Business Profile/": None,
+    r"Google Pay/": None,
+    r"Google Photos/": None,  # has images/some metadata on each of them
+    r"Google Play Movies.*?/": None,
+    r"Google Shopping/": None,
+    r"Google Store/": None,
+    r"Google Workspace Marketplace/": None,
+    r"Home App/": None,
+    r"Mail/": None,
+    r"Maps/": None,
+    r"News/": None,
+    r"Profile/Profile.json": None,
+    r"Saved/Favorite places.csv": None,
+    r"Search Contributions/": None,
+    r"archive_browser.html": None,  # description of takeout, not that useful
 }
 
 HandlerMatch = Res[Optional[HandlerFunction]]
