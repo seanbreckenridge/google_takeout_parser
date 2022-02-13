@@ -6,7 +6,10 @@ which determines unique events while merging
 """
 
 from datetime import datetime
-from typing import NamedTuple, Optional, List, Tuple, Union
+from typing import Optional, List, Tuple, Any, Union, Iterator, TYPE_CHECKING
+from dataclasses import dataclass
+
+from .common import Res
 
 
 Details = str
@@ -21,16 +24,32 @@ LocationInfo = Tuple[MetaData, MetaData, MetaData, MetaData]
 # name, url
 Subtitles = Tuple[str, MetaData]
 
+if TYPE_CHECKING:
+    try:
+        from typing import Protocol
+    except ImportError:
+        from typing_extensions import Protocol  # type: ignore[misc]
+else:
+    Protocol = object
 
-class Activity(NamedTuple):
+
+class BaseEvent(Protocol):
+    @property
+    def key(self) -> Any:
+        ...
+
+
+@dataclass
+class Activity(BaseEvent):
     header: str
     title: str
+    time: datetime
     description: Optional[str]
     titleUrl: Optional[str]
-    time: datetime
     # note: in HTML exports, there is no way to tell the difference between
     # a description and a subtitle, so they end up as subtitles
-    subtitles: List[Subtitles]  # more lines of text describing this
+    # more lines of text describing this
+    subtitles: List[Subtitles]
     details: List[Details]
     locationInfos: List[LocationInfo]
     products: List[str]
@@ -48,7 +67,8 @@ class Activity(NamedTuple):
         return (self.header, self.title, int(self.time.timestamp()))
 
 
-class YoutubeComment(NamedTuple):
+@dataclass
+class YoutubeComment(BaseEvent):
     content: str
     dt: datetime
     urls: List[str]
@@ -58,7 +78,8 @@ class YoutubeComment(NamedTuple):
         return int(self.dt.timestamp())
 
 
-class LikedYoutubeVideo(NamedTuple):
+@dataclass
+class LikedYoutubeVideo(BaseEvent):
     title: str
     desc: str
     link: str
@@ -69,17 +90,19 @@ class LikedYoutubeVideo(NamedTuple):
         return int(self.dt.timestamp())
 
 
-class PlayStoreAppInstall(NamedTuple):
+@dataclass
+class PlayStoreAppInstall(BaseEvent):
     title: str
-    device_name: Optional[str]
     dt: datetime
+    device_name: Optional[str]
 
     @property
     def key(self) -> int:
         return int(self.dt.timestamp())
 
 
-class Location(NamedTuple):
+@dataclass
+class Location(BaseEvent):
     lng: float
     lat: float
     dt: datetime
@@ -89,7 +112,8 @@ class Location(NamedTuple):
         return (self.lng, self.lat, int(self.dt.timestamp()))
 
 
-class ChromeHistory(NamedTuple):
+@dataclass
+class ChromeHistory(BaseEvent):
     title: str
     url: str
     dt: datetime
@@ -99,11 +123,15 @@ class ChromeHistory(NamedTuple):
         return (self.url, int(self.dt.timestamp()))
 
 
-Event = Union[
+# cant compute this dynamically -- have to write it out
+# if you want to override, override both global variable types with new types
+DEFAULT_MODEL_TYPE = Union[
     Activity,
-    YoutubeComment,
     LikedYoutubeVideo,
     PlayStoreAppInstall,
     Location,
     ChromeHistory,
+    YoutubeComment,
 ]
+
+CacheResults = Iterator[Res[DEFAULT_MODEL_TYPE]]

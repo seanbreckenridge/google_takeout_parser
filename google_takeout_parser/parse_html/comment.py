@@ -58,6 +58,9 @@ def _parse_html_comment_file(p: Path) -> Iterator[Res[YoutubeComment]]:
             yield e
 
 
+_parse_html_comment_file.return_type = YoutubeComment  # type: ignore[attr-defined]
+
+
 def test_parse_html_comment_file() -> None:
     li_obj = bs4.BeautifulSoup(
         """<ul><li>Sent at 2020-04-27 23:18:23 UTC while watching <a href="http://www.youtube.com/watch?v=mM">a video</a>.<br/>content here</li></ul>""",

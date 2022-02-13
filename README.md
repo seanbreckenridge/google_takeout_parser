@@ -38,15 +38,14 @@ To install with pip, run:
 
 ### CLI Usage
 
-Can be access by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse a takeout and interact with it in a REPL:
+Can be access by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse/merge a takeout and interact with it in a REPL:
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
 To parse a takeout:
 
 ```
-$ google_takeout_parser parse ~/data/Unpacked_Takout --cache
-Parsing...
+$ google_takeout_parser --quiet parse ~/data/Unpacked_Takout --cache
 Interact with the export using res
 
 In [1]: res[-2]
@@ -54,6 +53,16 @@ Out[1]: PlayStoreAppInstall(title='Hangouts', device_name='motorola moto g(7) pl
 
 In [2]: len(res)
 Out[2]: 236654
+```
+
+```
+$ google_takeout_parser --quiet merge ./Takeout-Old ./Takeout-New --action summary --no-cache
+Counter({'Activity': 366292,
+         'Location': 147581,
+         'YoutubeComment': 131,
+         'PlayStoreAppInstall': 122,
+         'LikedYoutubeVideo': 100,
+         'ChromeHistory': 4})
 ```
 
 Also contains a small utility command to help move/extract the google takeout:
@@ -87,54 +96,50 @@ Assuming you maintain an unpacked view, e.g. like:
 To parse one takeout:
 
 ```python
-from pathlib import Path
 from google_takeout.path_dispatch import TakeoutParser
-tp = TakeoutParser(Path("/full/path/to/Takeout-1599315526"))
+tp = TakeoutParser("/full/path/to/Takeout-1599315526")
 # to check if files are all handled
 tp.dispatch_map()
 # to parse without caching the results in ~/.cache/google_takeout_parser
 uncached = list(tp.parse())
 # to parse with cachew cache https://github.com/karlicoss/cachew
-cached = list(tp.cached_parse())
+cached = list(tp.parse(cache=True))
 ```
 
-To merge takeouts:
+To merge takeouts (maintains a single dependency on the paths you pass -- so if you change the input paths, it does a full recompute)
 
 ```python
-from pathlib import Path
 from google_takeout.merge import cached_merge_takeouts
-results = list(cached_merge_takeouts([Path("/full/path/to/Takeout-1599315526"), Path("/full/path/to/Takeout-1634971143")]))
+results = list(cached_merge_takeouts(["/full/path/to/Takeout-1599315526", "/full/path/to/Takeout-1634971143"]))
 ```
 
-If you don't want to cache the results, can do something custom by directly using the `merge_events` function:
+If you don't want to cache the results but want to merge results from multiple takeouts, can do something custom by directly using the `merge_events` function:
 
 ```python
-from pathlib import Path
-from typing import Iterator, List
-from google_takeout_parser.merge import merge_events
-from google_takeout_parser.path_dispatch import TakeoutParser
+from google_takeout_parser.merge import merge_events, TakeoutParser
 itrs = []  # list of iterators of google events
-for pth in [Path('/full/path/to/Takeout-1599315526'), Path('/full/path/to/Takeout-1616796262')]:
-    tk = TakeoutParser(pth)
-    # remove any exceptions from the results
-    # use .parse() instead .cached_parse()
-    itrs.append(filter(lambda e: not isinstance(e, Exception), tk.parse()))
+for path in ['path/to/Takeout-1599315526' 'path/to/Takeout-1616796262']:
+    # ignore errors
+    tk = TakeoutParser(path, error_policy="drop")
+    itrs.append(tk.parse(cache=False))
 res = list(merge_events(*itrs))
 ```
 
-The events this returns is a combination of all types in the [`models.py`](google_takeout_parser/models.py) (to support easy serialization with cachew), to filter to a particular just do an `isinstance` check:
+The events this returns is a combination of all types in the [`models.py`](google_takeout_parser/models.py), to filter to a particular type you can provide that to skip parsing other files:
 
 ```python
 from google_takeout_parser.models import Location
-takeout_generator = TakeoutParser(Path("/full/path/to/Takeout")).cached_parse()
-locations = list(filter(lambda e: isinstance(e, Location), takeout_generator))
->>> len(locations)
+from google_takeout_parser.path_dispatch import TakeoutParser
+locations = list(TakeoutParser("path/to/Takeout").parse(filter_type=Location))
+len(locations)
 99913
 ```
 
 I personally exclusively use this through my [HPI google takeout](https://github.com/seanbreckenridge/HPI/blob/master/my/google_takeout.py) file, as a configuration layer to locate where my takeouts are on disk, and since that 'automatically' unzips the takeouts (I store them as the zips), i.e., doesn't require me to maintain an unpacked view
 
 ### Contributing
+
+TODO: update with new cache strategy/BaseEvent class
 
 Just to give a brief overview, to add new functionality (parsing some new folder that this doesn't currently support), you'd need to:
 
