@@ -6,7 +6,7 @@ from itertools import chain
 from typing import Set, Tuple, List, Any, Iterator, Union
 try:
     from typing import TypeAlias
-except ImportError:
+except:
     from typing_extensions import TypeAlias
 
 

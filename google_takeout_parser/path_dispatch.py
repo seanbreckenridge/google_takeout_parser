@@ -21,7 +21,7 @@ from typing import (
 )
 try:
     from typing import TypeAlias
-except ImportError:
+except:
     from typing_extensions import TypeAlias
 
 import collections.abc as abc
@@ -58,7 +58,7 @@ CacheKey: TypeAlias = Union[Tuple[Type[BaseEvent], ...], Type[BaseEvent]]
 
 def _cache_key_to_str(c: CacheKey) -> str:
     c_key = "_".join([t.__name__ for t in c]) if isinstance(c, tuple) else c.__name__
-    return c_key.casefold()
+    return str(c_key.casefold())
 
 
 # If parsed, should mention:
