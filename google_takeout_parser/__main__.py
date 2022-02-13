@@ -4,7 +4,7 @@ import shutil
 import time
 import tempfile
 import zipfile
-from typing import List, Optional
+from typing import List, Optional, Callable, Sequence, Any
 
 import click
 
@@ -12,7 +12,8 @@ from . import log
 from .cache import takeout_cache_path
 from .common import Res
 from .path_dispatch import TakeoutParser
-from .models import BaseEvent
+from .models import BaseEvent, DEFAULT_MODEL_TYPE
+from .merge import cached_merge_takeouts, merge_events
 
 
 @click.group()
@@ -32,6 +33,67 @@ def main(verbose: Optional[bool]) -> None:
             log.logger = log.setup(level=logging.DEBUG)
         else:
             log.logger = log.setup(level=logging.ERROR)
+
+
+SHARED = [
+    click.option("--cache/--no-cache", default=False, show_default=True),
+    click.option(
+        "-a",
+        "--action",
+        type=click.Choice(["repl", "summary"]),
+        default="repl",
+        help="What to do with the parsed result",
+        show_default=True,
+    ),
+]
+
+
+# decorator to apply shared arguments to inspect/merge
+def shared_options(func: Callable[..., None]) -> Callable[..., None]:
+    for decorator in SHARED:
+        func = decorator(func)
+    return func
+
+
+def _handle_action(res: List[Any], action: str) -> None:
+    if action == "repl":
+        import IPython  # type: ignore[import]
+
+        click.echo(f"Interact with the export using {click.style('res', 'green')}")
+        IPython.embed()
+    else:
+        from collections import Counter
+        from pprint import pformat
+
+        click.echo(pformat(Counter([type(t).__name__ for t in res])))
+
+
+@main.command(short_help="parse a takeout directory")
+@shared_options
+@click.argument("TAKEOUT_DIR", type=click.Path(exists=True), required=True)
+def parse(cache: bool, action: str, takeout_dir: str) -> None:
+    """
+    Parse a takeout directory takeout
+    """
+    tp = TakeoutParser(takeout_dir, error_policy="drop")
+    # note: actually no exceptions since since they're dropped
+    res: List[Res[BaseEvent]] = list(tp.parse(cache=cache))
+    _handle_action(res, action)
+
+
+@main.command(short_help="merge multiple takeout directories")
+@shared_options
+@click.argument("TAKEOUT_DIR", type=click.Path(exists=True), nargs=-1, required=True)
+def merge(cache: bool, action: str, takeout_dir: Sequence[str]) -> None:
+    """
+    Parse and merge multiple takeout directories
+    """
+    res: List[DEFAULT_MODEL_TYPE] = []
+    if cache:
+        res = list(cached_merge_takeouts(takeout_dir))
+    else:
+        res = list(merge_events(*iter([TakeoutParser(p).parse(cache=False) for p in takeout_dir])))  # type: ignore[arg-type]
+    _handle_action(res, action)
 
 
 @main.group(
@@ -57,37 +119,6 @@ def cache_dir_remove() -> None:
         print(f"\t{str(f)}")
     if click.confirm("Really remove this directory?"):
         shutil.rmtree(str(takeout_cache_path))
-
-
-@main.command(short_help="parse a takeout directory")
-@click.option("--cache/--no-cache", default=True, show_default=True)
-@click.option(
-    "-a",
-    "--action",
-    type=click.Choice(["repl", "summary"]),
-    default="repl",
-    help="What to do with the parsed result",
-    show_default=True,
-)
-@click.argument("TAKEOUT_DIR")
-def parse(cache: bool, action: str, takeout_dir: str) -> None:
-    """
-    Parse a takeout directory takeout
-    """
-    tp = TakeoutParser(takeout_dir, error_policy="drop")
-    # note: actually no exceptions since since they're dropped
-    res: List[Res[BaseEvent]] = list(tp.parse(cache=cache))
-
-    if action == "repl":
-        import IPython  # type: ignore[import]
-
-        click.echo(f"Interact with the export using {click.style('res', 'green')}")
-        IPython.embed()
-    else:
-        from collections import Counter
-        from pprint import pformat
-
-        click.echo(pformat(Counter([type(t).__name__ for t in res])))
 
 
 @main.command(name="move", short_help="move new google takeouts")

@@ -38,15 +38,14 @@ To install with pip, run:
 
 ### CLI Usage
 
-Can be access by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse a takeout and interact with it in a REPL:
+Can be access by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse/merge a takeout and interact with it in a REPL:
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
 To parse a takeout:
 
 ```
-$ google_takeout_parser parse ~/data/Unpacked_Takout --cache
-Parsing...
+$ google_takeout_parser --quiet parse ~/data/Unpacked_Takout --cache
 Interact with the export using res
 
 In [1]: res[-2]
@@ -54,6 +53,16 @@ Out[1]: PlayStoreAppInstall(title='Hangouts', device_name='motorola moto g(7) pl
 
 In [2]: len(res)
 Out[2]: 236654
+```
+
+```
+$ google_takeout_parser --quiet merge ./Takeout-Old ./Takeout-New --action summary --no-cache
+Counter({'Activity': 366292,
+         'Location': 147581,
+         'YoutubeComment': 131,
+         'PlayStoreAppInstall': 122,
+         'LikedYoutubeVideo': 100,
+         'ChromeHistory': 4})
 ```
 
 Also contains a small utility command to help move/extract the google takeout:
