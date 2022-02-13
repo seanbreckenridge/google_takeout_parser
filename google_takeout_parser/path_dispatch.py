@@ -320,6 +320,9 @@ class TakeoutParser:
             # Hmm -- I think this should work with CacheKeys that have multiple
             # types but it may fail -- need to check if one is added
             #
+            # Currently it would set cache_key as a tuple of types,
+            # but we likely want a Union
+            #
             # create a function which groups the iterators for this return type
             # that all gets stored in one database
             #
