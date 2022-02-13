@@ -272,7 +272,7 @@ class TakeoutParser:
         if not cache:
             yield from self._handle_errors(self._parse_raw(filter_type=filter_type))
         else:
-            yield from self._cached_parse(filter_type=filter_type)
+            yield from self._handle_errors(self._cached_parse(filter_type=filter_type))
 
     def _group_by_return_type(
         self, filter_type: Optional[Type[BaseEvent]] = None
@@ -337,7 +337,7 @@ class TakeoutParser:
             def _func() -> Iterator[Res[cache_key]]:  # type: ignore[valid-type]
                 for (path, itr) in result_tuples:
                     self._log_handler(path, itr)
-                    yield from self._handle_errors(itr)
+                    yield from itr
 
             cached_itr = cachew(
                 depends_on=lambda: self._depends_on(),
