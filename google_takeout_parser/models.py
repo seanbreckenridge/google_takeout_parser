@@ -6,8 +6,8 @@ which determines unique events while merging
 """
 
 from datetime import datetime
-from typing import Optional, List, Tuple, Any, Union, Iterator
-from dataclasses import dataclass, field
+from typing import Optional, List, Tuple, Any, Union, Iterator, TYPE_CHECKING
+from dataclasses import dataclass
 
 
 Details = str
@@ -22,14 +22,18 @@ LocationInfo = Tuple[MetaData, MetaData, MetaData, MetaData]
 # name, url
 Subtitles = Tuple[str, MetaData]
 
+if TYPE_CHECKING:
+    try:
+        from typing import Protocol
+    except ImportError:
+        from typing_extensions import Protocol  # type: ignore[misc]
+else:
+    Protocol = object
 
-class BaseEvent:
-    def __init__(self) -> None:
-        raise NotImplementedError
 
+class BaseEvent(Protocol):
     @property
-    def key(self) -> Any:
-        raise NotImplementedError
+    def key(self) -> Any: ...
 
 
 @dataclass
@@ -37,15 +41,15 @@ class Activity(BaseEvent):
     header: str
     title: str
     time: datetime
-    description: Optional[str] = None
-    titleUrl: Optional[str] = None
+    description: Optional[str]
+    titleUrl: Optional[str]
     # note: in HTML exports, there is no way to tell the difference between
     # a description and a subtitle, so they end up as subtitles
     # more lines of text describing this
-    subtitles: List[Subtitles] = field(default_factory=list)
-    details: List[Details] = field(default_factory=list)
-    locationInfos: List[LocationInfo] = field(default_factory=list)
-    products: List[str] = field(default_factory=list)
+    subtitles: List[Subtitles]
+    details: List[Details]
+    locationInfos: List[LocationInfo]
+    products: List[str]
 
     @property
     def dt(self) -> datetime:
@@ -64,7 +68,7 @@ class Activity(BaseEvent):
 class YoutubeComment(BaseEvent):
     content: str
     dt: datetime
-    urls: List[str] = field(default_factory=list)
+    urls: List[str]
 
     @property
     def key(self) -> int:
@@ -87,7 +91,7 @@ class LikedYoutubeVideo(BaseEvent):
 class PlayStoreAppInstall(BaseEvent):
     title: str
     dt: datetime
-    device_name: Optional[str] = None
+    device_name: Optional[str]
 
     @property
     def key(self) -> int:

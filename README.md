@@ -101,7 +101,7 @@ To merge takeouts (maintains a single dependency on the paths you pass -- so if 
 
 ```python
 from google_takeout.merge import cached_merge_takeouts
-results = list(cached_merge_takeouts([Path("/full/path/to/Takeout-1599315526"), Path("/full/path/to/Takeout-1634971143")]))
+results = list(cached_merge_takeouts(["/full/path/to/Takeout-1599315526", "/full/path/to/Takeout-1634971143"]))
 ```
 
 If you don't want to cache the results but want to merge results from multiple takeouts, can do something custom by directly using the `merge_events` function:

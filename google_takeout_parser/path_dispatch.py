@@ -251,16 +251,22 @@ class TakeoutParser:
                 elif self.error_policy == "drop":
                     continue
 
-    def parse(self, cache: bool = False) -> BaseResults:
+    def parse(
+        self, cache: bool = False, filter_type: Optional[Type[BaseEvent]] = None
+    ) -> BaseResults:
         """
         'Main' function -- parses the Takeout
 
         if cache is True, using cachew to cache the results
         """
         if not cache:
-            yield from self._handle_errors(self.parse_raw())
+            itr = self._handle_errors(self.parse_raw())
+            if filter_type:
+                yield from filter(lambda e: isinstance(e, filter_type), itr)  # type: ignore[arg-type]
+            else:
+                yield from itr
         else:
-            yield from self._cached_parse()
+            yield from self._cached_parse(filter_type=filter_type)
 
     @staticmethod
     def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
@@ -300,10 +306,17 @@ class TakeoutParser:
             part = os.path.join(*self.takeout_dir.parts[1:])
         return str(base / part / _cache_key_to_str(cache_key))
 
-    def _cached_parse(self) -> BaseResults:
+    def _cached_parse(
+        self, filter_type: Optional[Type[BaseEvent]] = None
+    ) -> BaseResults:
         if self.error_policy == "yield":
-            raise RuntimeError("Can't cache exceptions with error_policy='yield', set to 'drop' or 'yield'")
+            self.error_policy = "drop"
+            logger.warn(
+                "Can't cache exceptions with error_policy='yield', chaing to 'drop'"
+            )
         for cache_key, result_tuples in self._group_by_return_type().items():
+            if filter_type is not None and filter_type != cache_key:
+                continue
             # Hmm -- I think this should work with CacheKeys that have multiple
             # types but it may fail -- need to check if one is added
             #
