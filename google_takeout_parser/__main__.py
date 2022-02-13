@@ -60,23 +60,34 @@ def cache_dir_remove() -> None:
 
 
 @main.command(short_help="parse a takeout directory")
-@click.option("--cache/--no-cache", default=True)
+@click.option("--cache/--no-cache", default=True, show_default=True)
+@click.option(
+    "-a",
+    "--action",
+    type=click.Choice(["repl", "summary"]),
+    default="repl",
+    help="What to do with the parsed result",
+    show_default=True,
+)
 @click.argument("TAKEOUT_DIR")
-def parse(cache: bool, takeout_dir: str) -> None:
+def parse(cache: bool, action: str, takeout_dir: str) -> None:
     """
-    Parse a google takeout and interact with it in the REPL
+    Parse a takeout directory takeout
     """
-    import IPython  # type: ignore[import]
-
     tp = TakeoutParser(takeout_dir, error_policy="drop")
-    ires: BaseResults = tp.parse(cache=cache)
-
     # note: actually no exceptions since since they're dropped
-    res: List[Res[BaseEvent]] = list(ires)
+    res: List[Res[BaseEvent]] = list(tp.parse(cache=cache))
 
-    click.echo(f"Interact with the export using {click.style('res', 'green')}")
+    if action == "repl":
+        import IPython  # type: ignore[import]
 
-    IPython.embed()
+        click.echo(f"Interact with the export using {click.style('res', 'green')}")
+        IPython.embed()
+    else:
+        from collections import Counter
+        from pprint import pformat
+
+        click.echo(pformat(Counter([type(t).__name__ for t in res])))
 
 
 @main.command(name="move", short_help="move new google takeouts")
