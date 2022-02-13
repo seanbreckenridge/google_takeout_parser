@@ -105,11 +105,12 @@ class PlayStoreAppInstall(BaseEvent):
 class Location(BaseEvent):
     lng: float
     lat: float
+    accuracy: int
     dt: datetime
 
     @property
-    def key(self) -> Tuple[float, float, int]:
-        return (self.lng, self.lat, int(self.dt.timestamp()))
+    def key(self) -> Tuple[float, float, int, int]:
+        return (self.lng, self.lat, self.accuracy, int(self.dt.timestamp()))
 
 
 @dataclass

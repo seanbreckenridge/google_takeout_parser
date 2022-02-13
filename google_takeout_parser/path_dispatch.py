@@ -277,6 +277,18 @@ class TakeoutParser:
     def _group_by_return_type(
         self, filter_type: Optional[Type[BaseEvent]] = None
     ) -> Dict[CacheKey, List[Tuple[Path, BaseResults]]]:
+        """
+        Groups the dispatch_map by output model type
+        If filter_type is provided, only returns that Model
+
+        e.g.:
+
+        Activity -> [
+            (filepath, iterator that produces activity)
+            (filepath, iterator that produces activity),
+            (filepath, iterator that produces activity),
+        ]
+        """
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
         for path, handler in self.dispatch_map().items():
             ckey: CacheKey = _parse_handler_return_type(handler)
