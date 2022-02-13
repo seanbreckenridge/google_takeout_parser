@@ -106,7 +106,7 @@ uncached = list(tp.parse())
 cached = list(tp.parse(cache=True))
 ```
 
-To merge takeouts (maintains a single dependency on the paths you pass -- so if you change the input paths, it does a full recompute)
+To cache and merge takeouts (maintains a single dependency on the paths you pass -- so if you change the input paths, it does a full recompute)
 
 ```python
 from google_takeout.merge import cached_merge_takeouts
