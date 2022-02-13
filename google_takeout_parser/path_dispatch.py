@@ -16,10 +16,14 @@ from typing import (
     Type,
     Tuple,
     Literal,
-    TypeAlias,
     Union,
     cast,
 )
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
+
 import collections.abc as abc
 from collections import defaultdict
 

@@ -3,7 +3,12 @@ Helper module to remove duplicate events when combining takeouts
 """
 
 from itertools import chain
-from typing import Set, Tuple, List, Any, Iterator, TypeAlias, Union
+from typing import Set, Tuple, List, Any, Iterator, Union
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
+
 
 from cachew import cachew
 
