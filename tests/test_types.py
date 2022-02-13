@@ -8,7 +8,7 @@ def test_check_union() -> None:
     """
     Makes sure that any classes defined in models are included in the union type
 
-    sanity check test to ensure cachew doesnt fail with difficult to debug errors
+    sanity check test to ensure cachew doesnt fail with difficult to debug union/errors
     """
 
     classes = {
