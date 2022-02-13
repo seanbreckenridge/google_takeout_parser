@@ -5,10 +5,11 @@ Each top-level NamedTuple here has a 'key' property
 which determines unique events while merging
 """
 
-import inspect
 from datetime import datetime
-from typing import Optional, List, Tuple, Any, Type, Union
+from typing import Optional, List, Tuple, Any, Type, Union, Iterator
 from dataclasses import dataclass, field
+
+from .common import Res
 
 
 Details = str
@@ -25,9 +26,12 @@ Subtitles = Tuple[str, MetaData]
 
 
 class BaseEvent:
+    def __init__(self) -> None:
+        raise NotImplementedError
+
     @property
     def key(self) -> Any:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 @dataclass
@@ -129,3 +133,6 @@ DEFAULT_MODELS: List[Type[BaseEvent]] = [
 DEFAULT_MODEL_TYPE = Union[
     Activity, LikedYoutubeVideo, PlayStoreAppInstall, Location, ChromeHistory
 ]
+
+
+Results = Iterator[Res[DEFAULT_MODEL_TYPE]]

@@ -41,6 +41,7 @@ from .parse_json import (
 )
 
 
+# anything that subclasses BaseEvent
 BaseResults = Iterator[Res[BaseEvent]]
 
 HandlerFunction = Callable[[Path], BaseResults]

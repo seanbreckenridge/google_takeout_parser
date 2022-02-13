@@ -11,17 +11,14 @@ from cachew import cachew
 from .log import logger
 from .cache import takeout_cache_path
 from .common import Res, PathIsh
-from .models import BaseEvent, DEFAULT_MODEL_TYPE
-from .path_dispatch import TakeoutParser, BaseResults
+from .models import BaseEvent, Results
+from .path_dispatch import TakeoutParser
 
 # hmm -- feel there are too many usecases to support
 # everything here, so just need to document this a bit
 # so is obvious how to use
 #
 # else Im just duplicating code that would exist in HPI anyways
-
-
-ResultsType = Iterator[Res[DEFAULT_MODEL_TYPE]]
 
 
 # Note: only used for this module, HPI caches elsewhere
@@ -31,7 +28,7 @@ ResultsType = Iterator[Res[DEFAULT_MODEL_TYPE]]
     force_file=True,
     logger=logger,
 )
-def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> ResultsType:
+def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> Results:
     """
     Cached version of merge events, merges each of these into one cachew database
 
@@ -47,15 +44,17 @@ def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> ResultsType:
     takeout_paths would be:
     ['Takeout-1599315526', 'Takeout-1616796262', 'Takeout-1599728222']
     """
-    itrs: List[BaseResults] = []
+    itrs: List[Results] = []
     for pth in takeout_paths:
         tk = TakeoutParser(pth, warn_exceptions=True, error_policy="drop")
-        itrs.append(tk.parse(cache=True))
+        # have to ignore type conversion here -- its returns BaseEvent,
+        # while Results is the combined Union type
+        itrs.append(tk.parse(cache=True))  # type: ignore[misc,arg-type]
     yield from merge_events(*itrs)
 
 
 # TODO: need to make sure that differences in format (HTML/JSON) don't result in duplicate events
-def merge_events(*sources: BaseResults) -> BaseResults:
+def merge_events(*sources: Results) -> Results:
     """
     Given a bunch of iterators, merges takeout events together
     """
