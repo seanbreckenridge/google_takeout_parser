@@ -50,7 +50,9 @@ HandlerMap = Dict[str, Optional[HandlerFunction]]
 # A return value for one of the HandlerFunctions
 # multiple matches in the HandlerMap can return the same data,
 # so this acts as a unique key to Cache the results using cachew
-CacheKey = Union[Tuple[Type[BaseEvent], ...], Type[BaseEvent]]
+_CacheKeySingle = Type[BaseEvent]
+_CacheKeyTuple = Tuple[_CacheKeySingle, ...]
+CacheKey = Union[_CacheKeyTuple, _CacheKeySingle]
 
 
 def _cache_key_to_str(c: CacheKey) -> str:
@@ -277,11 +279,11 @@ class TakeoutParser:
             for v in val:
                 assert isinstance(v, type), f"{val} not a type"
                 assert BaseEvent in v.__mro__, f"{val} not a subclass of BaseEvent"
-            return cast(Tuple[Type[BaseEvent]], tuple(val))
+            return cast(_CacheKeyTuple, tuple(val))
         else:
             assert isinstance(val, type), f"{val} is not  a type"
             assert BaseEvent in val.__mro__, f"{val} not a subclass of BaseEvent"
-            return cast(Tuple[Type[BaseEvent]], val)
+            return cast(_CacheKeySingle, val)
 
     def _group_by_return_type(self) -> Dict[CacheKey, List[Tuple[Path, BaseResults]]]:
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
