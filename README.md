@@ -110,18 +110,18 @@ If you don't want to cache the results but want to merge results from multiple t
 from google_takeout_parser.merge import merge_events, TakeoutParser
 itrs = []  # list of iterators of google events
 for path in ['path/to/Takeout-1599315526' 'path/to/Takeout-1616796262']:
+    # ignore errors
     tk = TakeoutParser(path, error_policy="drop")
     itrs.append(tk.parse(cache=False))
 res = list(merge_events(*itrs))
 ```
 
-The events this returns is a combination of all types in the [`models.py`](google_takeout_parser/models.py), to filter to a particular type just use an `isinstance` check:
+The events this returns is a combination of all types in the [`models.py`](google_takeout_parser/models.py), to filter to a particular type you can provide that to skip parsing other files:
 
 ```python
 from google_takeout_parser.models import Location
 from google_takeout_parser.path_dispatch import TakeoutParser
-takeout_generator = TakeoutParser(".cache/gt/Takeout-New/").parse()
-locations = list(filter(lambda e: isinstance(e, Location), takeout_generator))
+locations = list(TakeoutParser("path/to/Takeout").parse(filter_type=Location))
 len(locations)
 99913
 ```

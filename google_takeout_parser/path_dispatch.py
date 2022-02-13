@@ -53,6 +53,16 @@ def _cache_key_to_str(c: CacheKey) -> str:
     return str(c.__name__).casefold()
 
 
+def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
+    assert hasattr(
+        handler, "return_type"
+    ), f"Handler functions should have an 'return_type' property which specifies what types this produces. See parse_json.py for an example. No 'return_type' on {handler}"
+    val: Any = getattr(handler, "return_type")
+    assert isinstance(val, type), f"{val} is not  a type"
+    assert BaseEvent in val.__mro__, f"{val} not a subclass of BaseEvent"
+    return cast(_CacheKeySingle, val)
+
+
 # If parsed, should mention:
 # Google Help Communities
 #   - Select JSON as Output
@@ -218,23 +228,22 @@ class TakeoutParser:
 
         return res
 
-    def _log_handler(self, path: Path, handler: Optional[Any] = None) -> None:
+    def _log_handler(self, path: Path, handler: Any) -> None:
+        """Log the path/function parsing it"""
         rel_path = str(path)[len(str(self.takeout_dir)) + 1 :]
-        if handler is not None:
-            func_name: str = getattr(handler, "__name__", str(handler))
-            logger.info(f"Parsing '{rel_path}' using '{func_name}'")
-        else:
-            logger.info(f"Parsing '{rel_path}'...")
+        func_name: str = getattr(handler, "__name__", str(handler))
+        logger.info(f"Parsing '{rel_path}' using '{func_name}'")
 
-    def parse_raw(self) -> BaseResults:
-        """
-        Parse the entire Takeout -- no cache
-        """
-        for f, handler in self.dispatch_map().items():
-            self._log_handler(f, handler)
-            yield from handler(f)
+    def _parse_raw(self, filter_type: Optional[Type[BaseEvent]] = None) -> BaseResults:
+        """Parse the takeout with no cache. If a filter is specified, only parses those files"""
+        handlers = self._group_by_return_type(filter_type=filter_type)
+        for cache_key, result_tuples in handlers.items():
+            for (path, itr) in result_tuples:
+                self._log_handler(path, itr)
+                yield from itr
 
     def _handle_errors(self, results: BaseResults) -> BaseResults:
+        """Wrap the results and handle any errors according to the policy"""
         for e in results:
             if not isinstance(e, Exception):
                 yield e
@@ -255,33 +264,28 @@ class TakeoutParser:
         self, cache: bool = False, filter_type: Optional[Type[BaseEvent]] = None
     ) -> BaseResults:
         """
-        'Main' function -- parses the Takeout
+        Parses the Takeout
 
         if cache is True, using cachew to cache the results
+        if filter_type is given, only parses the files which have that type
         """
         if not cache:
-            itr = self._handle_errors(self.parse_raw())
-            if filter_type:
-                yield from filter(lambda e: isinstance(e, filter_type), itr)  # type: ignore[arg-type]
-            else:
-                yield from itr
+            yield from self._handle_errors(self._parse_raw(filter_type=filter_type))
         else:
             yield from self._cached_parse(filter_type=filter_type)
 
-    @staticmethod
-    def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
-        assert hasattr(
-            handler, "return_type"
-        ), f"Handler functions should have an 'return_type' property which specifies what types this produces. See parse_json.py for an example. No handler on {handler}"
-        val: Any = getattr(handler, "return_type")
-        assert isinstance(val, type), f"{val} is not  a type"
-        assert BaseEvent in val.__mro__, f"{val} not a subclass of BaseEvent"
-        return cast(_CacheKeySingle, val)
-
-    def _group_by_return_type(self) -> Dict[CacheKey, List[Tuple[Path, BaseResults]]]:
+    def _group_by_return_type(
+        self, filter_type: Optional[Type[BaseEvent]] = None
+    ) -> Dict[CacheKey, List[Tuple[Path, BaseResults]]]:
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
         for path, handler in self.dispatch_map().items():
-            ckey = self.__class__._parse_handler_return_type(handler)
+            ckey: CacheKey = _parse_handler_return_type(handler)
+            # don't include in the result if we're filtering to a specific type
+            if filter_type is not None and ckey != filter_type:
+                logger.debug(
+                    f"Provided '{filter_type}' as filter, '{ckey}' doesn't match, ignoring '{path}'..."
+                )
+                continue
             # call the function -- since the parsers are all generators,
             # this doesn't run here, it just waits till its consumed
             handlers[ckey].append((path, handler(path)))
@@ -309,14 +313,8 @@ class TakeoutParser:
     def _cached_parse(
         self, filter_type: Optional[Type[BaseEvent]] = None
     ) -> BaseResults:
-        if self.error_policy == "yield":
-            self.error_policy = "drop"
-            logger.warn(
-                "Can't cache exceptions with error_policy='yield', chaing to 'drop'"
-            )
-        for cache_key, result_tuples in self._group_by_return_type().items():
-            if filter_type is not None and filter_type != cache_key:
-                continue
+        handlers = self._group_by_return_type(filter_type=filter_type)
+        for cache_key, result_tuples in handlers.items():
             # Hmm -- I think this should work with CacheKeys that have multiple
             # types but it may fail -- need to check if one is added
             #
@@ -324,7 +322,7 @@ class TakeoutParser:
             # that all gets stored in one database
             #
             # the return type here is purely for cachew, so it can infer the type
-            def _func() -> Iterator[cache_key]:  # type: ignore[valid-type]
+            def _func() -> Iterator[Res[cache_key]]:  # type: ignore[valid-type]
                 for (path, itr) in result_tuples:
                     self._log_handler(path, itr)
                     yield from self._handle_errors(itr)

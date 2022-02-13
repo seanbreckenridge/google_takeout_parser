@@ -11,7 +11,7 @@ import click
 from . import log
 from .cache import takeout_cache_path
 from .common import Res
-from .path_dispatch import TakeoutParser, BaseResults
+from .path_dispatch import TakeoutParser
 from .models import BaseEvent
 
 

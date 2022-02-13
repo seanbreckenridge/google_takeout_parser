@@ -46,7 +46,7 @@ def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> CacheResults:
     """
     itrs: List[CacheResults] = []
     for pth in takeout_paths:
-        tk = TakeoutParser(pth, warn_exceptions=True, error_policy="drop")
+        tk = TakeoutParser(pth, warn_exceptions=True)
         # have to ignore type conversion here -- its returns BaseEvent,
         # while CacheResults is the combined Union type
         itrs.append(tk.parse(cache=True))  # type: ignore[misc,arg-type]

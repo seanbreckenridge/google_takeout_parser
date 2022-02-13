@@ -9,6 +9,8 @@ from datetime import datetime
 from typing import Optional, List, Tuple, Any, Union, Iterator, TYPE_CHECKING
 from dataclasses import dataclass
 
+from .common import Res
+
 
 Details = str
 
@@ -132,5 +134,4 @@ DEFAULT_MODEL_TYPE = Union[
     YoutubeComment,
 ]
 
-# Doesnt support Exceptions
-CacheResults = Iterator[DEFAULT_MODEL_TYPE]
+CacheResults = Iterator[Res[DEFAULT_MODEL_TYPE]]

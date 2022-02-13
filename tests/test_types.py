@@ -21,4 +21,3 @@ def test_check_union() -> None:
     union_args = set(ua)
 
     assert union_args == classes
-
