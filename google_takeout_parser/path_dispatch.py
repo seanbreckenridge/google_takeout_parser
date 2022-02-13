@@ -15,7 +15,6 @@ from typing import (
     List,
     Type,
     Tuple,
-    Literal,
     Union,
     cast,
 )
@@ -25,6 +24,7 @@ from collections import defaultdict
 
 from cachew import cachew
 
+from .compat import Literal
 from .common import Res, PathIsh
 from .cache import takeout_cache_path
 from .log import logger
