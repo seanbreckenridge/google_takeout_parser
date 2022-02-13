@@ -270,7 +270,7 @@ class TakeoutParser:
             yield from self._cached_parse()
 
     @staticmethod
-    def _parse_handle_return_type(handler: HandlerFunction) -> CacheKey:
+    def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
         assert hasattr(
             handler, "return_type"
         ), f"Handler functions should have an 'return_type' property which specifies what types this produces. See parse_json.py for an example. No handler on {handler}"
@@ -288,7 +288,7 @@ class TakeoutParser:
     def _group_by_return_type(self) -> Dict[CacheKey, List[Tuple[Path, BaseResults]]]:
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
         for path, handler in self.dispatch_map().items():
-            ckey = self.__class__._parse_handle_return_type(handler)
+            ckey = self.__class__._parse_handler_return_type(handler)
             # call the function -- since the parsers are all generators,
             # this doesn't run here, it just waits till its consumed
             handlers[ckey].append((path, handler(path)))
