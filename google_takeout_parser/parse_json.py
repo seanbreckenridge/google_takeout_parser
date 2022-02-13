@@ -68,6 +68,9 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
             yield e
 
 
+_parse_json_activity.return_type = Activity  # type: ignore[attr-defined]
+
+
 def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
     json_data = json.loads(p.read_text())
     if not isinstance(json_data, list):
@@ -86,6 +89,9 @@ def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
             yield e
 
 
+_parse_likes.return_type = LikedYoutubeVideo  # type: ignore[attr-defined]
+
+
 def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
     json_data = json.loads(p.read_text())
     if not isinstance(json_data, list):
@@ -99,6 +105,9 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
             )
         except Exception as e:
             yield e
+
+
+_parse_app_installs.return_type = PlayStoreAppInstall  # type: ignore[attr-defined]
 
 
 def _parse_location_timestamp(d: Dict[str, Any]) -> datetime:
@@ -127,6 +136,9 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
             yield e
 
 
+_parse_location_history.return_type = Location  # type: ignore[attr-defined]
+
+
 def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
     json_data = json.loads(p.read_text())
     if "Browser History" not in json_data:
@@ -141,3 +153,6 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
             )
         except Exception as e:
             yield e
+
+
+_parse_chrome_history.return_type = ChromeHistory  # type: ignore[attr-defined]

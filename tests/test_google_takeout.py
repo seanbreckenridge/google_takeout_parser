@@ -1,17 +1,13 @@
-import pytest
-from pathlib import Path
-
 from google_takeout_parser.path_dispatch import TakeoutParser
 
-this_dir = Path(__file__).parent
-testdata = this_dir / "testdata"
+from .common import testdata
 
 
 def test_structure() -> None:
     recent_takeout = testdata / "RecentTakeout"
     assert recent_takeout.exists()
     files = [f for f in recent_takeout.rglob("*") if f.is_file()]
-    tk = TakeoutParser(recent_takeout, raise_exceptions=True)
+    tk = TakeoutParser(recent_takeout)
     m = tk.dispatch_map()
     assert len(files) == 53
     assert len(m) == 30

@@ -4,14 +4,15 @@ import shutil
 import time
 import tempfile
 import zipfile
-from pathlib import Path
 from typing import List, Optional
 
 import click
 
 from . import log
 from .cache import takeout_cache_path
-from .path_dispatch import TakeoutParser, Results, Event, Res
+from .common import Res
+from .path_dispatch import TakeoutParser, BaseResults
+from .models import BaseEvent
 
 
 @click.group()
@@ -67,15 +68,11 @@ def parse(cache: bool, takeout_dir: str) -> None:
     """
     import IPython  # type: ignore[import]
 
-    p = Path(str(takeout_dir)).absolute()
-    ires: Results
-    tp = TakeoutParser(p, drop_exceptions=True)
-    if cache:
-        ires = tp.cached_parse()
-    else:
-        ires = tp.parse()
+    tp = TakeoutParser(takeout_dir, error_policy="drop")
+    ires: BaseResults = tp.parse(cache=cache)
+
     # note: actually no exceptions since since they're dropped
-    res: List[Res[Event]] = list(ires)
+    res: List[Res[BaseEvent]] = list(ires)
 
     click.echo(f"Interact with the export using {click.style('res', 'green')}")
 

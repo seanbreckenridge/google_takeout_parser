@@ -5,8 +5,10 @@ Each top-level NamedTuple here has a 'key' property
 which determines unique events while merging
 """
 
+import inspect
 from datetime import datetime
-from typing import NamedTuple, Optional, List, Tuple, Union
+from typing import Optional, List, Tuple, Any, Type
+from dataclasses import dataclass, field
 
 
 Details = str
@@ -22,18 +24,27 @@ LocationInfo = Tuple[MetaData, MetaData, MetaData, MetaData]
 Subtitles = Tuple[str, MetaData]
 
 
-class Activity(NamedTuple):
+class BaseEvent:
+    @property
+    def key(self) -> Any:
+        raise NotImplementedError()
+
+
+@dataclass
+class Activity(BaseEvent):
     header: str
     title: str
-    description: Optional[str]
-    titleUrl: Optional[str]
     time: datetime
+    description: Optional[str] = None
+    titleUrl: Optional[str] = None
     # note: in HTML exports, there is no way to tell the difference between
     # a description and a subtitle, so they end up as subtitles
-    subtitles: List[Subtitles]  # more lines of text describing this
-    details: List[Details]
-    locationInfos: List[LocationInfo]
-    products: List[str]
+    subtitles: List[Subtitles] = field(
+        default_factory=list
+    )  # more lines of text describing this
+    details: List[Details] = field(default_factory=list)
+    locationInfos: List[LocationInfo] = field(default_factory=list)
+    products: List[str] = field(default_factory=list)
 
     @property
     def dt(self) -> datetime:
@@ -48,17 +59,19 @@ class Activity(NamedTuple):
         return (self.header, self.title, int(self.time.timestamp()))
 
 
-class YoutubeComment(NamedTuple):
+@dataclass
+class YoutubeComment(BaseEvent):
     content: str
     dt: datetime
-    urls: List[str]
+    urls: List[str] = field(default_factory=list)
 
     @property
     def key(self) -> int:
         return int(self.dt.timestamp())
 
 
-class LikedYoutubeVideo(NamedTuple):
+@dataclass
+class LikedYoutubeVideo(BaseEvent):
     title: str
     desc: str
     link: str
@@ -69,17 +82,19 @@ class LikedYoutubeVideo(NamedTuple):
         return int(self.dt.timestamp())
 
 
-class PlayStoreAppInstall(NamedTuple):
+@dataclass
+class PlayStoreAppInstall(BaseEvent):
     title: str
-    device_name: Optional[str]
     dt: datetime
+    device_name: Optional[str] = None
 
     @property
     def key(self) -> int:
         return int(self.dt.timestamp())
 
 
-class Location(NamedTuple):
+@dataclass
+class Location(BaseEvent):
     lng: float
     lat: float
     dt: datetime
@@ -89,7 +104,8 @@ class Location(NamedTuple):
         return (self.lng, self.lat, int(self.dt.timestamp()))
 
 
-class ChromeHistory(NamedTuple):
+@dataclass
+class ChromeHistory(BaseEvent):
     title: str
     url: str
     dt: datetime
@@ -99,11 +115,9 @@ class ChromeHistory(NamedTuple):
         return (self.url, int(self.dt.timestamp()))
 
 
-Event = Union[
-    Activity,
-    YoutubeComment,
-    LikedYoutubeVideo,
-    PlayStoreAppInstall,
-    Location,
-    ChromeHistory,
+# dynamically compute models here so it can be used elsewhere?
+DEFAULT_MODELS: List[Type[BaseEvent]] = [
+    d
+    for d in globals().values()
+    if inspect.isclass(d) and hasattr(d, "__mro__") and BaseEvent in d.__mro__
 ]
