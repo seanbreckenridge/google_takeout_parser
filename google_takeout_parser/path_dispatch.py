@@ -314,6 +314,8 @@ class TakeoutParser:
         return str(base / part / _cache_key_to_str(cache_key))
 
     def _cached_parse(self) -> BaseResults:
+        if self.error_policy == "yield":
+            raise RuntimeError("Can't cache exceptions with error_policy='yield', set to 'drop' or 'yield'")
         for cache_key, result_tuples in self._group_by_return_type().items():
             # Hmm -- I think this should work with CacheKeys that have multiple
             # types but it may fail -- need to check if one is added
@@ -322,7 +324,7 @@ class TakeoutParser:
             # that all gets stored in one database
             #
             # the return type here is purely for cachew, so it can infer the type
-            def _func() -> Iterator[Res[cache_key]]:  # type: ignore[valid-type]
+            def _func() -> Iterator[cache_key]:  # type: ignore[valid-type]
                 for (path, itr) in result_tuples:
                     self._log_handler(path, itr)
                     yield from self._handle_errors(itr)
