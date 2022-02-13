@@ -119,17 +119,8 @@ class ChromeHistory(BaseEvent):
         return (self.url, int(self.dt.timestamp()))
 
 
-DEFAULT_MODELS: List[Type[BaseEvent]] = [
-    Activity,
-    LikedYoutubeVideo,
-    PlayStoreAppInstall,
-    Location,
-    ChromeHistory,
-]
-
-
 # cant compute this dynamically -- have to write it out
-# if you want to override, override this global variable with new types
+# if you want to override, override both global variable types with new types
 DEFAULT_MODEL_TYPE = Union[
     Activity, LikedYoutubeVideo, PlayStoreAppInstall, Location, ChromeHistory
 ]
