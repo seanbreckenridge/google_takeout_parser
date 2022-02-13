@@ -11,7 +11,7 @@ from cachew import cachew
 from .log import logger
 from .cache import takeout_cache_path
 from .common import PathIsh
-from .models import BaseEvent, Results
+from .models import BaseEvent, CacheResults
 from .path_dispatch import TakeoutParser
 
 # hmm -- feel there are too many usecases to support
@@ -28,7 +28,7 @@ from .path_dispatch import TakeoutParser
     force_file=True,
     logger=logger,
 )
-def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> Results:
+def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> CacheResults:
     """
     Cached version of merge events, merges each of these into one cachew database
 
@@ -44,17 +44,17 @@ def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> Results:
     takeout_paths would be:
     ['Takeout-1599315526', 'Takeout-1616796262', 'Takeout-1599728222']
     """
-    itrs: List[Results] = []
+    itrs: List[CacheResults] = []
     for pth in takeout_paths:
         tk = TakeoutParser(pth, warn_exceptions=True, error_policy="drop")
         # have to ignore type conversion here -- its returns BaseEvent,
-        # while Results is the combined Union type
+        # while CacheResults is the combined Union type
         itrs.append(tk.parse(cache=True))  # type: ignore[misc,arg-type]
     yield from merge_events(*itrs)
 
 
 # TODO: need to make sure that differences in format (HTML/JSON) don't result in duplicate events
-def merge_events(*sources: Results) -> Results:
+def merge_events(*sources: CacheResults) -> CacheResults:
     """
     Given a bunch of iterators, merges takeout events together
     """

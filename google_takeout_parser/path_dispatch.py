@@ -1,6 +1,6 @@
 """
 This handles mapping the filenames in the export
-to the corresponding functions and caching the results
+to the corresponding functions and caching the gesults
 """
 
 import os

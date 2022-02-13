@@ -9,8 +9,6 @@ from datetime import datetime
 from typing import Optional, List, Tuple, Any, Union, Iterator
 from dataclasses import dataclass, field
 
-from .common import Res
-
 
 Details = str
 
@@ -126,4 +124,5 @@ DEFAULT_MODEL_TYPE = Union[
 ]
 
 
-Results = Iterator[Res[DEFAULT_MODEL_TYPE]]
+# Doesnt support Exceptions
+CacheResults = Iterator[DEFAULT_MODEL_TYPE]
