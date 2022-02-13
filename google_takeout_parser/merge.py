@@ -11,7 +11,7 @@ from cachew import cachew
 from .log import logger
 from .cache import takeout_cache_path
 from .common import Res, PathIsh
-from .models import BaseEvent, DEFAULT_MODELS
+from .models import BaseEvent, DEFAULT_MODEL_TYPE
 from .path_dispatch import TakeoutParser, BaseResults
 
 # hmm -- feel there are too many usecases to support
@@ -21,8 +21,8 @@ from .path_dispatch import TakeoutParser, BaseResults
 # else Im just duplicating code that would exist in HPI anyways
 
 
-TakeoutModelType = Union[tuple(DEFAULT_MODELS)]  # type: ignore[valid-type, misc]
-ResultsType = Iterator[Res[TakeoutModelType]]  # type: ignore[valid-type, misc]
+ResultsType = Iterator[Res[DEFAULT_MODEL_TYPE]]
+
 
 # Note: only used for this module, HPI caches elsewhere
 @cachew(

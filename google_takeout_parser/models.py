@@ -7,7 +7,7 @@ which determines unique events while merging
 
 import inspect
 from datetime import datetime
-from typing import Optional, List, Tuple, Any, Type
+from typing import Optional, List, Tuple, Any, Type, Union
 from dataclasses import dataclass, field
 
 
@@ -115,9 +115,17 @@ class ChromeHistory(BaseEvent):
         return (self.url, int(self.dt.timestamp()))
 
 
-# dynamically compute models here so it can be used elsewhere?
 DEFAULT_MODELS: List[Type[BaseEvent]] = [
-    d
-    for d in globals().values()
-    if inspect.isclass(d) and hasattr(d, "__mro__") and BaseEvent in d.__mro__
+    Activity,
+    LikedYoutubeVideo,
+    PlayStoreAppInstall,
+    Location,
+    ChromeHistory,
+]
+
+
+# cant compute this dynamically -- have to write it out
+# if you want to override, override this global variable with new types
+DEFAULT_MODEL_TYPE = Union[
+    Activity, LikedYoutubeVideo, PlayStoreAppInstall, Location, ChromeHistory
 ]
