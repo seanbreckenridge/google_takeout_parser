@@ -3,14 +3,14 @@ Helper module to remove duplicate events when combining takeouts
 """
 
 from itertools import chain
-from typing import Set, Tuple, List, Any, Iterator, Union
+from typing import Set, Tuple, List, Any
 
 
 from cachew import cachew
 
 from .log import logger
 from .cache import takeout_cache_path
-from .common import Res, PathIsh
+from .common import PathIsh
 from .models import BaseEvent, Results
 from .path_dispatch import TakeoutParser
 

@@ -6,7 +6,7 @@ which determines unique events while merging
 """
 
 from datetime import datetime
-from typing import Optional, List, Tuple, Any, Type, Union, Iterator
+from typing import Optional, List, Tuple, Any, Union, Iterator
 from dataclasses import dataclass, field
 
 from .common import Res
