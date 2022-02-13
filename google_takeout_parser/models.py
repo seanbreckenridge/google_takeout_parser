@@ -41,9 +41,8 @@ class Activity(BaseEvent):
     titleUrl: Optional[str] = None
     # note: in HTML exports, there is no way to tell the difference between
     # a description and a subtitle, so they end up as subtitles
-    subtitles: List[Subtitles] = field(
-        default_factory=list
-    )  # more lines of text describing this
+    # more lines of text describing this
+    subtitles: List[Subtitles] = field(default_factory=list)
     details: List[Details] = field(default_factory=list)
     locationInfos: List[LocationInfo] = field(default_factory=list)
     products: List[str] = field(default_factory=list)
