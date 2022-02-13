@@ -33,7 +33,8 @@ else:
 
 class BaseEvent(Protocol):
     @property
-    def key(self) -> Any: ...
+    def key(self) -> Any:
+        ...
 
 
 @dataclass
@@ -123,9 +124,13 @@ class ChromeHistory(BaseEvent):
 # cant compute this dynamically -- have to write it out
 # if you want to override, override both global variable types with new types
 DEFAULT_MODEL_TYPE = Union[
-    Activity, LikedYoutubeVideo, PlayStoreAppInstall, Location, ChromeHistory
+    Activity,
+    LikedYoutubeVideo,
+    PlayStoreAppInstall,
+    Location,
+    ChromeHistory,
+    YoutubeComment,
 ]
-
 
 # Doesnt support Exceptions
 CacheResults = Iterator[DEFAULT_MODEL_TYPE]
