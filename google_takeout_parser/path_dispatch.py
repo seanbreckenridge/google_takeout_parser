@@ -56,8 +56,8 @@ CacheKey = Union[_CacheKeyTuple, _CacheKeySingle]
 
 
 def _cache_key_to_str(c: CacheKey) -> str:
-    c_key = "_".join([t.__name__ for t in c]) if isinstance(c, tuple) else c.__name__
-    return str(c_key.casefold())
+    c_key: str = "_".join([str(t.__name__) for t in c]) if isinstance(c, tuple) else str(c.__name__)
+    return c_key.casefold()
 
 
 # If parsed, should mention:
