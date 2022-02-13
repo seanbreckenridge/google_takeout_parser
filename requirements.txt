@@ -5,4 +5,3 @@ beautifulsoup4
 cachew
 pytz
 IPython
-typing_extensions

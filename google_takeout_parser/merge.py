@@ -4,10 +4,6 @@ Helper module to remove duplicate events when combining takeouts
 
 from itertools import chain
 from typing import Set, Tuple, List, Any, Iterator, Union
-try:
-    from typing import TypeAlias
-except:
-    from typing_extensions import TypeAlias
 
 
 from cachew import cachew
@@ -25,8 +21,8 @@ from .path_dispatch import TakeoutParser, BaseResults
 # else Im just duplicating code that would exist in HPI anyways
 
 
-TakeoutModelType: TypeAlias = Union[tuple(DEFAULT_MODELS)]  # type: ignore[valid-type, misc]
-ResultsType: TypeAlias = Iterator[Res[TakeoutModelType]]  # type: ignore[valid-type, misc]
+TakeoutModelType = Union[tuple(DEFAULT_MODELS)]  # type: ignore[valid-type, misc]
+ResultsType = Iterator[Res[TakeoutModelType]]  # type: ignore[valid-type, misc]
 
 # Note: only used for this module, HPI caches elsewhere
 @cachew(

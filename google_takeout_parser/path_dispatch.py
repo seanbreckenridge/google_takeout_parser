@@ -19,10 +19,6 @@ from typing import (
     Union,
     cast,
 )
-try:
-    from typing import TypeAlias
-except:
-    from typing_extensions import TypeAlias
 
 import collections.abc as abc
 from collections import defaultdict
@@ -53,7 +49,7 @@ HandlerMap = Dict[str, Optional[HandlerFunction]]
 # A return value for one of the HandlerFunctions
 # multiple matches in the HandlerMap can return the same data,
 # so this acts as a unique key to Cache the results using cachew
-CacheKey: TypeAlias = Union[Tuple[Type[BaseEvent], ...], Type[BaseEvent]]
+CacheKey = Union[Tuple[Type[BaseEvent], ...], Type[BaseEvent]]
 
 
 def _cache_key_to_str(c: CacheKey) -> str:
