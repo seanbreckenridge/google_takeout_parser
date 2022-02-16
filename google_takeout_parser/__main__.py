@@ -1,19 +1,7 @@
 import os
-import logging
-import shutil
-import time
-import tempfile
-import zipfile
 from typing import List, Optional, Callable, Sequence, Any
 
 import click
-
-from . import log
-from .cache import takeout_cache_path
-from .common import Res
-from .path_dispatch import TakeoutParser
-from .models import BaseEvent, DEFAULT_MODEL_TYPE
-from .merge import cached_merge_takeouts, merge_events
 
 
 @click.group()
@@ -28,6 +16,10 @@ def main(verbose: Optional[bool]) -> None:
     """
     Parse a google takeout!
     """
+    import logging
+
+    from . import log
+
     if verbose is not None:
         if verbose:
             log.logger = log.setup(level=logging.DEBUG)
@@ -75,6 +67,10 @@ def parse(cache: bool, action: str, takeout_dir: str) -> None:
     """
     Parse a takeout directory takeout
     """
+    from .common import Res
+    from .models import BaseEvent
+    from .path_dispatch import TakeoutParser
+
     tp = TakeoutParser(takeout_dir, error_policy="drop")
     # note: actually no exceptions since since they're dropped
     res: List[Res[BaseEvent]] = list(tp.parse(cache=cache))
@@ -88,6 +84,10 @@ def merge(cache: bool, action: str, takeout_dir: Sequence[str]) -> None:
     """
     Parse and merge multiple takeout directories
     """
+    from .path_dispatch import TakeoutParser
+    from .merge import cached_merge_takeouts, merge_events
+    from .models import DEFAULT_MODEL_TYPE
+
     res: List[DEFAULT_MODEL_TYPE] = []
     if cache:
         res = list(cached_merge_takeouts(takeout_dir))
@@ -104,6 +104,8 @@ def cache_dir(ctx: click.Context) -> None:
     """
     Print location of cache dir
     """
+    from .cache import takeout_cache_path
+
     if ctx.invoked_subcommand is None:
         click.echo(str(takeout_cache_path.absolute()))
 
@@ -113,6 +115,9 @@ def cache_dir_remove() -> None:
     """
     Remove the cache directory
     """
+    import shutil
+    from .cache import takeout_cache_path
+
     click.echo(str(takeout_cache_path))
     click.echo("Contents:")
     for f in takeout_cache_path.rglob("*"):
@@ -145,6 +150,10 @@ def move(from_: str, to_dir: str, extract: bool) -> None:
     """
     Utility command to help move/extract takeouts into the correct location
     """
+    import time
+    import tempfile
+    import zipfile
+
     ts = int(time.time())
     target = f"{to_dir}/Takeout-{ts}"
     if not extract:
@@ -167,6 +176,8 @@ def move(from_: str, to_dir: str, extract: bool) -> None:
 
 
 def _safe_shutil_mv(from_: str, to: str) -> None:
+    import shutil
+
     click.echo(f"Moving {from_} to {to}")
     assert os.path.exists(from_)
     assert not os.path.exists(to)
