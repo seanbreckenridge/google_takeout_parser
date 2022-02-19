@@ -55,12 +55,12 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
                 details=[d["name"] for d in blob.get("details", [])],
                 locationInfos=[
                     (
-                        l.get("name"),
-                        l.get("url"),
-                        l.get("source"),
-                        l.get("sourceUrl"),
+                        locinfo.get("name"),
+                        locinfo.get("url"),
+                        locinfo.get("source"),
+                        locinfo.get("sourceUrl"),
                     )
-                    for l in blob.get("locationInfos", [])
+                    for locinfo in blob.get("locationInfos", [])
                 ],
                 products=blob.get("products", []),
             )

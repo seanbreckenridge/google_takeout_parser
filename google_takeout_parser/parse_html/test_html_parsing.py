@@ -3,12 +3,14 @@ import bs4  # type: ignore[import]
 from .activity import _parse_subtitles, _parse_caption, _is_location_api_link
 
 # bring into scope
-from .comment import test_parse_html_comment_file
-from .html_time_utils import test_parse_dt
+from .comment import test_parse_html_comment_file  # noqa: F401
+from .html_time_utils import test_parse_dt  # noqa: F401
 
 
 def bs4_div(html: str) -> bs4.element.Tag:
-    return bs4.BeautifulSoup(html, "lxml").select_one("div")
+    tag = bs4.BeautifulSoup(html, "lxml").select_one("div")
+    assert tag is not None
+    return tag
 
 
 def test_parse_subtitles() -> None:

@@ -23,7 +23,7 @@ from .path_dispatch import TakeoutParser
 
 # Note: only used for this module, HPI caches elsewhere
 @cachew(
-    cache_path=lambda _p: str(takeout_cache_path / "_merged_takeouts"),
+    cache_path=lambda _: str(takeout_cache_path / "_merged_takeouts"),
     depends_on=lambda pths: list(sorted([str(p) for p in pths])),
     force_file=True,
     logger=logger,

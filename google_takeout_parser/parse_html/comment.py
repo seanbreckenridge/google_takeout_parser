@@ -23,6 +23,8 @@ COMMENT_DATE_REGEX = re.compile(
 # sent at '...'
 # on '....'
 # probably just need to use regex
+
+
 def _extract_html_li_date(comment: str) -> datetime:
     matches = re.search(COMMENT_DATE_REGEX, comment)
     if matches:
@@ -43,7 +45,7 @@ def _parse_html_li(li: bs4.element.Tag) -> YoutubeComment:
             desc += str(tag)
         elif isinstance(tag, bs4.element.Tag):
             desc += str(tag.text)
-    urls = list({l.attrs["href"] for l in li.select("a") if "href" in l.attrs})
+    urls = list({link.attrs["href"] for link in li.select("a") if "href" in link.attrs})
     return YoutubeComment(
         content=clean_latin1_chars(desc).strip(), urls=urls, dt=parsed_date
     )
@@ -66,6 +68,7 @@ def test_parse_html_comment_file() -> None:
         """<ul><li>Sent at 2020-04-27 23:18:23 UTC while watching <a href="http://www.youtube.com/watch?v=mM">a video</a>.<br/>content here</li></ul>""",
         "lxml",
     ).select_one("li")
+    assert li_obj is not None
     parsed_li = _parse_html_li(li_obj)
     assert parsed_li == YoutubeComment(
         content="content here",

@@ -153,5 +153,6 @@ git clone 'https://github.com/seanbreckenridge/google_takeout_parser'
 cd ./google_takeout_parser
 pip install '.[testing]'
 mypy ./google_takeout_parser
+flake8 ./google_takeout_parser
 pytest
 ```
