@@ -34,6 +34,7 @@ setup(
         "testing": [
             "pytest",
             "mypy",
+            "flake8",
         ],
         ':python_version<"3.7"': [
             "typing_extensions",
