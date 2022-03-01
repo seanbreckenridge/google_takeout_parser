@@ -42,7 +42,7 @@ Can be access by either `google_takeout_parser` or `python -m google_takeout_par
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
-To parse a takeout:
+A few examples of parsing takeouts:
 
 ```
 $ google_takeout_parser --quiet parse ~/data/Unpacked_Takout --cache
@@ -55,14 +55,22 @@ In [2]: len(res)
 Out[2]: 236654
 ```
 
-```
-$ google_takeout_parser --quiet merge ./Takeout-Old ./Takeout-New --action summary --no-cache
+`$ google_takeout_parser --quiet merge ./Takeout-Old ./Takeout-New --action summary --no-cache`
+
+```python
 Counter({'Activity': 366292,
          'Location': 147581,
          'YoutubeComment': 131,
          'PlayStoreAppInstall': 122,
          'LikedYoutubeVideo': 100,
          'ChromeHistory': 4})
+```
+
+Can also dump the info to JSON; e.g. to filter YouTube links from your Activity:
+
+```bash
+google_takeout_parser parse -a json --no-cache ~/.cache/gt/Takeout-New \
+  | jq '.[] | select(.type == "Activity") | select(.header == "YouTube") | .titleUrl'
 ```
 
 Also contains a small utility command to help move/extract the google takeout:

@@ -1,7 +1,7 @@
 """
 Models for the data parsed by this module
 
-Each top-level NamedTuple here has a 'key' property
+Each top-level dataclass here has a 'key' property
 which determines unique events while merging
 """
 

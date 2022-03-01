@@ -1,4 +1,7 @@
 import os
+import json
+from datetime import datetime, date
+import dataclasses
 from typing import List, Optional, Callable, Sequence, Any
 
 import click
@@ -32,7 +35,7 @@ SHARED = [
     click.option(
         "-a",
         "--action",
-        type=click.Choice(["repl", "summary"]),
+        type=click.Choice(["repl", "summary", "json"]),
         default="repl",
         help="What to do with the parsed result",
         show_default=True,
@@ -47,12 +50,29 @@ def shared_options(func: Callable[..., None]) -> Callable[..., None]:
     return func
 
 
+def _serialize_default(obj: Any) -> Any:
+    if isinstance(obj, Exception):
+        return {"type": type(obj).__name__, "value": str(obj)}
+    elif dataclasses.is_dataclass(obj):
+        d = dataclasses.asdict(obj)
+        assert "type" not in d
+        d["type"] = type(obj).__name__
+        return d
+    elif isinstance(obj, datetime):
+        return str(obj)
+    elif isinstance(obj, date):
+        return str(obj)
+    raise TypeError(f"No known way to serialize {type(obj)} '{obj}'")
+
+
 def _handle_action(res: List[Any], action: str) -> None:
     if action == "repl":
         import IPython  # type: ignore[import]
 
         click.echo(f"Interact with the export using {click.style('res', 'green')}")
         IPython.embed()
+    elif action == "json":
+        click.echo(json.dumps(res, default=_serialize_default))
     else:
         from collections import Counter
         from pprint import pformat
@@ -90,7 +110,7 @@ def merge(cache: bool, action: str, takeout_dir: Sequence[str]) -> None:
 
     res: List[DEFAULT_MODEL_TYPE] = []
     if cache:
-        res = list(cached_merge_takeouts(takeout_dir))
+        res = list(cached_merge_takeouts(list(takeout_dir)))
     else:
         res = list(merge_events(*iter([TakeoutParser(p).parse(cache=False) for p in takeout_dir])))  # type: ignore[arg-type]
     _handle_action(res, action)
