@@ -69,7 +69,7 @@ Counter({'Activity': 366292,
 Can also dump the info to JSON; e.g. to filter YouTube links from your Activity:
 
 ```bash
-google_takeout_parser parse -a json --no-cache ~/.cache/gt/Takeout-New \
+google_takeout_parser parse -a json --no-cache ./Takeout-New \
   | jq '.[] | select(.type == "Activity") | select(.header == "YouTube") | .titleUrl'
 ```
 
