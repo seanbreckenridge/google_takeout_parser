@@ -198,10 +198,11 @@ class TakeoutParser:
         """
         Match one of the handler regexes to a function which parses the file
         """
+        assert not p.is_absolute(), p  # should be relative to Takeout dir
         sf = str(p)
         for prefix, h in handler.items():
             # regex match the map (e.g. above)
-            if bool(re.search(prefix, sf)):
+            if bool(re.match(prefix, sf)):
                 return h  # could be None, if chosen to ignore
         else:
             return RuntimeError(f"No function to handle parsing {sf}")
@@ -214,10 +215,11 @@ class TakeoutParser:
                 continue
             if not f.is_file():
                 continue
+            rf = f.relative_to(self.takeout_dir)
 
             # if user overrode some function, use that
             user_handler: HandlerMatch = self.__class__._match_handler(
-                f, self.additional_handlers
+                rf, self.additional_handlers
             )
             # user handler matched something
             if not isinstance(user_handler, Exception):
@@ -230,7 +232,7 @@ class TakeoutParser:
 
             # try the default matchers
             def_handler: HandlerMatch = self.__class__._match_handler(
-                f, DEFAULT_HANDLER_MAP
+                rf, DEFAULT_HANDLER_MAP
             )
             # default handler
             if not isinstance(def_handler, Exception):
