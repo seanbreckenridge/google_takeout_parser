@@ -208,10 +208,11 @@ class TakeoutParser:
     def _warn_if_no_activity(self) -> None:
         # most common is probably 'My Activity'?
         # can be used as a check to see if the user passed a wrong directory
-        expected = self.takeout_dir / "My Activity"
+        activity_dir = "My Activity"
+        expected = self.takeout_dir / activity_dir
         if not expected.exists():
             logger.warning(
-                f"Warning: given '{self.takeout_dir}', expected the 'My Actitivity' directory at '{expected}'. Perhaps you passed the wrong location?"
+                f"Warning: given '{self.takeout_dir}', expected the '{activity_dir}' directory at '{expected}'. Perhaps you passed the wrong location?"
             )
 
     @staticmethod
