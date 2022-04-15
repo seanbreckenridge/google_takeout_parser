@@ -111,32 +111,51 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     r"YouTube( and YouTube Music)?/playlists/": None,
     r"YouTube( and YouTube Music)?/subscriptions": None,
     r"YouTube( and YouTube Music)?/videos": None,
+    r"YouTube( and YouTube Music)?/music-uploads": None,
+    r"My Activity/Assistant/.*.mp3": None,  # might be interesting to extract timestamps
+    r"My Activity/Voice and Audio/.*.mp3": None,
     r"My Activity/Takeout": None,  # activity for when you made takeouts, dont need
     # HTML 'My Activity' Files
     r"My Activity/.*?My\s*Activity.html": _parse_html_activity,
     r"My Activity/.*?My\s*Activity.json": _parse_json_activity,
     # Maybe parse these?
     r"Access Log Activity": None,
+    r"Assistant Notes and Lists/.*.csv": None,
     r"Blogger/Comments/.*?feed.atom": None,
+    r"Blogger/Blogs/": None,
+    # Fit has possibly interesting data
+    # Fit/Daily activity metrics/2015-07-27.csv
+    # Fit/Activities/2017-10-29T23_08_59Z_PT2M5.699S_Other.tcx
+    # Fit/All Data/derived_com.google.calories.bmr_com.google.and.json
+    r"Fit/": None,
     r"Groups": None,
+    r"Google Play Games Services/Games/.*/(Achievements|Activity|Experience|Scores).html": None,
     r"Hangouts": None,
     r"Keep": None,
     r"Maps \(your places\)": None,
+    r"My Maps/.*.kmz": None,  # custom KML maps
+    r"Saved/.*.csv": None,  # lists with saved places from Google Maps
+    r"Shopping Lists/.*.csv": None,
     r"Tasks": None,
     # Files to ignore
     r"Android Device Configuration Service/": None,
-    r"Blogger/Profile": None,
+    r"Blogger/Albums/": None,
+    r"Blogger/Profile/": None,
     r"Calendar/": None,
     r"Cloud Print/": None,
     r"Contacts/": None,
     r"Drive/": None,
     r"Google Account/": None,
     r"Google Business Profile/": None,
+    r"Google My Business/": None,
     r"Google Pay/": None,
     r"Google Photos/": None,  # has images/some metadata on each of them
+    r"Google Play Books/.*.pdf": None,
+    r"Google Play Games Services/Games/.*/(Data.bin|Metadata.html)": None,
     r"Google Play Movies.*?/": None,
     r"Google Shopping/": None,
     r"Google Store/": None,
+    r"Google Translator Toolkit/": None,
     r"Google Workspace Marketplace/": None,
     r"Home App/": None,
     r"Mail/": None,
