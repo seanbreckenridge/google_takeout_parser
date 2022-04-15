@@ -126,12 +126,13 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
     if "locations" not in json_data:
         yield RuntimeError(f"Locations: no 'locations' key in '{p}'")
     for loc in json_data.get("locations", []):
+        accuracy = loc.get("accuracy")
         try:
             yield Location(
                 lng=float(loc["longitudeE7"]) / 1e7,
                 lat=float(loc["latitudeE7"]) / 1e7,
                 dt=_parse_location_timestamp(loc),
-                accuracy=int(loc["accuracy"]),
+                accuracy=None if accuracy is None else int(accuracy)
             )
         except Exception as e:
             yield e
