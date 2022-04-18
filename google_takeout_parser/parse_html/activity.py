@@ -53,6 +53,8 @@ def _group_by_brs(els: TextOrEl) -> ListOfTags:
 
 def _parse_subtitles(
     subtitle_cell: bs4.element.Tag,
+    *,
+    file_dt: Optional[datetime],
 ) -> Tuple[List[Subtitles], datetime]:
 
     parsed_subs: List[Subtitles] = []
@@ -83,7 +85,7 @@ def _parse_subtitles(
 
         parsed_subs.append((clean_latin1_chars(buf), url))
 
-    return parsed_subs, parse_html_dt(dt_raw)
+    return parsed_subs, parse_html_dt(dt_raw, file_dt=file_dt)
 
 
 def _split_by_caption_headers(groups: List[ListOfTags]) -> Dict[str, List[ListOfTags]]:
@@ -240,7 +242,11 @@ def _parse_caption(
     return details, locationInfos, products
 
 
-def _parse_activity_div(div: bs4.element.Tag) -> Activity:
+def _parse_activity_div(
+    div: bs4.element.Tag,
+    *,
+    file_dt: Optional[datetime],
+) -> Activity:
     header = div.select_one("p.mdl-typography--title").text.strip()
 
     # all possible data that this div could parse
@@ -279,7 +285,7 @@ def _parse_activity_div(div: bs4.element.Tag) -> Activity:
     ), f"Expected one body cell in {div}, found {len(subtitle_cells)}"
     sub_cell = subtitle_cells[0]
 
-    subtitles, dtime = _parse_subtitles(sub_cell)
+    subtitles, dtime = _parse_subtitles(sub_cell, file_dt=file_dt)
 
     assert (
         len(caption_cells) == 1
@@ -307,10 +313,11 @@ def _parse_activity_div(div: bs4.element.Tag) -> Activity:
 
 
 def _parse_html_activity(p: Path) -> Iterator[Res[Activity]]:
+    file_dt = datetime.fromtimestamp(p.stat().st_mtime)
     soup = bs4.BeautifulSoup(p.read_text(), "lxml")
     for outer_div in soup.select("div.outer-cell"):
         try:
-            yield _parse_activity_div(outer_div)
+            yield _parse_activity_div(outer_div, file_dt=file_dt)
         except Exception as ae:
             yield ae
 
