@@ -69,7 +69,7 @@ def parse_html_dt(s: str, *, file_dt: Optional[datetime]) -> datetime:
     # this will computer the correct UTC offset
     export_tzinfo = tz.localize(file_dt).tzinfo
     assert export_tzinfo is not None  # make mypy happy
-    return dt.replace(tzinfo=export_tzinfo)
+    return tz.normalize(dt.replace(tzinfo=export_tzinfo))
 
 
 def test_parse_dt() -> None:
@@ -97,8 +97,13 @@ def test_parse_dt() -> None:
         "Sep 10, 2019, 7:51:45 PM PDT", file_dt=datetime.strptime('20201220', '%Y%m%d')
     )
 
-    assert parse_html_dt(
+    winter_file_dt = parse_html_dt(
         "Jan 15, 2021, 5:54:12 PM GMT", file_dt=datetime.strptime('20210120', '%Y%m%d')
-    ) == parse_html_dt(
+    )
+    summer_file_dt = parse_html_dt(
         "Jan 15, 2021, 6:54:12 PM BST", file_dt=datetime.strptime('20210820', '%Y%m%d')
     )
+    assert winter_file_dt == summer_file_dt
+    # make sure it's normalized, so the tzinfo property doesn't contain DST tzinfo
+    # otherwise it might result in issues, e.g. orjson dumps it with the wrong UTC offset
+    assert summer_file_dt.isoformat() == '2021-01-15T17:54:12+00:00'
