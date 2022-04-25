@@ -143,7 +143,7 @@ len(locations)
 99913
 ```
 
-I personally exclusively use this through my [HPI google takeout](https://github.com/seanbreckenridge/HPI/blob/master/my/google_takeout.py) file, as a configuration layer to locate where my takeouts are on disk, and since that 'automatically' unzips the takeouts (I store them as the zips), i.e., doesn't require me to maintain an unpacked view
+I personally exclusively use this through the [HPI google takeout](https://github.com/karlicoss/HPI/blob/master/my/google/takeout/parser.py) file, as a configuration layer to locate where my takeouts are on disk, and since that 'automatically' unzips the takeouts (I store them as the zips), i.e., doesn't require me to maintain an unpacked view
 
 ### Contributing
 
