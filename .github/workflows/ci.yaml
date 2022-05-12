@@ -8,10 +8,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        platform: [ubuntu-latest, windows-latest]
         python-version: [3.7, 3.8, 3.9, "3.10"]
+        exclude: [
+          {platform: windows-latest, python-version: "3.8"},
+          {platform: windows-latest, python-version: "3.9"}
+        ]
+
+    runs-on: ${{ matrix.platform }}
 
     steps:
       - uses: actions/checkout@v2
