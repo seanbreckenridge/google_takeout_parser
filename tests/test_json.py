@@ -1,6 +1,4 @@
-import os
 import datetime
-import time
 from pathlib import Path
 from typing import Iterator
 from tempfile import NamedTemporaryFile
@@ -16,10 +14,9 @@ def temp_path(contents: str) -> Iterator[Path]:
     yield p
     try:
         p.unlink()
+        assert not p.exists()
     except (Exception, PermissionError):
-        time.sleep(1)
-        os.remove(p)
-    assert not p.exists()
+        pass
 
 
 def test_parse_activity_json() -> None:
