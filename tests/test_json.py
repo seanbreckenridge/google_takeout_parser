@@ -1,3 +1,4 @@
+import os
 import datetime
 from pathlib import Path
 from typing import Iterator
@@ -12,7 +13,10 @@ def temp_path(contents: str) -> Iterator[Path]:
     p = Path(tf.name)
     p.write_text(contents)
     yield p
-    p.unlink()
+    try:
+        p.unlink()
+    except PermissionError:
+        os.remove(p)
     assert not p.exists()
 
 
