@@ -12,8 +12,11 @@ def temp_path(contents: str) -> Iterator[Path]:
     p = Path(tf.name)
     p.write_text(contents)
     yield p
-    p.unlink()
-    assert not p.exists()
+    try:
+        p.unlink()
+        assert not p.exists()
+    except (Exception, PermissionError):
+        pass
 
 
 def test_parse_activity_json() -> None:

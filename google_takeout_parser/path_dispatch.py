@@ -91,7 +91,7 @@ def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
 
 # Setting 'None' in the handler map specifies that we should ignore this file
 DEFAULT_HANDLER_MAP: HandlerMap = {
-    r"Chrome/BrowserHistory\.json": _parse_chrome_history,
+    r"Chrome/BrowserHistory.json": _parse_chrome_history,
     r"Chrome": None,  # Ignore rest of Chrome stuff
     r"Google Play Store/Installs.json": _parse_app_installs,
     r"Google Play Store/": None,  # ignore anything else in Play Store
@@ -105,8 +105,8 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     r"YouTube( and YouTube Music)?/history/.*?.html": _parse_html_activity,
     r"YouTube( and YouTube Music)?/history/.*?.json": _parse_json_activity,
     # basic list item files which have chat messages/comments
-    r"YouTube( and YouTube Music)?/my-comments/.*?\.html": _parse_html_comment_file,
-    r"YouTube( and YouTube Music)?/my-live-chat-messages/.*?\.html": _parse_html_comment_file,
+    r"YouTube( and YouTube Music)?/my-comments/.*?.html": _parse_html_comment_file,
+    r"YouTube( and YouTube Music)?/my-live-chat-messages/.*?.html": _parse_html_comment_file,
     r"YouTube( and YouTube Music)?/playlists/likes.json": _parse_likes,
     r"YouTube( and YouTube Music)?/playlists/": None,
     r"YouTube( and YouTube Music)?/subscriptions": None,
@@ -132,7 +132,7 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     r"Google Play Games Services/Games/.*/(Achievements|Activity|Experience|Scores).html": None,
     r"Hangouts": None,
     r"Keep": None,
-    r"Maps \(your places\)": None,
+    r"Maps (your places)": None,
     r"My Maps/.*.kmz": None,  # custom KML maps
     r"Saved/.*.csv": None,  # lists with saved places from Google Maps
     r"Shopping Lists/.*.csv": None,
@@ -221,7 +221,8 @@ class TakeoutParser:
         Match one of the handler regexes to a function which parses the file
         """
         assert not p.is_absolute(), p  # should be relative to Takeout dir
-        sf = str(p)
+        # replace OS-specific (e.g. windows) path separator to match the handler
+        sf = str(p).replace(os.sep, "/")
         for prefix, h in handler.items():
             # regex match the map (e.g. above)
             if bool(re.match(prefix, sf)):
