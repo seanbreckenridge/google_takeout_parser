@@ -1,5 +1,6 @@
 import os
 import datetime
+import time
 from pathlib import Path
 from typing import Iterator
 from tempfile import NamedTemporaryFile
@@ -15,7 +16,8 @@ def temp_path(contents: str) -> Iterator[Path]:
     yield p
     try:
         p.unlink()
-    except PermissionError:
+    except (Exception, PermissionError):
+        time.sleep(1)
         os.remove(p)
     assert not p.exists()
 
