@@ -32,7 +32,7 @@ Requires `python3.7+`
 
 To install with pip, run:
 
-    pip install git+https://github.com/seanbreckenridge/google_takeout_parser
+    pip install google_takeout_parser
 
 ## Usage
 
