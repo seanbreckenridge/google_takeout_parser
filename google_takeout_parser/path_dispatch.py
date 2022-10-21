@@ -35,6 +35,7 @@ from .parse_json import (
     _parse_app_installs,
     _parse_json_activity,
     _parse_location_history,
+    _parse_semantic_location_history,
     _parse_chrome_history,
 )
 
@@ -95,7 +96,7 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     r"Chrome": None,  # Ignore rest of Chrome stuff
     r"Google Play Store/Installs.json": _parse_app_installs,
     r"Google Play Store/": None,  # ignore anything else in Play Store
-    r"Location History/Semantic Location History/.*": None,  # not that much data here. maybe parse it?
+    r"Location History/Semantic Location History/.*?/.*.json": _parse_semantic_location_history,  
     # optional space to handle pre-2017 data
     r"Location History/Location( )?History.json": _parse_location_history,  # old path to Location History
     r"Location History/Records.json": _parse_location_history,  # new path to Location History

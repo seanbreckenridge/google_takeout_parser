@@ -137,8 +137,26 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
         except Exception as e:
             yield e
 
-
 _parse_location_history.return_type = Location  # type: ignore[attr-defined]
+
+def _parse_semantic_location_history(p: Path) -> Iterator[Res[Location]]:
+    json_data = json.loads(p.read_text())
+    if "timelineObjects" not in json_data:
+        yield RuntimeError(f"Locations: no 'timelineObjects' key in '{p}'")
+    for place in json_data.get("placeVisit", []):
+        loc = place.get("location")
+        accuracy = location.get("accuracy")
+        try:
+            yield Location(
+                lng=float(loc["longitudeE7"]) / 1e7,
+                lat=float(loc["latitudeE7"]) / 1e7,
+                dt=_parse_location_timestamp(loc),
+                accuracy=None if accuracy is None else int(accuracy)
+            )
+        except Exception as e:
+            yield e
+
+_parse_semantic_location_history.return_type = Location  # type: ignore[attr-defined]
 
 
 def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
