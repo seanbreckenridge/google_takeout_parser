@@ -105,13 +105,27 @@ class PlayStoreAppInstall(BaseEvent):
 class Location(BaseEvent):
     lng: float
     lat: float
+    address: Optional[str]
     accuracy: Optional[int]
     dt: datetime
+    placeId: Optional[str]
 
     @property
     def key(self) -> Tuple[float, float, Optional[int], int]:
         return (self.lng, self.lat, self.accuracy, int(self.dt.timestamp()))
 
+@dataclass
+class PlaceVisit(BaseEvent):
+    location: Location
+    lng: float
+    lat: float
+    startTime: datetime
+    endTime: datetime
+    visitConfidence: Optional[int]
+
+    @property
+    def key(self) -> Tuple[float, float, Optional[int]]:
+        return (self.lng, self.lat, self.visitConfidence)
 
 @dataclass
 class ChromeHistory(BaseEvent):

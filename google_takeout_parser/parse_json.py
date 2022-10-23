@@ -14,6 +14,7 @@ from .models import (
     ChromeHistory,
     PlayStoreAppInstall,
     Location,
+    PlaceVisit
 )
 from .common import Res
 from .time_utils import parse_json_utc_date
@@ -143,20 +144,27 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[Location]]:
     json_data = json.loads(p.read_text())
     if "timelineObjects" not in json_data:
         yield RuntimeError(f"Locations: no 'timelineObjects' key in '{p}'")
-    for place in json_data.get("placeVisit", []):
-        loc = place.get("location")
-        accuracy = location.get("accuracy")
-        try:
-            yield Location(
-                lng=float(loc["longitudeE7"]) / 1e7,
-                lat=float(loc["latitudeE7"]) / 1e7,
-                dt=_parse_location_timestamp(loc),
-                accuracy=None if accuracy is None else int(accuracy)
-            )
-        except Exception as e:
-            yield e
+    timelineObjects = json_data.get("timelineObjects", [])    
+    print(f"timelineObjects length:  {len(timelineObjects)}")
+    for timelineObject in timelineObjects:
+        if "placeVisit" in timelineObject:
+            placeVisit = timelineObject.get("placeVisit")
+            visitConfidence = placeVisit.get("visitConfidence")
+            location = placeVisit["location"]
+            duration = placeVisit["duration"]
+            try:
+                yield PlaceVisit(
+                    location,
+                    lng=float(location["longitudeE7"]) / 1e7,
+                    lat=float(location["latitudeE7"]) / 1e7,
+                    startTime=parse_json_utc_date(duration["startTimestamp"]),
+                    endTime=parse_json_utc_date(duration["endTimestamp"]),
+                    visitConfidence=None if visitConfidence is None else int(visitConfidence)
+                )
+            except Exception as e:
+                yield e
 
-_parse_semantic_location_history.return_type = Location  # type: ignore[attr-defined]
+_parse_semantic_location_history.return_type = PlaceVisit  # type: ignore[attr-defined]
 
 
 def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
