@@ -193,7 +193,9 @@ class TakeoutParser:
             "drop": drop/ignore exceptions
         """
         # isinstance check to avoid messing up objects which mimic Path (e.g. zip wrappers)
-        takeout_dir = takeout_dir if isinstance(takeout_dir, Path) else Path(takeout_dir)
+        takeout_dir = (
+            takeout_dir if isinstance(takeout_dir, Path) else Path(takeout_dir)
+        )
         self.takeout_dir = takeout_dir.absolute()
         if not self.takeout_dir.exists():
             raise FileNotFoundError(f"{self.takeout_dir} does not exist!")

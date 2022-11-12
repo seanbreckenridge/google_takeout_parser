@@ -132,7 +132,7 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
                 lng=float(loc["longitudeE7"]) / 1e7,
                 lat=float(loc["latitudeE7"]) / 1e7,
                 dt=_parse_location_timestamp(loc),
-                accuracy=None if accuracy is None else int(accuracy)
+                accuracy=None if accuracy is None else int(accuracy),
             )
         except Exception as e:
             yield e
