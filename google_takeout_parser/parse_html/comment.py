@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterator
 from datetime import datetime, timezone
 
-import bs4  # type: ignore[import]
+import bs4
 
 from ..models import YoutubeComment
 from ..common import Res

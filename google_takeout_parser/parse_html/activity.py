@@ -5,14 +5,15 @@ Parses the HTML MyActivity.html files that used to be the standard
 import warnings
 from pathlib import Path
 from datetime import datetime
-from typing import List, Iterator, Optional, Tuple, Union, Dict
+from typing import List, Iterator, Optional, Tuple, Union, Dict, Iterable
 from urllib.parse import urlparse, parse_qs
 
-import bs4  # type: ignore[import]
-from bs4.element import Tag  # type: ignore[import]
+import bs4
+from bs4.element import Tag, PageElement
 
 from ..models import Activity, Subtitles, Details, LocationInfo
 from ..common import Res
+from ..log import logger
 from .html_time_utils import parse_html_dt
 
 
@@ -21,11 +22,11 @@ def clean_latin1_chars(s: str) -> str:
     return s.replace("\xa0", " ").replace("\u2003", " ")
 
 
-TextOrEl = Union[bs4.element.Tag, bs4.element.NavigableString]
+TextOrEl = Union[bs4.element.Tag, bs4.element.NavigableString, str]
 ListOfTags = List[List[TextOrEl]]
 
 
-def _group_by_brs(els: TextOrEl) -> ListOfTags:
+def _group_by_brs(els: List[PageElement]) -> ListOfTags:
     """
     splits elements (children of some top-level div)
     into groups of elements, separated by 'br' elements
@@ -35,17 +36,24 @@ def _group_by_brs(els: TextOrEl) -> ListOfTags:
     a URL we want
     """
     res: ListOfTags = []
-    cur: List[TextOrEl] = []
+    cur: List[TextOrEl]
+    cur = []
     for tag in els:
         if isinstance(tag, bs4.element.NavigableString):
             cur.append(tag)
-        else:
+        elif isinstance(tag, str):
+            cur.append(tag)
+        elif isinstance(tag, bs4.element.Tag):
             # is a bs4.element.Tag
             if tag.name == "br":
                 res.append(cur)
                 cur = []
             else:
                 cur.append(tag)
+        else:
+            logger.warning(
+                f"While parsing subtitle {els}, found unexpected type: {type(tag)} {tag}"
+            )
     if cur:
         res.append(cur)
     return res
@@ -55,14 +63,19 @@ def _parse_subtitles(
     subtitle_cell: bs4.element.Tag,
     *,
     file_dt: Optional[datetime],
-) -> Tuple[List[Subtitles], datetime]:
+) -> Res[Tuple[List[Subtitles], datetime]]:
 
     parsed_subs: List[Subtitles] = []
 
     # iterate over direct children, and remove the last
     # one (the date)
-    sub_children = list(subtitle_cell.children)
-    dt_raw = sub_children.pop(-1).strip()
+    sub_children: Iterable[PageElement] = list(subtitle_cell.children)
+    dt_raw_el = sub_children.pop(-1)
+    if not isinstance(dt_raw_el, str):
+        return ValueError(
+            f"Could not extract datetime (should be last element) from {subtitle_cell}"
+        )
+    dt_raw = dt_raw_el.strip()
 
     for group in _group_by_brs(sub_children):
 
@@ -88,7 +101,7 @@ def _parse_subtitles(
     return parsed_subs, parse_html_dt(dt_raw, file_dt=file_dt)
 
 
-def _split_by_caption_headers(groups: List[ListOfTags]) -> Dict[str, List[ListOfTags]]:
+def _split_by_caption_headers(groups: ListOfTags) -> Dict[str, ListOfTags]:
     """
     Captions are structured like:
 
@@ -104,7 +117,7 @@ def _split_by_caption_headers(groups: List[ListOfTags]) -> Dict[str, List[ListOf
     """
 
     k = ""
-    res: Dict[str, List[ListOfTags]] = {}
+    res: Dict[str, ListOfTags] = {}
     vals: ListOfTags = []
 
     for g in groups:
@@ -121,10 +134,10 @@ def _split_by_caption_headers(groups: List[ListOfTags]) -> Dict[str, List[ListOf
                 vals = []
             k = possible_key.text.strip()
         else:
+            # add non-header key to values
             assert (
                 k
             ), f"While parsing caption; Found value while key has no value {groups}"
-            # add non-header key to values
             vals.append(g)
 
     # add last key/val pair
@@ -246,8 +259,11 @@ def _parse_activity_div(
     div: bs4.element.Tag,
     *,
     file_dt: Optional[datetime],
-) -> Activity:
-    header = div.select_one("p.mdl-typography--title").text.strip()
+) -> Res[Activity]:
+    header_el = div.select_one("p.mdl-typography--title")
+    if header_el is None:
+        return ValueError(f"Could not find header in {div}")
+    header = header_el.text.strip()
 
     # all possible data that this div could parse
     dtime: datetime
@@ -285,7 +301,10 @@ def _parse_activity_div(
     ), f"Expected one body cell in {div}, found {len(subtitle_cells)}"
     sub_cell = subtitle_cells[0]
 
-    subtitles, dtime = _parse_subtitles(sub_cell, file_dt=file_dt)
+    subs = _parse_subtitles(sub_cell, file_dt=file_dt)
+    if isinstance(subs, Exception):
+        return subs
+    subtitles, dtime = subs
 
     assert (
         len(caption_cells) == 1

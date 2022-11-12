@@ -1,4 +1,4 @@
-import bs4  # type: ignore[import]
+import bs4
 
 from .activity import _parse_subtitles, _parse_caption, _is_location_api_link
 
