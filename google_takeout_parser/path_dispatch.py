@@ -22,6 +22,7 @@ from collections import defaultdict
 
 from cachew import cachew
 
+from . import __version__ as _google_takeout_version
 from .compat import Literal
 from .common import Res, PathIsh
 from .cache import takeout_cache_path
@@ -349,11 +350,17 @@ class TakeoutParser:
             handlers[ckey].append((path, handler(path)))
         return dict(handlers)
 
-    def _depends_on(self) -> List[str]:
+    def _depends_on(self) -> str:
         """
-        basename of all files in the takeout directory
+        basename of all files in the takeout directory + google_takeout_version version
         """
-        return list(sorted([str(p.name) for p in self.takeout_dir.rglob("*")]))
+        file_index: List[str] = list(
+            sorted([str(p.name) for p in self.takeout_dir.rglob("*")])
+        )
+        # store version at the beginning of hash
+        # if pip version changes, invalidates old results and re-computes
+        file_index.insert(0, f"google_takeout_version: {_google_takeout_version}")
+        return str(file_index)
 
     def _determine_cache_path(self, cache_key: CacheKey) -> str:
         """
@@ -385,7 +392,7 @@ class TakeoutParser:
                     self._log_handler(path, itr)
                     yield from itr
 
-            cached_itr = cachew(
+            cached_itr: Callable[[], BaseResults] = cachew(
                 depends_on=lambda: self._depends_on(),
                 cache_path=lambda: self._determine_cache_path(cache_key),
                 force_file=True,
