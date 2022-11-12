@@ -26,7 +26,7 @@ TextOrEl = Union[bs4.element.Tag, bs4.element.NavigableString, str]
 ListOfTags = List[List[TextOrEl]]
 
 
-def _group_by_brs(els: List[PageElement]) -> ListOfTags:
+def _group_by_brs(els: Iterable[PageElement]) -> ListOfTags:
     """
     splits elements (children of some top-level div)
     into groups of elements, separated by 'br' elements
@@ -69,7 +69,7 @@ def _parse_subtitles(
 
     # iterate over direct children, and remove the last
     # one (the date)
-    sub_children: Iterable[PageElement] = list(subtitle_cell.children)
+    sub_children: List[PageElement] = list(subtitle_cell.children)
     dt_raw_el = sub_children.pop(-1)
     if not isinstance(dt_raw_el, str):
         return ValueError(

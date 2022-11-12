@@ -17,7 +17,9 @@ def test_parse_subtitles() -> None:
     content = bs4_div(
         """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">Visited&nbsp;<a href="https://support.google.com/youtube/answer/7071292?hl=en">Get support with Premium memberships &amp; purchases - YouTube Help</a><br>Aug 25, 2020, 5:06:44 PM PDT</div>"""
     )
-    subs, dt = _parse_subtitles(content, file_dt=None)
+    res = _parse_subtitles(content, file_dt=None)
+    assert not isinstance(res, Exception)
+    subs, dt = res
     assert subs == [
         (
             "Visited Get support with Premium memberships & purchases - YouTube Help",
@@ -29,7 +31,9 @@ def test_parse_subtitles() -> None:
     content = bs4_div(
         """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">6 cards in your feed<br/>Sep 4, 2020, 11:01:46 AM PDT</div>"""
     )
-    subs, dt = _parse_subtitles(content, file_dt=None)
+    res = _parse_subtitles(content, file_dt=None)
+    assert not isinstance(res, Exception)
+    subs, dt = res
     assert subs == [("6 cards in your feed", None)]
     # parses into a DstTzInfo timezone, so just testing that it parsed
     assert int(dt.timestamp()) == 1599242506
@@ -37,7 +41,9 @@ def test_parse_subtitles() -> None:
     content = bs4_div(
         """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">1 notification<br>Including topics:<br><a href="https://www.google.com/maps/place/?q=place_id:XX">Emergency resources and information</a><br>Sep 1, 2020, 9:27:07 PM PDT</div>""",
     )
-    subs, dt = _parse_subtitles(content, file_dt=None)
+    res = _parse_subtitles(content, file_dt=None)
+    assert not isinstance(res, Exception)
+    subs, dt = res
 
     # how multiple lines of body look in subtitles
     assert subs == [
