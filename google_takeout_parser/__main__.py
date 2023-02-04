@@ -70,7 +70,7 @@ def _handle_action(res: List[Any], action: str) -> None:
         import IPython  # type: ignore[import]
 
         click.echo(f"Interact with the export using {click.style('res', 'green')}")
-        IPython.embed()
+        IPython.embed()  # type: ignore[no-untyped-call]
     elif action == "json":
         click.echo(json.dumps(res, default=_serialize_default))
     else:

@@ -76,34 +76,40 @@ def test_parse_dt() -> None:
     # hack for the later GMT/BST testcase, need to keep it here because of the lru_cache
     ABBR_TIMEZONES.append("Europe/London")
 
-    assert parse_html_dt("Jun 23, 2015, 2:43:45 PM"    , file_dt=None) == datetime(2015, 6, 23, 14, 43, 45, tzinfo=pytz.utc)
-    assert parse_html_dt("Jan 25, 2019, 8:23:48 AM GMT", file_dt=None) == datetime(2019, 1, 25, 8 , 23, 48, tzinfo=pytz.utc)
-    assert parse_html_dt("Jan 22, 2020, 8:34:00 PM UTC", file_dt=None) == datetime(2020, 1, 22, 20, 34, 0 , tzinfo=pytz.utc)
+    assert parse_html_dt("Jun 23, 2015, 2:43:45 PM", file_dt=None) == datetime(
+        2015, 6, 23, 14, 43, 45, tzinfo=pytz.utc
+    )
+    assert parse_html_dt("Jan 25, 2019, 8:23:48 AM GMT", file_dt=None) == datetime(
+        2019, 1, 25, 8, 23, 48, tzinfo=pytz.utc
+    )
+    assert parse_html_dt("Jan 22, 2020, 8:34:00 PM UTC", file_dt=None) == datetime(
+        2020, 1, 22, 20, 34, 0, tzinfo=pytz.utc
+    )
 
-    parse_html_dt("Sep 10, 2019, 8:51:45 PM MSK", file_dt=None) == pytz.timezone('Europe/Moscow').localize(datetime(2019, 9, 10, 20, 51, 45))
+    parse_html_dt("Sep 10, 2019, 8:51:45 PM MSK", file_dt=None) == pytz.timezone(
+        "Europe/Moscow"
+    ).localize(datetime(2019, 9, 10, 20, 51, 45))
 
     # without file_dt hints they both will parse into the same (tz-aware) timestamp
     # this is somewhat unfortunate, but not much we can do really
-    assert parse_html_dt(
-        "Sep 10, 2019, 8:51:45 PM PST", file_dt=None
-    ) == parse_html_dt(
+    assert parse_html_dt("Sep 10, 2019, 8:51:45 PM PST", file_dt=None) == parse_html_dt(
         "Sep 10, 2019, 8:51:45 PM PDT", file_dt=None
     )
 
     # however if we pass proper file_dt (summer/winter correspondingly), they parse correctly (note the 1hr difference)
     assert parse_html_dt(
-        "Sep 10, 2019, 8:51:45 PM PST", file_dt=datetime.strptime('20210720', '%Y%m%d')
+        "Sep 10, 2019, 8:51:45 PM PST", file_dt=datetime.strptime("20210720", "%Y%m%d")
     ) == parse_html_dt(
-        "Sep 10, 2019, 7:51:45 PM PDT", file_dt=datetime.strptime('20201220', '%Y%m%d')
+        "Sep 10, 2019, 7:51:45 PM PDT", file_dt=datetime.strptime("20201220", "%Y%m%d")
     )
 
     winter_file_dt = parse_html_dt(
-        "Jan 15, 2021, 5:54:12 PM GMT", file_dt=datetime.strptime('20210120', '%Y%m%d')
+        "Jan 15, 2021, 5:54:12 PM GMT", file_dt=datetime.strptime("20210120", "%Y%m%d")
     )
     summer_file_dt = parse_html_dt(
-        "Jan 15, 2021, 6:54:12 PM BST", file_dt=datetime.strptime('20210820', '%Y%m%d')
+        "Jan 15, 2021, 6:54:12 PM BST", file_dt=datetime.strptime("20210820", "%Y%m%d")
     )
     assert winter_file_dt == summer_file_dt
     # make sure it's normalized, so the tzinfo property doesn't contain DST tzinfo
     # otherwise it might result in issues, e.g. orjson dumps it with the wrong UTC offset
-    assert summer_file_dt.isoformat() == '2021-01-15T17:54:12+00:00'
+    assert summer_file_dt.isoformat() == "2021-01-15T17:54:12+00:00"

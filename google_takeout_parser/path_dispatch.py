@@ -22,6 +22,7 @@ from collections import defaultdict
 
 from cachew import cachew
 
+from . import __version__ as _google_takeout_version
 from .compat import Literal
 from .common import Res, PathIsh
 from .cache import takeout_cache_path
@@ -194,7 +195,9 @@ class TakeoutParser:
             "drop": drop/ignore exceptions
         """
         # isinstance check to avoid messing up objects which mimic Path (e.g. zip wrappers)
-        takeout_dir = takeout_dir if isinstance(takeout_dir, Path) else Path(takeout_dir)
+        takeout_dir = (
+            takeout_dir if isinstance(takeout_dir, Path) else Path(takeout_dir)
+        )
         self.takeout_dir = takeout_dir.absolute()
         if not self.takeout_dir.exists():
             raise FileNotFoundError(f"{self.takeout_dir} does not exist!")
@@ -283,7 +286,7 @@ class TakeoutParser:
         """Parse the takeout with no cache. If a filter is specified, only parses those files"""
         handlers = self._group_by_return_type(filter_type=filter_type)
         for cache_key, result_tuples in handlers.items():
-            for (path, itr) in result_tuples:
+            for path, itr in result_tuples:
                 self._log_handler(path, itr)
                 yield from itr
 
@@ -348,11 +351,17 @@ class TakeoutParser:
             handlers[ckey].append((path, handler(path)))
         return dict(handlers)
 
-    def _depends_on(self) -> List[str]:
+    def _depends_on(self) -> str:
         """
-        basename of all files in the takeout directory
+        basename of all files in the takeout directory + google_takeout_version version
         """
-        return list(sorted([str(p.name) for p in self.takeout_dir.rglob("*")]))
+        file_index: List[str] = list(
+            sorted([str(p.name) for p in self.takeout_dir.rglob("*")])
+        )
+        # store version at the beginning of hash
+        # if pip version changes, invalidates old results and re-computes
+        file_index.insert(0, f"google_takeout_version: {_google_takeout_version}")
+        return str(file_index)
 
     def _determine_cache_path(self, cache_key: CacheKey) -> str:
         """
@@ -380,11 +389,11 @@ class TakeoutParser:
             #
             # the return type here is purely for cachew, so it can infer the type
             def _func() -> Iterator[Res[cache_key]]:  # type: ignore[valid-type]
-                for (path, itr) in result_tuples:
+                for path, itr in result_tuples:
                     self._log_handler(path, itr)
                     yield from itr
 
-            cached_itr = cachew(
+            cached_itr: Callable[[], BaseResults] = cachew(
                 depends_on=lambda: self._depends_on(),
                 cache_path=lambda: self._determine_cache_path(cache_key),
                 force_file=True,
