@@ -5,7 +5,7 @@ Lots of functions to transform the JSON from the Takeout to useful information
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Iterator, Any, Dict
+from typing import Iterator, Any, Dict, Iterable, Optional
 
 from .time_utils import parse_datetime_millis
 from .models import (
@@ -14,7 +14,8 @@ from .models import (
     ChromeHistory,
     PlayStoreAppInstall,
     Location,
-    PlaceVisit
+    PlaceVisit,
+    CandidateLocation,
 )
 from .common import Res
 from .time_utils import parse_json_utc_date
@@ -133,36 +134,74 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
                 lng=float(loc["longitudeE7"]) / 1e7,
                 lat=float(loc["latitudeE7"]) / 1e7,
                 dt=_parse_location_timestamp(loc),
-                accuracy=None if accuracy is None else int(accuracy)
+                accuracy=None if accuracy is None else int(accuracy),
             )
         except Exception as e:
             yield e
 
+
 _parse_location_history.return_type = Location  # type: ignore[attr-defined]
 
-def _parse_semantic_location_history(p: Path) -> Iterator[Res[Location]]:
+_sem_required_keys = ["location", "duration"]
+
+
+def _check_required_keys(
+    d: Dict[str, Any], required_keys: Iterable[str]
+) -> Optional[str]:
+    for k in required_keys:
+        if k not in d:
+            return k
+    return None
+
+
+def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
     json_data = json.loads(p.read_text())
+    if not isinstance(json_data, dict):
+        yield RuntimeError(f"Locations: Top level item in '{p}' isn't a dict")
     if "timelineObjects" not in json_data:
         yield RuntimeError(f"Locations: no 'timelineObjects' key in '{p}'")
-    timelineObjects = json_data.get("timelineObjects", [])    
-    print(f"timelineObjects length:  {len(timelineObjects)}")
+    timelineObjects = json_data.get("timelineObjects", [])
     for timelineObject in timelineObjects:
-        if "placeVisit" in timelineObject:
-            placeVisit = timelineObject.get("placeVisit")
-            visitConfidence = placeVisit.get("visitConfidence")
-            location = placeVisit["location"]
+        if "placeVisit" not in timelineObject:
+            # yield RuntimeError(f"PlaceVisit: no 'placeVisit' key in '{p}'")
+            continue
+        placeVisit = timelineObject["placeVisit"]
+        missing_key = _check_required_keys(placeVisit, _sem_required_keys)
+        if missing_key is not None:
+            yield RuntimeError(f"PlaceVisit: no '{missing_key}' key in '{p}'")
+            continue
+        try:
+            location = CandidateLocation.from_dict(placeVisit["location"])
             duration = placeVisit["duration"]
-            try:
-                yield PlaceVisit(
-                    location,
-                    lng=float(location["longitudeE7"]) / 1e7,
-                    lat=float(location["latitudeE7"]) / 1e7,
-                    startTime=parse_json_utc_date(duration["startTimestamp"]),
-                    endTime=parse_json_utc_date(duration["endTimestamp"]),
-                    visitConfidence=None if visitConfidence is None else int(visitConfidence)
-                )
-            except Exception as e:
-                yield e
+            yield PlaceVisit(
+                name=location.name,
+                address=location.address,
+                # separators=(",", ":") removes whitespace from json.dumps
+                otherCandiateLocationsJSON=json.dumps(
+                    placeVisit.get("otherCandidateLocations", []), separators=(",", ":")
+                ),
+                sourceInfoDeviceTag=location.sourceInfoDeviceTag,
+                placeConfidence=placeVisit["placeConfidence"],
+                placeVisitImportance=placeVisit["placeVisitImportance"],
+                placeVisitType=placeVisit["placeVisitType"],
+                visitConfidence=placeVisit["visitConfidence"],
+                editConfirmationStatus=placeVisit["editConfirmationStatus"],
+                placeId=location.placeId,
+                lng=location.lng,
+                lat=location.lat,
+                centerLat=float(placeVisit["centerLatE7"]) / 1e7
+                if "centerLatE7" in placeVisit
+                else None,
+                centerLng=float(placeVisit["centerLngE7"]) / 1e7
+                if "centerLngE7" in placeVisit
+                else None,
+                startTime=parse_json_utc_date(duration["startTimestamp"]),
+                endTime=parse_json_utc_date(duration["endTimestamp"]),
+                locationConfidence=location.locationConfidence,
+            )
+        except Exception as e:
+            yield e
+
 
 _parse_semantic_location_history.return_type = PlaceVisit  # type: ignore[attr-defined]
 

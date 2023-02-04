@@ -8,8 +8,8 @@ from datetime import datetime
 from typing import List, Iterator, Optional, Tuple, Union, Dict
 from urllib.parse import urlparse, parse_qs
 
-import bs4  # type: ignore[import]
-from bs4.element import Tag  # type: ignore[import]
+import bs4
+from bs4.element import Tag
 
 from ..models import Activity, Subtitles, Details, LocationInfo
 from ..common import Res
