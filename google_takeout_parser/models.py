@@ -5,11 +5,13 @@ Each top-level dataclass here has a 'key' property
 which determines unique events while merging
 """
 
+from __future__ import annotations
 from datetime import datetime
-from typing import Optional, List, Tuple, Any, Union, Iterator, TYPE_CHECKING
+from typing import Optional, List, Tuple, Any, Union, Iterator, TYPE_CHECKING, Dict
 from dataclasses import dataclass
 
 from .common import Res
+from .log import logger
 
 
 Details = str
@@ -64,7 +66,7 @@ class Activity(BaseEvent):
 
     @property
     def key(self) -> Tuple[str, str, int]:
-        return (self.header, self.title, int(self.time.timestamp()))
+        return self.header, self.title, int(self.time.timestamp())
 
 
 @dataclass
@@ -101,16 +103,92 @@ class PlayStoreAppInstall(BaseEvent):
         return int(self.dt.timestamp())
 
 
-@dataclass
-class Location(BaseEvent):
-    lng: float
+class LocationProtocol(Protocol):
     lat: float
+    lng: float
+    dt: datetime
+
+
+@dataclass
+class Location(BaseEvent, LocationProtocol):
+    lat: float
+    lng: float
     accuracy: Optional[int]
     dt: datetime
 
     @property
     def key(self) -> Tuple[float, float, Optional[int], int]:
-        return (self.lng, self.lat, self.accuracy, int(self.dt.timestamp()))
+        return self.lat, self.lng, self.accuracy, int(self.dt.timestamp())
+
+
+# this is not cached as a model, its saved as JSON -- its a helper class that placevisit uses
+@dataclass
+class CandidateLocation:
+    lat: float
+    lng: float
+    address: str
+    name: str
+    placeId: str
+    locationConfidence: float
+    sourceInfoDeviceTag: Optional[int]
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> CandidateLocation:
+        return cls(
+            address=data["address"],
+            name=data["name"],
+            placeId=data["placeId"],
+            locationConfidence=data["locationConfidence"],
+            lat=data["latitudeE7"] / 1e7,
+            lng=data["longitudeE7"] / 1e7,
+            sourceInfoDeviceTag=data.get("sourceInfo", {}).get("deviceTag"),
+        )
+
+
+@dataclass
+class PlaceVisit(BaseEvent, LocationProtocol):
+    # these are part of the 'location' key
+    lat: float
+    lng: float
+    centerLat: Optional[float]
+    centerLng: Optional[float]
+    address: str
+    name: str
+    locationConfidence: float
+    placeId: str
+    startTime: datetime
+    endTime: datetime
+    sourceInfoDeviceTag: Optional[int]
+    otherCandiateLocationsJSON: str
+    # TODO: parse these into an enum of some kind? may be prone to breaking due to new values from google though...
+    placeConfidence: str
+    placeVisitImportance: str
+    placeVisitType: str
+    visitConfidence: float
+    editConfirmationStatus: str
+
+    @property
+    def dt(self) -> datetime:
+        return self.startTime
+
+    @property
+    def key(self) -> Tuple[float, float, int, Optional[float]]:
+        return self.lat, self.lng, int(self.startTime.timestamp()), self.visitConfidence
+
+    @property
+    def otherCandidateLocations(self) -> List[CandidateLocation]:
+        if self.otherCandiateLocationsJSON is None:
+            return []
+        import json
+
+        loaded = json.loads(self.otherCandiateLocationsJSON)
+        if not isinstance(loaded, list):
+            logger.warning(
+                f"loading candidate locations: expected list, got {type(loaded)}, {loaded}"
+            )
+            return []
+
+        return [CandidateLocation.from_dict(x) for x in loaded]
 
 
 @dataclass
@@ -121,7 +199,7 @@ class ChromeHistory(BaseEvent):
 
     @property
     def key(self) -> Tuple[str, int]:
-        return (self.url, int(self.dt.timestamp()))
+        return self.url, int(self.dt.timestamp())
 
 
 # cant compute this dynamically -- have to write it out
@@ -133,6 +211,7 @@ DEFAULT_MODEL_TYPE = Union[
     Location,
     ChromeHistory,
     YoutubeComment,
+    PlaceVisit,
 ]
 
 CacheResults = Iterator[Res[DEFAULT_MODEL_TYPE]]

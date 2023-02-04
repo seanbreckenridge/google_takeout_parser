@@ -10,4 +10,4 @@ def test_structure() -> None:
     tk = TakeoutParser(recent_takeout)
     m = tk.dispatch_map()
     assert len(files) == 53
-    assert len(m) == 32
+    assert len(m) == 35

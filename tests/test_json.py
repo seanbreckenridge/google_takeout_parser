@@ -1,9 +1,12 @@
+import json
+import dataclasses
 import datetime
 from pathlib import Path
 from typing import Iterator, Any
 
 import pytest
 import google_takeout_parser.parse_json as prj
+from google_takeout_parser import models
 
 
 @pytest.fixture(scope="function")
@@ -25,7 +28,7 @@ def test_parse_activity_json(tmp_path_f: Path) -> None:
     fp = tmp_path_f / "file"
     fp.write_text(contents)
     res = list(prj._parse_json_activity(fp))
-    assert res[0] == prj.Activity(
+    assert res[0] == models.Activity(
         header="Discover",
         title="7 cards in your feed",
         time=datetime.datetime(
@@ -58,7 +61,7 @@ def test_parse_likes_json(tmp_path_f: Path) -> None:
     fp.write_text(contents)
     res = list(prj._parse_likes(fp))
     assert res == [
-        prj.LikedYoutubeVideo(
+        models.LikedYoutubeVideo(
             title="[Maybe]Blood Blockade Battlefront ED シュガーソングとビターステップ "
             "Sugar Song and Bitter Step",
             desc="シュガーソングとビターステップ \n"
@@ -85,7 +88,7 @@ def test_parse_app_installs(tmp_path_f: Path) -> None:
     fp.write_text(contents)
     res = list(prj._parse_app_installs(fp))
     assert res == [
-        prj.PlayStoreAppInstall(
+        models.PlayStoreAppInstall(
             title="Discord - Talk, Video Chat & Hang Out with Friends",
             dt=datetime.datetime(
                 2020, 5, 25, 3, 11, 53, 55000, tzinfo=datetime.timezone.utc
@@ -101,7 +104,7 @@ def test_location_old(tmp_path_f) -> None:
     fp.write_text(contents)
     res = list(prj._parse_location_history(fp))
     assert res == [
-        prj.Location(
+        models.Location(
             lng=-112.2434441,
             lat=35.1324213,
             dt=datetime.datetime(
@@ -118,7 +121,7 @@ def test_location_new(tmp_path_f: Path) -> None:
     fp.write_text(contents)
     res = list(prj._parse_location_history(fp))
     assert res == [
-        prj.Location(
+        models.Location(
             lng=-112.2434441,
             lat=35.1324213,
             dt=datetime.datetime(
@@ -135,11 +138,97 @@ def test_chrome_history(tmp_path_f: Path) -> None:
     fp.write_text(contents)
     res = list(prj._parse_chrome_history(fp))
     assert res == [
-        prj.ChromeHistory(
+        models.ChromeHistory(
             title="sean",
             url="https://sean.fish",
             dt=datetime.datetime(
                 2021, 4, 2, 23, 4, 50, 134513, tzinfo=datetime.timezone.utc
             ),
         ),
+    ]
+
+
+def test_semantic_location_history(tmp_path_f: Path) -> None:
+    data = {
+        "timelineObjects": [
+            {
+                "placeVisit": {
+                    "location": {
+                        "latitudeE7": 555555555,
+                        "longitudeE7": -1066666666,
+                        "placeId": "JK4E4P",
+                        "address": "address",
+                        "name": "name",
+                        "sourceInfo": {"deviceTag": 987654321},
+                        "locationConfidence": 60.45,
+                    },
+                    "duration": {
+                        "startTimestamp": "2017-12-10T23:29:25.026Z",
+                        "endTimestamp": "2017-12-11T01:20:06.106Z",
+                    },
+                    "placeConfidence": "MEDIUM_CONFIDENCE",
+                    "centerLatE7": 555555555,
+                    "centerLngE7": -1666666666,
+                    "visitConfidence": 65.45,
+                    "otherCandidateLocations": [
+                        {
+                            "latitudeE7": 423984239,
+                            "longitudeE7": -1565656565,
+                            "placeId": "XPRK4E4P",
+                            "address": "address2",
+                            "name": "name2",
+                            "locationConfidence": 24.475897,
+                        }
+                    ],
+                    "editConfirmationStatus": "NOT_CONFIRMED",
+                    "locationConfidence": 55,
+                    "placeVisitType": "SINGLE_PLACE",
+                    "placeVisitImportance": "MAIN",
+                }
+            }
+        ]
+    }
+    fp = tmp_path_f / "file"
+    fp.write_text(json.dumps(data))
+    res = list(prj._parse_semantic_location_history(fp))
+    objbase = res[0]
+    assert not isinstance(objbase, Exception)
+    # remove JSON, compare manually below
+    objd = dataclasses.asdict(objbase)
+    del objd["otherCandiateLocationsJSON"]
+    obj = models.PlaceVisit(**objd, otherCandiateLocationsJSON="{}")
+    assert obj == models.PlaceVisit(
+        lat=55.5555555,
+        lng=-106.6666666,
+        centerLat=55.5555555,
+        centerLng=-166.6666666,
+        name="name",
+        address="address",
+        locationConfidence=60.45,
+        placeId="JK4E4P",
+        startTime=datetime.datetime(
+            2017, 12, 10, 23, 29, 25, 26000, tzinfo=datetime.timezone.utc
+        ),
+        endTime=datetime.datetime(
+            2017, 12, 11, 1, 20, 6, 106000, tzinfo=datetime.timezone.utc
+        ),
+        sourceInfoDeviceTag=987654321,
+        otherCandiateLocationsJSON="{}",
+        placeConfidence="MEDIUM_CONFIDENCE",
+        placeVisitImportance="MAIN",
+        placeVisitType="SINGLE_PLACE",
+        visitConfidence=65.45,
+        editConfirmationStatus="NOT_CONFIRMED",
+    )
+
+    assert objbase.otherCandidateLocations == [
+        models.CandidateLocation(
+            lat=42.3984239,
+            lng=-156.5656565,
+            name="name2",
+            address="address2",
+            locationConfidence=24.475897,
+            placeId="XPRK4E4P",
+            sourceInfoDeviceTag=None,
+        )
     ]
