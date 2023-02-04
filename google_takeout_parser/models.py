@@ -168,7 +168,7 @@ class PlaceVisit(BaseEvent, LocationProtocol):
     editConfirmationStatus: str
 
     @property
-    def dt(self) -> datetime:
+    def dt(self) -> datetime:  # type: ignore[override]
         return self.startTime
 
     @property
@@ -177,8 +177,6 @@ class PlaceVisit(BaseEvent, LocationProtocol):
 
     @property
     def otherCandidateLocations(self) -> List[CandidateLocation]:
-        if self.otherCandiateLocationsJSON is None:
-            return []
         import json
 
         loaded = json.loads(self.otherCandiateLocationsJSON)
