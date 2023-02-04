@@ -64,7 +64,6 @@ def _parse_subtitles(
     *,
     file_dt: Optional[datetime],
 ) -> Res[Tuple[List[Subtitles], datetime]]:
-
     parsed_subs: List[Subtitles] = []
 
     # iterate over direct children, and remove the last
@@ -78,7 +77,6 @@ def _parse_subtitles(
     dt_raw = dt_raw_el.strip()
 
     for group in _group_by_brs(sub_children):
-
         # loop vars
         buf: str = ""  # current text, till we hit a br (next group)
         url: Optional[str] = None  # a URL, if this subtitle contains one

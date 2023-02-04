@@ -70,7 +70,6 @@ def test_parse_captions() -> None:
 
 
 def test_parse_locations() -> None:
-
     content = bs4_div(
         """<div class="content-cell mdl-cell mdl-cell--12-col mdl-typography--caption"><b>Products:</b><br> Discover<br><b>Locations:</b><br> At <a href="https://www.google.com/maps/@?something">this general area</a> - From <a href="https://support.google.com/maps/answer/1">your places</a> (Home)<br></div>"""
     )

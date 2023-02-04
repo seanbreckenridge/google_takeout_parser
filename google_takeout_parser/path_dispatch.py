@@ -285,7 +285,7 @@ class TakeoutParser:
         """Parse the takeout with no cache. If a filter is specified, only parses those files"""
         handlers = self._group_by_return_type(filter_type=filter_type)
         for cache_key, result_tuples in handlers.items():
-            for (path, itr) in result_tuples:
+            for path, itr in result_tuples:
                 self._log_handler(path, itr)
                 yield from itr
 
@@ -388,7 +388,7 @@ class TakeoutParser:
             #
             # the return type here is purely for cachew, so it can infer the type
             def _func() -> Iterator[Res[cache_key]]:  # type: ignore[valid-type]
-                for (path, itr) in result_tuples:
+                for path, itr in result_tuples:
                     self._log_handler(path, itr)
                     yield from itr
 
