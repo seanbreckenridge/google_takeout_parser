@@ -112,13 +112,16 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
 _parse_app_installs.return_type = PlayStoreAppInstall  # type: ignore[attr-defined]
 
 
-def _parse_location_timestamp(d: Dict[str, Any]) -> datetime:
-    # old timestamp was an int
-    if "timestampMs" in d:
-        return parse_datetime_millis(d["timestampMs"])
+def _parse_timestamp_key(d: Dict[str, Any], key: str) -> datetime:
+    if f"{key}Ms" in d:
+        return parse_datetime_millis(d[f"{key}Ms"])
     else:
         # else should be the isoformat
-        return parse_json_utc_date(d["timestamp"])
+        return parse_json_utc_date(d[key])
+
+
+def _parse_location_timestamp(d: Dict[str, Any]) -> datetime:
+    return _parse_timestamp_key(d, "timestamp")
 
 
 def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
@@ -177,13 +180,13 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 name=location.name,
                 address=location.address,
                 # separators=(",", ":") removes whitespace from json.dumps
-                otherCandiateLocationsJSON=json.dumps(
+                otherCandidateLocationsJSON=json.dumps(
                     placeVisit.get("otherCandidateLocations", []), separators=(",", ":")
                 ),
                 sourceInfoDeviceTag=location.sourceInfoDeviceTag,
                 placeConfidence=placeVisit["placeConfidence"],
-                placeVisitImportance=placeVisit["placeVisitImportance"],
-                placeVisitType=placeVisit["placeVisitType"],
+                placeVisitImportance=placeVisit.get("placeVisitImportance"),
+                placeVisitType=placeVisit.get("placeVisitType"),
                 visitConfidence=placeVisit["visitConfidence"],
                 editConfirmationStatus=placeVisit["editConfirmationStatus"],
                 placeId=location.placeId,
@@ -195,12 +198,15 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 centerLng=float(placeVisit["centerLngE7"]) / 1e7
                 if "centerLngE7" in placeVisit
                 else None,
-                startTime=parse_json_utc_date(duration["startTimestamp"]),
-                endTime=parse_json_utc_date(duration["endTimestamp"]),
+                startTime=_parse_timestamp_key(duration, "startTimestamp"),
+                endTime=_parse_timestamp_key(duration, "endTimestamp"),
                 locationConfidence=location.locationConfidence,
             )
         except Exception as e:
-            yield e
+            if isinstance(e, KeyError):
+                yield RuntimeError(f"PlaceVisit: {p}, no key '{e}' in {placeVisit}")
+            else:
+                yield e
 
 
 _parse_semantic_location_history.return_type = PlaceVisit  # type: ignore[attr-defined]

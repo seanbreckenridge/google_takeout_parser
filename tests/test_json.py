@@ -195,8 +195,8 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
     assert not isinstance(objbase, Exception)
     # remove JSON, compare manually below
     objd = dataclasses.asdict(objbase)
-    del objd["otherCandiateLocationsJSON"]
-    obj = models.PlaceVisit(**objd, otherCandiateLocationsJSON="{}")
+    del objd["otherCandidateLocationsJSON"]
+    obj = models.PlaceVisit(**objd, otherCandidateLocationsJSON="{}")
     assert obj == models.PlaceVisit(
         lat=55.5555555,
         lng=-106.6666666,
@@ -213,7 +213,7 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
             2017, 12, 11, 1, 20, 6, 106000, tzinfo=datetime.timezone.utc
         ),
         sourceInfoDeviceTag=987654321,
-        otherCandiateLocationsJSON="{}",
+        otherCandidateLocationsJSON="{}",
         placeConfidence="MEDIUM_CONFIDENCE",
         placeVisitImportance="MAIN",
         placeVisitType="SINGLE_PLACE",

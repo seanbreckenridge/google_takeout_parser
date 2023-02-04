@@ -103,14 +103,8 @@ class PlayStoreAppInstall(BaseEvent):
         return int(self.dt.timestamp())
 
 
-class LocationProtocol(Protocol):
-    lat: float
-    lng: float
-    dt: datetime
-
-
 @dataclass
-class Location(BaseEvent, LocationProtocol):
+class Location(BaseEvent):
     lat: float
     lng: float
     accuracy: Optional[int]
@@ -126,8 +120,8 @@ class Location(BaseEvent, LocationProtocol):
 class CandidateLocation:
     lat: float
     lng: float
-    address: str
-    name: str
+    address: Optional[str]
+    name: Optional[str]
     placeId: str
     locationConfidence: float
     sourceInfoDeviceTag: Optional[int]
@@ -135,8 +129,8 @@ class CandidateLocation:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> CandidateLocation:
         return cls(
-            address=data["address"],
-            name=data["name"],
+            address=data.get("address"),
+            name=data.get("name"),
             placeId=data["placeId"],
             locationConfidence=data["locationConfidence"],
             lat=data["latitudeE7"] / 1e7,
@@ -146,26 +140,26 @@ class CandidateLocation:
 
 
 @dataclass
-class PlaceVisit(BaseEvent, LocationProtocol):
+class PlaceVisit(BaseEvent):
     # these are part of the 'location' key
     lat: float
     lng: float
     centerLat: Optional[float]
     centerLng: Optional[float]
-    address: str
-    name: str
+    address: Optional[str]
+    name: Optional[str]
     locationConfidence: float
     placeId: str
     startTime: datetime
     endTime: datetime
     sourceInfoDeviceTag: Optional[int]
-    otherCandiateLocationsJSON: str
+    otherCandidateLocationsJSON: str
     # TODO: parse these into an enum of some kind? may be prone to breaking due to new values from google though...
     placeConfidence: str
-    placeVisitImportance: str
-    placeVisitType: str
+    placeVisitType: Optional[str]
     visitConfidence: float
     editConfirmationStatus: str
+    placeVisitImportance: Optional[str] = None
 
     @property
     def dt(self) -> datetime:  # type: ignore[override]
@@ -179,7 +173,7 @@ class PlaceVisit(BaseEvent, LocationProtocol):
     def otherCandidateLocations(self) -> List[CandidateLocation]:
         import json
 
-        loaded = json.loads(self.otherCandiateLocationsJSON)
+        loaded = json.loads(self.otherCandidateLocationsJSON)
         if not isinstance(loaded, list):
             logger.warning(
                 f"loading candidate locations: expected list, got {type(loaded)}, {loaded}"
