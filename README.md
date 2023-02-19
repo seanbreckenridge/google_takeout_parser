@@ -52,7 +52,7 @@ To install with pip, run:
 
 ### CLI Usage
 
-Can be access by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse/merge a takeout and interact with it in a REPL:
+Can be accessed by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse/merge a takeout and interact with it in a REPL:
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
