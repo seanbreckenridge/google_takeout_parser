@@ -1,10 +1,17 @@
 # google_takeout_parser
 
+Parses data out of your [Google Takeout](https://takeout.google.com/) (History, Activity, Youtube, Locations, etc...). This:
+
 - parses both the Historical HTML and new JSON format for Google Takeouts
 - caches individual takeout results behind [`cachew`](https://github.com/karlicoss/cachew)
 - merge multiple takeouts into unique events
 
-Parses data out of your [Google Takeout](https://takeout.google.com/) (History, Activity, Youtube, Locations, etc...)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [CLI Usage](#cli-usage)
+  - [Library Usage](#library-usage)
+- [Contributing](#contributing)
+- [Testing](#testing)
 
 This doesn't handle all cases, but I have yet to find a parser that does, so here is my attempt at parsing what I see as the most useful info from it. The Google Takeout is pretty particular, and the contents of the directory depend on what you select while exporting. Unhandled files will warn, though feel free to [PR a parser](#contributing) or [create an issue](https://github.com/seanbreckenridge/google_takeout_parser/issues/new?title=add+parser+for) if this doesn't parse some part you want.
 
@@ -24,8 +31,6 @@ Since the Takeout slowly removes old events over time, I would recommend periodi
 
 The process for getting these isn't that great -- you have to manually go to [takeout.google.com](https://takeout.google.com) every few months, select what you want to export info for, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
 
-This was extracted out of [my HPI](https://github.com/seanbreckenridge/HPI/tree/4bb1f174bdbd693ab29e744413424d18b8667b1f/my/google) modules, which was in turn modified from the google files in [karlicoss/HPI](https://github.com/karlicoss/HPI/blob/4a04c09f314e10a4db8f35bf1ecc10e4d0203223/my/google/takeout/html.py)
-
 This currently parses:
 
 - Activity (from dozens of Google Services) - `My Activity/*.html|*.json`)
@@ -39,6 +44,8 @@ This currently parses:
   - Comments - `YouTube and YouTube Music/my-comments/*.html`
   - Live Chat Messages - `YouTube and YouTube Music/my-live-chat-messages/*.html`
   - Likes: `YouTube and YouTube Music/playlists/likes.json`
+
+This was extracted out of [my HPI](https://github.com/seanbreckenridge/HPI/tree/4bb1f174bdbd693ab29e744413424d18b8667b1f/my/google) modules, which was in turn modified from the google files in [karlicoss/HPI](https://github.com/karlicoss/HPI/blob/4a04c09f314e10a4db8f35bf1ecc10e4d0203223/my/google/takeout/html.py)
 
 ## Installation
 
@@ -168,7 +175,7 @@ Just to give a brief overview, to add new functionality (parsing some new folder
 - Set [the `return_type`](https://github.com/seanbreckenridge/google_takeout_parser/blob/7b1ee8ec3c3f36e6f279f20a9a214b6a3e8775f5/google_takeout_parser/parse_json.py#L71) property on the function, to use for caching/filtering
 - Add a regex match for the file path to the [`DEFAULT_HANDLER_MAP`](https://github.com/seanbreckenridge/google_takeout_parser/blob/2bd64b7373e4a2ac2ace32e03b25ca3b7e901034/google_takeout_parser/path_dispatch.py#L48)
 
-### Tests
+### Testing
 
 ```bash
 git clone 'https://github.com/seanbreckenridge/google_takeout_parser'
