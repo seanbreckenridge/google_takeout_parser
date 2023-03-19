@@ -6,6 +6,8 @@ Parses data out of your [Google Takeout](https://takeout.google.com/) (History, 
 - caches individual takeout results behind [`cachew`](https://github.com/karlicoss/cachew)
 - merge multiple takeouts into unique events
 
+---
+
 - [Installation](#installation)
 - [Usage](#usage)
   - [CLI Usage](#cli-usage)
