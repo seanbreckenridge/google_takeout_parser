@@ -40,6 +40,15 @@ SHARED = [
         help="What to do with the parsed result",
         show_default=True,
     ),
+    # TODO: actually handle argument
+    click.option(
+        "-l",
+        "--localization",
+        type=click.Choice(["en", "ger"]),
+        default="en",
+        help="Used DEFAULT_HANDLER_MAP resoling folder names to parser models",
+        show_default=True
+    )
 ]
 
 
@@ -91,6 +100,7 @@ def parse(cache: bool, action: str, takeout_dir: str) -> None:
     from .models import BaseEvent
     from .path_dispatch import TakeoutParser
 
+    # TODO: supply --localization HandlerMap as additional_handlers if set
     tp = TakeoutParser(takeout_dir, error_policy="drop")
     # note: actually no exceptions since since they're dropped
     res: List[Res[BaseEvent]] = list(tp.parse(cache=cache))
