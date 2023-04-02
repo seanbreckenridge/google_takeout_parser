@@ -69,7 +69,7 @@ class TakeoutParser:
         self,
         takeout_dir: PathIsh,
         cachew_identifier: Optional[str] = None,
-        handlers: Union[HandlerMap, List[HandlerMap]] = None,
+        handlers: Union[HandlerMap, List[HandlerMap], None] = None,
         warn_exceptions: bool = True,
         error_policy: ErrorPolicy = "yield",
     ) -> None:
@@ -98,15 +98,16 @@ class TakeoutParser:
         self.cachew_identifier: Optional[str] = cachew_identifier
         
         # copy handler objects or set default handler
-        if type(handlers) is list:
+        self.handlers: List[HandlerMap] = []
+        if isinstance(handlers, list):
             self.handlers: List[HandlerMap] = handlers
-        elif handlers is not None:
+        elif isinstance(handlers, dict):
             self.handlers: List[HandlerMap] = [handlers]
         
-        # triggers also at handlers==None 
+        # triggers also at handlers == None 
         if(len(self.handlers) == 0):
             logger.warning(f"No handler specified. Fallback to EN handler.")
-            self.handlers: List[HandlerMap] = [LocalizedHandler.EN()]
+            self.handlers = [LocalizedHandler.EN()]
 
         self.error_policy: ErrorPolicy = error_policy
         self.warn_exceptions = warn_exceptions
@@ -140,7 +141,7 @@ class TakeoutParser:
                     return None
                 elif type(h) is TakeoutFile:
                     return TAKEOUT_PARSER[h] # resolve TakeoutFile to a parser function
-                elif type(h) is callable:
+                elif callable(h):
                     return h
                 else:
                     RuntimeError(f"Parser for {sf} could not be resolved. You should map either to 'None', a callable or a TakeoutFile")
