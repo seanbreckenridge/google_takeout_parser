@@ -62,3 +62,15 @@ class LocalizedHandler:
     def DE() -> HandlerMap:
         return hmap_de
     
+    @staticmethod
+    def handler_from_string(locale_str: str) -> Optional[HandlerMap]:
+        """
+        Return a HandlerMap for a recognized language.
+        Recognized: EN, DE
+        """
+        _str = locale_str.strip().lower()
+    
+        if _str == "en":
+            return LocalizedHandler.EN()
+        elif _str == "de":
+            return LocalizedHandler.DE()
