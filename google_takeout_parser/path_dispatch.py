@@ -162,7 +162,7 @@ class TakeoutParser:
             
             # cache handler information for warning if we can't resolve the file
             file_resolved: bool = False
-            last_handler: Exception = None
+            handler_exception: Optional[Exception] = None
 
             for handler in self.handlers:
                 file_handler: HandlerMatch = self.__class__._match_handler(
@@ -174,16 +174,16 @@ class TakeoutParser:
                     if file_handler is not None:
                         res[f] = file_handler
                     file_resolved = True
-                    continue
-
-                last_handler = file_handler
+                    break # file was handled, don't check other HandlerMaps
+                else:
+                    handler_exception = file_handler
 
             if not file_resolved:
                 # this is an exception specifying an unhandled file
                 # this shouldn't cause a fatal error, so don't check
                 # error_policy here, just warn the user
                 if self.warn_exceptions:
-                    logger.warning(str(last_handler))
+                    logger.warning(str(handler_exception))
 
         return res
 
