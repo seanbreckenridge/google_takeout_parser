@@ -54,10 +54,11 @@ from .locales.de import HANDLER_MAP as hmap_de
 class LocalizedHandler:
     
     # static methods resolving to a localized HandlerMap
+    @staticmethod
     def EN() -> HandlerMap:
         return hmap_en
     
-
+    @staticmethod
     def DE() -> HandlerMap:
         return hmap_de
     
