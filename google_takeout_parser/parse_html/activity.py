@@ -223,7 +223,7 @@ def _parse_caption(
                 elif len(links) == 1:
                     if _is_location_api_link(links[0]):
                         url = links[0]
-                        # wasnt set in partition above, was only one
+                        # wasn't set in partition above, was only one
                         # phrase of text
                         if name is None:
                             name = textbuf
@@ -233,7 +233,7 @@ def _parse_caption(
                             source = textbuf
                 else:
                     # no links, just a description of the source
-                    # (since theres no URL, cant be name)
+                    # (since there's no URL, can't be name)
                     source = textbuf
 
                 locationInfos.append(

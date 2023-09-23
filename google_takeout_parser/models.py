@@ -194,7 +194,7 @@ class ChromeHistory(BaseEvent):
         return self.url, int(self.dt.timestamp())
 
 
-# cant compute this dynamically -- have to write it out
+# can't compute this dynamically -- have to write it out
 # if you want to override, override both global variable types with new types
 DEFAULT_MODEL_TYPE = Union[
     Activity,
