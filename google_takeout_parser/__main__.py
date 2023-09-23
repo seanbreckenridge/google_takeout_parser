@@ -106,9 +106,9 @@ def merge(cache: bool, action: str, takeout_dir: Sequence[str]) -> None:
     """
     from .path_dispatch import TakeoutParser
     from .merge import cached_merge_takeouts, merge_events
-    from .models import DEFAULT_MODEL_TYPE
+    from .models import DEFAULT_MODEL_TYPE, Res
 
-    res: List[DEFAULT_MODEL_TYPE] = []
+    res: List[Res[DEFAULT_MODEL_TYPE]] = []
     if cache:
         res = list(cached_merge_takeouts(list(takeout_dir)))
     else:
