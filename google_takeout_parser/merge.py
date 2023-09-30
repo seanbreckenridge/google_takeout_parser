@@ -21,21 +21,10 @@ from .path_dispatch import TakeoutParser
 # else Im just duplicating code that would exist in HPI anyways
 
 
-def _cache_path(_takeout_paths: List[PathIsh]) -> str:
-    """
-    Cache path for the merged takeout
-    """
-    return str(takeout_cache_path / "_merged_takeouts")
-
-
-def _depends_on(pths: List[PathIsh]) -> str:
-    return str(list(sorted([str(p) for p in pths])))
-
-
 # Note: only used for this module, HPI caches elsewhere
 @cachew(
-    cache_path=_cache_path,
-    depends_on=_depends_on,
+    cache_path=str(takeout_cache_path / "_merged_takeouts"),
+    depends_on=lambda tp: str([str(p) for p in tp]),
     force_file=True,
     logger=logger,
 )
