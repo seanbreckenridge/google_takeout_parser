@@ -99,8 +99,8 @@ def _handler_type_cache_key(handler: HandlerFunction) -> CacheKey:
 
 def _cache_key_to_type(c: CacheKey) -> Any:
     """
-    If theres one item in the cache key, return that
-    If theres multiple, return a Union of them
+    If there's one item in the cache key, return that
+    If there's multiple, return a Union of them
     """
     assert len(c) > 0
     if len(c) == 1:

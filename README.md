@@ -55,7 +55,7 @@ Requires `python3.8+`
 
 To install with pip, run:
 
-    pip install google_takeout_parser
+    pip install google-takeout-parser
 
 ## Usage
 
