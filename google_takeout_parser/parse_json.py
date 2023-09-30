@@ -70,9 +70,6 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
             yield e
 
 
-_parse_json_activity.return_type = Activity  # type: ignore[attr-defined]
-
-
 def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
     json_data = json.loads(p.read_text())
     if not isinstance(json_data, list):
@@ -91,9 +88,6 @@ def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
             yield e
 
 
-_parse_likes.return_type = LikedYoutubeVideo  # type: ignore[attr-defined]
-
-
 def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
     json_data = json.loads(p.read_text())
     if not isinstance(json_data, list):
@@ -107,9 +101,6 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
             )
         except Exception as e:
             yield e
-
-
-_parse_app_installs.return_type = PlayStoreAppInstall  # type: ignore[attr-defined]
 
 
 def _parse_timestamp_key(d: Dict[str, Any], key: str) -> datetime:
@@ -137,13 +128,11 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
                 lng=float(loc["longitudeE7"]) / 1e7,
                 lat=float(loc["latitudeE7"]) / 1e7,
                 dt=_parse_location_timestamp(loc),
-                accuracy=None if accuracy is None else int(accuracy),
+                accuracy=None if accuracy is None else float(accuracy),
             )
         except Exception as e:
             yield e
 
-
-_parse_location_history.return_type = Location  # type: ignore[attr-defined]
 
 _sem_required_keys = ["location", "duration"]
 
@@ -209,9 +198,6 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 yield e
 
 
-_parse_semantic_location_history.return_type = PlaceVisit  # type: ignore[attr-defined]
-
-
 def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
     json_data = json.loads(p.read_text())
     if "Browser History" not in json_data:
@@ -226,6 +212,3 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
             )
         except Exception as e:
             yield e
-
-
-_parse_chrome_history.return_type = ChromeHistory  # type: ignore[attr-defined]

@@ -110,7 +110,7 @@ def test_location_old(tmp_path_f) -> None:
             dt=datetime.datetime(
                 2017, 12, 10, 23, 14, 58, tzinfo=datetime.timezone.utc
             ),
-            accuracy=10,
+            accuracy=10.0,
         ),
     ]
 
@@ -127,7 +127,7 @@ def test_location_new(tmp_path_f: Path) -> None:
             dt=datetime.datetime(
                 2017, 12, 10, 23, 14, 58, 30000, tzinfo=datetime.timezone.utc
             ),
-            accuracy=10,
+            accuracy=10.0,
         ),
     ]
 

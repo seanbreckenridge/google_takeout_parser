@@ -9,13 +9,14 @@ from pathlib import Path
 from typing import (
     Iterator,
     Dict,
+    Union,
     Callable,
     Any,
     Optional,
     List,
     Type,
     Tuple,
-    cast,
+    Literal,
 )
 
 from collections import defaultdict
@@ -23,7 +24,6 @@ from collections import defaultdict
 from cachew import cachew
 
 from . import __version__ as _google_takeout_version
-from .compat import Literal
 from .common import Res, PathIsh
 from .cache import takeout_cache_path
 from .log import logger
@@ -47,22 +47,68 @@ BaseResults = Iterator[Res[BaseEvent]]
 HandlerFunction = Callable[[Path], BaseResults]
 HandlerMap = Dict[str, Optional[HandlerFunction]]
 
-_CacheKeySingle = Type[BaseEvent]
-CacheKey = _CacheKeySingle
+CacheKey = Tuple[Type[BaseEvent], ...]
 
 
 def _cache_key_to_str(c: CacheKey) -> str:
-    return str(c.__name__).casefold()
+    """Convert a cache key to a string"""
+    return "_".join(sorted(p.__name__ for p in c)).casefold()
 
 
-def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
-    assert hasattr(
-        handler, "return_type"
-    ), f"Handler functions should have an 'return_type' property which specifies what types this produces. See parse_json.py for an example. No 'return_type' on {handler}"
-    val: Any = getattr(handler, "return_type")
-    assert isinstance(val, type), f"{val} is not  a type"
-    assert BaseEvent in val.__mro__, f"{val} not a subclass of BaseEvent"
-    return cast(_CacheKeySingle, val)
+def _handler_type_cache_key(handler: HandlerFunction) -> CacheKey:
+    # Take a function like Iterator[Union[Item, Exception]] and return Item
+
+    import inspect
+    from cachew.legacy import get_union_args
+
+    sig = inspect.signature(handler)
+
+    # get the return type of the function
+    # e.g. Iterator[Union[Item, Exception]]
+    return_type = sig.return_annotation
+
+    # this must have a return type
+    if return_type == inspect.Signature.empty:
+        raise TypeError(f"Could not get return type for {handler.__name__}")
+
+    # remove top-level iterator if it has it
+    if return_type._name == "Iterator":
+        return_type = return_type.__args__[0]
+
+    args: Optional[Tuple[Type]] = get_union_args(return_type)  # type: ignore[type-arg]
+    if args is None:
+        raise TypeError(
+            f"Could not get union args for {return_type} in {handler.__name__}"
+        )
+
+    # remove exceptions
+    t_args = tuple(t for t in args if t != Exception)
+
+    for t in t_args:
+        if BaseEvent not in t.__mro__:
+            raise TypeError(
+                f"Return type {t} from {return_type} of {handler.__name__} does not contain BaseEvent"
+            )
+        if t == BaseEvent:
+            raise TypeError(
+                f"Return type {t} from {return_type} of {handler.__name__} is BaseEvent, which is not allowed"
+            )
+
+    return tuple(t_args)
+
+
+def _cache_key_to_type(c: CacheKey) -> Any:
+    """
+    If theres one item in the cache key, return that
+    If theres multiple, return a Union of them
+    """
+    assert len(c) > 0
+    if len(c) == 1:
+        return c[0]
+    else:
+        assert isinstance(c, tuple)
+
+        return Union[c]  # type: ignore[valid-type]
 
 
 # If parsed, should mention:
@@ -285,7 +331,7 @@ class TakeoutParser:
     def _parse_raw(self, filter_type: Optional[Type[BaseEvent]] = None) -> BaseResults:
         """Parse the takeout with no cache. If a filter is specified, only parses those files"""
         handlers = self._group_by_return_type(filter_type=filter_type)
-        for cache_key, result_tuples in handlers.items():
+        for _, result_tuples in handlers.items():
             for path, itr in result_tuples:
                 self._log_handler(path, itr)
                 yield from itr
@@ -339,9 +385,9 @@ class TakeoutParser:
         """
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
         for path, handler in self.dispatch_map().items():
-            ckey: CacheKey = _parse_handler_return_type(handler)
+            ckey: CacheKey = _handler_type_cache_key(handler)
             # don't include in the result if we're filtering to a specific type
-            if filter_type is not None and ckey != filter_type:
+            if filter_type is not None and filter_type not in ckey:
                 logger.debug(
                     f"Provided '{filter_type}' as filter, '{ckey}' doesn't match, ignoring '{path}'..."
                 )
@@ -381,14 +427,9 @@ class TakeoutParser:
     ) -> BaseResults:
         handlers = self._group_by_return_type(filter_type=filter_type)
         for cache_key, result_tuples in handlers.items():
-            # Hmm -- I think this should work with CacheKeys that have multiple
-            # types but it may fail -- need to check if one is added
-            #
-            # create a function which groups the iterators for this return type
-            # that all gets stored in one database
-            #
-            # the return type here is purely for cachew, so it can infer the type
-            def _func() -> Iterator[Res[cache_key]]:  # type: ignore[valid-type]
+            _ret_type: Any = _cache_key_to_type(cache_key)
+
+            def _func() -> Iterator[Res[_ret_type]]:  # type: ignore[valid-type]
                 for path, itr in result_tuples:
                     self._log_handler(path, itr)
                     yield from itr
