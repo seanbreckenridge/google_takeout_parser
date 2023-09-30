@@ -51,7 +51,7 @@ This was extracted out of [my HPI](https://github.com/seanbreckenridge/HPI/tree/
 
 ## Installation
 
-Requires `python3.7+`
+Requires `python3.8+`
 
 To install with pip, run:
 
