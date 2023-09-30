@@ -1,7 +1,7 @@
 import inspect
 
 import google_takeout_parser.models as mod
-from cachew import get_union_args
+from cachew.legacy import get_union_args
 
 
 def test_check_union() -> None:
