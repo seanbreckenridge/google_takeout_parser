@@ -51,7 +51,7 @@ This was extracted out of [my HPI](https://github.com/seanbreckenridge/HPI/tree/
 
 ## Installation
 
-Requires `python3.7+`
+Requires `python3.8+`
 
 To install with pip, run:
 
@@ -174,7 +174,6 @@ Just to give a brief overview, to add new functionality (parsing some new folder
 
 - Add a `model` for it in [`models.py`](google_takeout_parser/models.py) subclassing `BaseEvent` and adding it to the Union at the bottom of the file. That should have a `key` property function which describes each event uniquely (used to merge takeout events)
 - Write a function which takes the `Path` to the file you're trying to parse and converts it to the model you created (See examples in [`parse_json.py`](google_takeout_parser/parse_json.py)). Ideally extract a single raw item from the takeout file add a test for it so its obvious when/if the format changes.
-- Set [the `return_type`](https://github.com/seanbreckenridge/google_takeout_parser/blob/7b1ee8ec3c3f36e6f279f20a9a214b6a3e8775f5/google_takeout_parser/parse_json.py#L71) property on the function, to use for caching/filtering
 - Add a regex match for the file path to the [`DEFAULT_HANDLER_MAP`](https://github.com/seanbreckenridge/google_takeout_parser/blob/2bd64b7373e4a2ac2ace32e03b25ca3b7e901034/google_takeout_parser/path_dispatch.py#L48)
 
 ### Testing

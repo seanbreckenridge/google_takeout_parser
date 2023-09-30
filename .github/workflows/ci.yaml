@@ -2,19 +2,19 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: ['*']
   pull_request:
-    branches: [master]
+    branches: ['*']
 
 jobs:
   build:
     strategy:
       matrix:
         platform: [ubuntu-latest, windows-latest]
-        python-version: [3.7, 3.8, 3.9, "3.10"]
+        python-version: [3.8, 3.9, "3.10", "3.11"]
         exclude: [
-          {platform: windows-latest, python-version: "3.8"},
-          {platform: windows-latest, python-version: "3.9"}
+          {platform: windows-latest, python-version: "3.9"},
+          {platform: windows-latest, python-version: "3.10"}
         ]
 
     runs-on: ${{ matrix.platform }}

@@ -7,7 +7,7 @@ which determines unique events while merging
 
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional, List, Tuple, Any, Union, Iterator, TYPE_CHECKING, Dict
+from typing import Optional, List, Tuple, Any, Union, Iterator, Dict, Protocol
 from dataclasses import dataclass
 
 from .common import Res
@@ -25,14 +25,6 @@ LocationInfo = Tuple[MetaData, MetaData, MetaData, MetaData]
 
 # name, url
 Subtitles = Tuple[str, MetaData]
-
-if TYPE_CHECKING:
-    try:
-        from typing import Protocol
-    except ImportError:
-        from typing_extensions import Protocol  # type: ignore
-else:
-    Protocol = object
 
 
 class BaseEvent(Protocol):
@@ -107,11 +99,11 @@ class PlayStoreAppInstall(BaseEvent):
 class Location(BaseEvent):
     lat: float
     lng: float
-    accuracy: Optional[int]
+    accuracy: Optional[float]
     dt: datetime
 
     @property
-    def key(self) -> Tuple[float, float, Optional[int], int]:
+    def key(self) -> Tuple[float, float, Optional[float], int]:
         return self.lat, self.lng, self.accuracy, int(self.dt.timestamp())
 
 

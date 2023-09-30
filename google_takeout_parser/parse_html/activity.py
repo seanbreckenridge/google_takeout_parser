@@ -337,6 +337,3 @@ def _parse_html_activity(p: Path) -> Iterator[Res[Activity]]:
             yield _parse_activity_div(outer_div, file_dt=file_dt)
         except Exception as ae:
             yield ae
-
-
-_parse_html_activity.return_type = Activity  # type: ignore[attr-defined]
