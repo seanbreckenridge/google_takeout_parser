@@ -171,7 +171,7 @@ I personally exclusively use this through the [HPI google takeout](https://githu
 
 ### Legacy HTML Parsing
 
-I would *heavily recommend against* using the HTML format for `My Activity`. It is not always possible to properly parse the metadata, is more prone to errors parsing dates due to local timezones, and takes much longer to parse than the JSON output.
+I would _heavily recommend against_ using the HTML format for `My Activity`. It is not always possible to properly parse the metadata, is more prone to errors parsing dates due to local timezones, and takes much longer to parse than the JSON output.
 
 On certain machines, the giant HTML files may even take so much memory that the process is eventually killed for using too much memory. For a workaround, see [split_html](./split_html).
 
