@@ -208,7 +208,9 @@ def _convert_to_https(url: str, logger: Optional[logging.Logger] = None) -> str:
         without_www = uu.netloc[4:] if uu.netloc.startswith("www.") else uu.netloc
         if without_www in CONVERT_HTTP or without_www in CONVERT_HTTP_SUFFIX:
             return urlunsplit(("https",) + uu[1:])
-        if any(without_www.endswith(suffix) for suffix in CONVERT_HTTP_SUFFIX):
+        # check if this is a subdomain of a domain in the allowlist
+        # like m.youtube.com
+        if any(without_www.endswith("." + suffix) for suffix in CONVERT_HTTP_SUFFIX):
             return urlunsplit(("https",) + uu[1:])
         if logger:
             logger.debug(

@@ -10,6 +10,9 @@ def test__convert_to_https(caplog) -> None:
         url = "http://youtube.com"
         assert _convert_to_https(url) == "https://youtube.com"
 
+        url = "http://www.youtube.com"
+        assert _convert_to_https(url) == "https://www.youtube.com"
+
         url = "https://youtube.com"
         assert _convert_to_https(url) == "https://youtube.com"
 
