@@ -29,6 +29,6 @@ def test__convert_to_https(caplog) -> None:
 
     assert len(caplog.records) == 1
     assert (
-        "HTTP URL did not match allowlist: http://www.otherurl.com\nIf you think this should be auto-converted, make an issue here:"
+        "HTTP URL did not match allowlist: http://www.otherurl.com\nIf you think this should be auto-converted to HTTPS, make an issue here:"
         in caplog.records[0].message
     )
