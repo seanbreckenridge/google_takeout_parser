@@ -1,21 +1,17 @@
 import logging
-from typing import Set, Optional, List
+from typing import Set, Optional
 
 from .log import logger
 
 from urllib.parse import urlsplit, urlunsplit
 
-# exact matches
-CONVERT_HTTP: Set[str] = {
-    "m.youtube.com",
-    "www.youtube.com",
-    "youtube.com",
-    "bp0.blogger.com",
-}
+CONVERT_HTTP: Set[str] = set()
 
 # anything that ends with these domains
 # curl -sL 'https://www.google.com/supported_domains
-CONVERT_HTTP_SUFFIX: List[str] = [
+CONVERT_HTTP_SUFFIX: Set[str] = {
+    "youtube.com",
+    "bp0.blogger.com",
     "google.com",
     "google.ad",
     "google.ae",
@@ -203,15 +199,16 @@ CONVERT_HTTP_SUFFIX: List[str] = [
     "google.co.zm",
     "google.co.zw",
     "google.cat",
-]
+}
 
 
 def _convert_to_https(url: str, logger: Optional[logging.Logger] = None) -> str:
     uu = urlsplit(url)
     if uu.scheme == "http":
-        if uu.netloc in CONVERT_HTTP:
+        without_www = uu.netloc[4:] if uu.netloc.startswith("www.") else uu.netloc
+        if without_www in CONVERT_HTTP or without_www in CONVERT_HTTP_SUFFIX:
             return urlunsplit(("https",) + uu[1:])
-        if any(uu.netloc.endswith(suffix) for suffix in CONVERT_HTTP_SUFFIX):
+        if any(without_www.endswith(suffix) for suffix in CONVERT_HTTP_SUFFIX):
             return urlunsplit(("https",) + uu[1:])
         if logger:
             logger.debug(

@@ -3,24 +3,30 @@ from google_takeout_parser.http_allowlist import _convert_to_https
 
 
 def test__convert_to_https(caplog) -> None:
-    url = "http://www.google.com"
-    assert _convert_to_https(url) == "https://www.google.com"
+    with caplog.at_level(logging.DEBUG):
+        url = "http://www.google.com"
+        assert _convert_to_https(url) == "https://www.google.com"
 
-    url = "http://youtube.com"
-    assert _convert_to_https(url) == "https://youtube.com"
+        url = "http://youtube.com"
+        assert _convert_to_https(url) == "https://youtube.com"
 
-    url = "https://youtube.com"
-    assert _convert_to_https(url) == "https://youtube.com"
+        url = "https://youtube.com"
+        assert _convert_to_https(url) == "https://youtube.com"
 
-    url = "http://maps.google.com/something+else"
-    assert _convert_to_https(url) == "https://maps.google.com/something+else"
+        url = "http://maps.google.com/something+else"
+        assert _convert_to_https(url) == "https://maps.google.com/something+else"
 
-    from logzero import logger
+        url = "http://m.youtube.com/watch?v=123"
+        assert _convert_to_https(url) == "https://m.youtube.com/watch?v=123"
 
-    logger.propagate = True
+        from logzero import logger
 
-    # catpure logs
-    url = "http://www.otherurl.com"
+        logger.propagate = True
+
+        # catpure logs
+        url = "http://www.otherurl.com"
+
+    assert len(caplog.records) == 0
 
     caplog.clear()
 
