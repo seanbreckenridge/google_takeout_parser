@@ -1,5 +1,5 @@
 import logging
-from typing import Set, Optional
+from typing import Set, Optional, List
 
 from .log import logger
 
@@ -15,7 +15,7 @@ CONVERT_HTTP: Set[str] = {
 
 # anything that ends with these domains
 # curl -sL 'https://www.google.com/supported_domains
-CONVERT_HTTP_SUFFIX: Set[str] = {
+CONVERT_HTTP_SUFFIX: List[str] = [
     "google.com",
     "google.ad",
     "google.ae",
@@ -203,7 +203,7 @@ CONVERT_HTTP_SUFFIX: Set[str] = {
     "google.co.zm",
     "google.co.zw",
     "google.cat",
-}
+]
 
 
 def _convert_to_https(url: str, logger: Optional[logging.Logger] = None) -> str:
