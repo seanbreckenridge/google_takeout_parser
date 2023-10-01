@@ -208,9 +208,7 @@ CONVERT_HTTP_SUFFIX: List[str] = [
 
 def _convert_to_https(url: str, logger: Optional[logging.Logger] = None) -> str:
     uu = urlsplit(url)
-    if uu.scheme == "https":
-        return url
-    elif uu.scheme == "http":
+    if uu.scheme == "http":
         if uu.netloc in CONVERT_HTTP:
             return urlunsplit(("https",) + uu[1:])
         if any(uu.netloc.endswith(suffix) for suffix in CONVERT_HTTP_SUFFIX):
