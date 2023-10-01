@@ -12,6 +12,7 @@ Parses data out of your [Google Takeout](https://takeout.google.com/) (History, 
 - [Usage](#usage)
   - [CLI Usage](#cli-usage)
   - [Library Usage](#library-usage)
+- [Legacy HTML Parsing](#legacy-html-parsing)
 - [Contributing](#contributing)
 - [Testing](#testing)
 
@@ -167,6 +168,12 @@ len(locations)
 ```
 
 I personally exclusively use this through the [HPI google takeout](https://github.com/karlicoss/HPI/blob/master/my/google/takeout/parser.py) file, as a configuration layer to locate where my takeouts are on disk, and since that 'automatically' unzips the takeouts (I store them as the zips), i.e., doesn't require me to maintain an unpacked view
+
+### Legacy HTML Parsing
+
+I would *heavily recommend against* using the HTML format for `My Activity`. It is not always possible to properly parse the metadata, is more prone to errors parsing dates due to local timezones, and takes much longer to parse than the JSON output.
+
+On certain machines, the giant HTML files may even take so much memory that the process is eventually killed for using too much memory. For a workaround, see [split_html](./split_html).
 
 ### Contributing
 

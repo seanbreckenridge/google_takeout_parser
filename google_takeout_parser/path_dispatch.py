@@ -164,7 +164,8 @@ DEFAULT_HANDLER_MAP: HandlerMap = {
     r"My Activity/Voice and Audio/.*.mp3": None,
     r"My Activity/Takeout": None,  # activity for when you made takeouts, dont need
     # HTML 'My Activity' Files
-    r"My Activity/.*?My\s*Activity.html": _parse_html_activity,
+    # the \d+ is for split html files, see the ./split_html directory
+    r"My Activity/.*?My\s*Activity(-\d+)?.html": _parse_html_activity,
     r"My Activity/.*?My\s*Activity.json": _parse_json_activity,
     # Maybe parse these?
     r"Access Log Activity": None,
@@ -283,7 +284,7 @@ class TakeoutParser:
     # TODO: cache? may run into issues though
     def dispatch_map(self) -> Dict[Path, HandlerFunction]:
         res: Dict[Path, HandlerFunction] = {}
-        for f in self.takeout_dir.rglob("*"):
+        for f in sorted(self.takeout_dir.rglob("*")):
             if f.name.startswith("."):
                 continue
             if not f.is_file():
