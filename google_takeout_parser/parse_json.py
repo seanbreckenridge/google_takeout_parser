@@ -5,10 +5,12 @@ Lots of functions to transform the JSON from the Takeout to useful information
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Iterator, Any, Dict, Iterable, Optional
+from typing import Iterator, Any, Dict, Iterable, Optional, List
 
 from .time_utils import parse_datetime_millis
 from .models import (
+    Subtitles,
+    LocationInfo,
     Activity,
     LikedYoutubeVideo,
     ChromeHistory,
@@ -30,12 +32,14 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
         yield RuntimeError(f"Activity: Top level item in '{p}' isn't a list")
     for blob in json_data:
         try:
-            subtitles = []
+            subtitles: List[Subtitles] = []
             for s in blob.get("subtitles", []):
-                if s == {}:
-                    # sometimes it's just empty ("My Activity/Assistant" data circa 2018)
+                if not isinstance(s, dict):
                     continue
-                subtitles.append((s["name"], s.get("url")))
+                # sometimes it's just empty ("My Activity/Assistant" data circa 2018)
+                if "name" not in s:
+                    continue
+                subtitles.append(Subtitles(name=s["name"], url=s.get("url")))
 
             # till at least 2017
             old_format = "snippet" in blob
@@ -54,13 +58,17 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
                 description=blob.get("description"),
                 time=parse_json_utc_date(time_str),
                 subtitles=subtitles,
-                details=[d["name"] for d in blob.get("details", [])],
+                details=[
+                    d["name"]
+                    for d in blob.get("details", [])
+                    if isinstance(d, dict) and "name" in d
+                ],
                 locationInfos=[
-                    (
-                        locinfo.get("name"),
-                        locinfo.get("url"),
-                        locinfo.get("source"),
-                        locinfo.get("sourceUrl"),
+                    LocationInfo(
+                        name=locinfo.get("name"),
+                        url=locinfo.get("url"),
+                        source=locinfo.get("source"),
+                        sourceUrl=locinfo.get("sourceUrl"),
                     )
                     for locinfo in blob.get("locationInfos", [])
                 ],

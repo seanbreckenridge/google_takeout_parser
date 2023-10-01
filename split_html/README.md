@@ -1,4 +1,4 @@
-### NOTE: This is for splitting the old HTML format, you shouldn't use this for new exports
+## This is for splitting the old HTML format, you shouldn't use this for new exports
 
 This dir contains a go script to split an HTML file into smaller chunks, so its possible to parse on machines with limited memory.
 
