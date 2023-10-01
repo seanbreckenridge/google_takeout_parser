@@ -66,6 +66,20 @@ To install with pip, run:
 
 Can be accessed by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse/merge a takeout and interact with it in a REPL:
 
+```
+Usage: google_takeout_parser parse [OPTIONS] TAKEOUT_DIR
+
+  Parse a takeout directory takeout
+
+Options:
+  -f, --filter [Activity|LikedYoutubeVideo|PlayStoreAppInstall|Location|ChromeHistory|YoutubeComment|PlaceVisit]
+                                  Filter to only show events of this type
+  -a, --action [repl|summary|json]
+                                  What to do with the parsed result  [default: repl]
+  --cache / --no-cache            [default: no-cache]
+  -h, --help                      Show this message and exit.
+```
+
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
 A few examples of parsing takeouts:

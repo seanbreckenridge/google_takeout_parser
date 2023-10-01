@@ -27,7 +27,7 @@ from . import __version__ as _google_takeout_version
 from .common import Res, PathIsh
 from .cache import takeout_cache_path
 from .log import logger
-from .models import BaseEvent
+from .models import BaseEvent, get_union_args
 
 from .parse_html.activity import _parse_html_activity
 from .parse_html.comment import _parse_html_comment_file
@@ -59,7 +59,6 @@ def _handler_type_cache_key(handler: HandlerFunction) -> CacheKey:
     # Take a function like Iterator[Union[Item, Exception]] and return Item
 
     import inspect
-    from cachew.legacy import get_union_args
 
     sig = inspect.signature(handler)
 

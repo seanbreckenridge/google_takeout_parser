@@ -2,12 +2,14 @@ import os
 import json
 from datetime import datetime, date
 import dataclasses
-from typing import List, Optional, Callable, Sequence, Any
+from typing import List, Optional, Callable, Sequence, Any, Dict, Type, Tuple
 
 import click
 
 
-@click.group()
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"], "max_content_width": 120}
+)
 @click.option(
     "--verbose/--quiet",
     default=None,
@@ -30,15 +32,35 @@ def main(verbose: Optional[bool]) -> None:
             log.logger = log.setup(level=logging.ERROR)
 
 
+# use the union of types to determine the possible filters
+from .models import DEFAULT_MODEL_TYPE, get_union_args
+
+model_types: Optional[Tuple[Type[DEFAULT_MODEL_TYPE]]] = get_union_args(
+    DEFAULT_MODEL_TYPE
+)
+assert model_types is not None
+
+FILTER_OPTIONS: Dict[str, Type[DEFAULT_MODEL_TYPE]] = {
+    t.__name__: t for t in model_types
+}
+
 SHARED = [
     click.option("--cache/--no-cache", default=False, show_default=True),
     click.option(
         "-a",
         "--action",
-        type=click.Choice(["repl", "summary", "json"]),
+        type=click.Choice(["repl", "summary", "json"], case_sensitive=False),
         default="repl",
         help="What to do with the parsed result",
         show_default=True,
+    ),
+    click.option(
+        "-f",
+        "--filter",
+        "filter_",
+        type=click.Choice(list(FILTER_OPTIONS.keys()), case_sensitive=False),
+        multiple=False,
+        help="Filter to only show events of this type",
     ),
 ]
 
@@ -83,36 +105,55 @@ def _handle_action(res: List[Any], action: str) -> None:
 @main.command(short_help="parse a takeout directory")
 @shared_options
 @click.argument("TAKEOUT_DIR", type=click.Path(exists=True), required=True)
-def parse(cache: bool, action: str, takeout_dir: str) -> None:
+def parse(cache: bool, action: str, takeout_dir: str, filter_: str) -> None:
     """
     Parse a takeout directory takeout
     """
-    from .common import Res
-    from .models import BaseEvent
     from .path_dispatch import TakeoutParser
+    from .log import logger
 
     tp = TakeoutParser(takeout_dir, error_policy="drop")
     # note: actually no exceptions since since they're dropped
-    res: List[Res[BaseEvent]] = list(tp.parse(cache=cache))
+    if cache:
+        if filter_:
+            logger.warn(
+                "As it would otherwise re-compute every time, filtering happens after loading from cache"
+            )
+        res = list(tp.parse(cache=True))
+        if filter_:
+            filter_type = FILTER_OPTIONS[filter_]
+            res = [r for r in res if isinstance(r, filter_type)]
+    else:
+        res = list(tp.parse(cache=False, filter_type=FILTER_OPTIONS.get(filter_, None)))
     _handle_action(res, action)
 
 
 @main.command(short_help="merge multiple takeout directories")
 @shared_options
 @click.argument("TAKEOUT_DIR", type=click.Path(exists=True), nargs=-1, required=True)
-def merge(cache: bool, action: str, takeout_dir: Sequence[str]) -> None:
+def merge(cache: bool, action: str, takeout_dir: Sequence[str], filter_: str) -> None:
     """
     Parse and merge multiple takeout directories
     """
     from .path_dispatch import TakeoutParser
     from .merge import cached_merge_takeouts, merge_events
     from .models import DEFAULT_MODEL_TYPE, Res
+    from .log import logger
 
     res: List[Res[DEFAULT_MODEL_TYPE]] = []
+    filter_type: Optional[Type[DEFAULT_MODEL_TYPE]]
     if cache:
+        if filter_:
+            logger.warn(
+                "As it would otherwise re-compute every time, filtering happens after loading from cache"
+            )
         res = list(cached_merge_takeouts(list(takeout_dir)))
+        if filter_:
+            filter_type = FILTER_OPTIONS[filter_]
+            res = [r for r in res if isinstance(r, filter_type)]
     else:
-        res = list(merge_events(*iter([TakeoutParser(p).parse(cache=False) for p in takeout_dir])))  # type: ignore[arg-type]
+        filter_type = FILTER_OPTIONS[filter_] if filter_ else None
+        res = list(merge_events(*iter([TakeoutParser(p).parse(cache=False, filter_type=filter_type) for p in takeout_dir])))  # type: ignore[arg-type]
     _handle_action(res, action)
 
 

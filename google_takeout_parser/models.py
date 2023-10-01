@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import (
     Optional,
+    Type,
     List,
     Tuple,
     Any,
@@ -22,6 +23,16 @@ from dataclasses import dataclass
 
 from .common import Res
 from .log import logger
+
+
+def get_union_args(cls: Any) -> Optional[Tuple[Type]]:  # type: ignore[type-arg]
+    if getattr(cls, "__origin__", None) != Union:
+        return None
+
+    args = cls.__args__
+    args = [e for e in args if e != type(None)]  # noqa: E721
+    assert len(args) > 0
+    return args  # type: ignore
 
 
 class Subtitles(NamedTuple):
