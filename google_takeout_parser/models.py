@@ -7,24 +7,33 @@ which determines unique events while merging
 
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional, List, Tuple, Any, Union, Iterator, Dict, Protocol
+from typing import (
+    Optional,
+    List,
+    Tuple,
+    Any,
+    Union,
+    Iterator,
+    Dict,
+    Protocol,
+    NamedTuple,
+)
 from dataclasses import dataclass
 
 from .common import Res
 from .log import logger
 
 
-Details = str
+class Subtitles(NamedTuple):
+    name: str
+    url: Optional[str]
 
 
-# because of https://github.com/karlicoss/cachew/issues/28, need
-# to do these as tuples instead of NamedTuples
-MetaData = Optional[str]
-# name, url, source, sourceUrl
-LocationInfo = Tuple[MetaData, MetaData, MetaData, MetaData]
-
-# name, url
-Subtitles = Tuple[str, MetaData]
+class LocationInfo(NamedTuple):
+    name: Optional[str]
+    url: Optional[str]
+    source: Optional[str]
+    sourceUrl: Optional[str]
 
 
 class BaseEvent(Protocol):
@@ -44,7 +53,7 @@ class Activity(BaseEvent):
     # a description and a subtitle, so they end up as subtitles
     # more lines of text describing this
     subtitles: List[Subtitles]
-    details: List[Details]
+    details: List[str]
     locationInfos: List[LocationInfo]
     products: List[str]
 

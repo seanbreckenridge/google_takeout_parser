@@ -11,7 +11,7 @@ from urllib.parse import urlparse, parse_qs
 import bs4
 from bs4.element import Tag, PageElement
 
-from ..models import Activity, Subtitles, Details, LocationInfo
+from ..models import Activity, Subtitles, LocationInfo
 from ..common import Res
 from ..log import logger
 from .html_time_utils import parse_html_dt
@@ -94,7 +94,7 @@ def _parse_subtitles(
             else:
                 raise RuntimeError(f"Unexpected Type {tag} {type(tag)}")
 
-        parsed_subs.append((clean_latin1_chars(buf), url))
+        parsed_subs.append(Subtitles(name=clean_latin1_chars(buf), url=url))
 
     return parsed_subs, parse_html_dt(dt_raw, file_dt=file_dt)
 
@@ -165,8 +165,8 @@ def _is_location_api_link(url: str) -> bool:
 
 def _parse_caption(
     cap_cell: bs4.element.Tag,
-) -> Tuple[List[Details], List[LocationInfo], List[str]]:
-    details: List[Details] = []
+) -> Tuple[List[str], List[LocationInfo], List[str]]:
+    details: List[str] = []
     locationInfos: List[LocationInfo] = []
     products: List[str] = []
 
@@ -237,15 +237,15 @@ def _parse_caption(
                     source = textbuf
 
                 locationInfos.append(
-                    (
-                        name,
-                        url,
-                        source,
-                        sourceUrl,
+                    LocationInfo(
+                        name=name,
+                        url=url,
+                        source=source,
+                        sourceUrl=sourceUrl,
                     )
                 )
             elif header == "Details:":
-                details.append(Details(clean_latin1_chars(str(value[0])).strip()))
+                details.append(str(clean_latin1_chars(str(value[0])).strip()))
 
             else:
                 warnings.warn(f"Unexpected header in caption {header} {value}")
@@ -266,7 +266,7 @@ def _parse_activity_div(
     # all possible data that this div could parse
     dtime: datetime
     subtitles: List[Subtitles] = []  # more lines of text describing this
-    details: List[Details] = []
+    details: List[str] = []
     locationInfos: List[LocationInfo] = []
     products: List[str] = []
 

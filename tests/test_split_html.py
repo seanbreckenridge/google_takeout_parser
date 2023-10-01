@@ -50,7 +50,10 @@ def test_split_html(in_golang_dir) -> None:
         assert Path(temp_dir).is_dir()
 
         from_merged = []
-        for file in Path(temp_dir).iterdir():
+
+        files = sorted(Path(temp_dir).iterdir())
+        assert len(files) > 1
+        for file in files:
             assert file.is_file()
             assert file.stat().st_size > 0
 
