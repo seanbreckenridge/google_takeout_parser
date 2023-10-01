@@ -2,6 +2,8 @@ import bs4
 
 from .activity import _parse_subtitles, _parse_caption, _is_location_api_link
 
+# NOTE: some of the URLs here have been converted to http from https to test the http_allowlist.py conversion
+
 # bring into scope
 from .comment import test_parse_html_comment_file  # noqa: F401
 from .html_time_utils import test_parse_dt  # noqa: F401
@@ -15,7 +17,7 @@ def bs4_div(html: str) -> bs4.element.Tag:
 
 def test_parse_subtitles() -> None:
     content = bs4_div(
-        """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">Visited&nbsp;<a href="https://support.google.com/youtube/answer/7071292?hl=en">Get support with Premium memberships &amp; purchases - YouTube Help</a><br>Aug 25, 2020, 5:06:44 PM PDT</div>"""
+        """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">Visited&nbsp;<a href="http://support.google.com/youtube/answer/7071292?hl=en">Get support with Premium memberships &amp; purchases - YouTube Help</a><br>Aug 25, 2020, 5:06:44 PM PDT</div>"""
     )
     res = _parse_subtitles(content, file_dt=None)
     assert not isinstance(res, Exception)
@@ -39,7 +41,7 @@ def test_parse_subtitles() -> None:
     assert int(dt.timestamp()) == 1599242506
 
     content = bs4_div(
-        """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">1 notification<br>Including topics:<br><a href="https://www.google.com/maps/place/?q=place_id:XX">Emergency resources and information</a><br>Sep 1, 2020, 9:27:07 PM PDT</div>""",
+        """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">1 notification<br>Including topics:<br><a href="http://www.google.com/maps/place/?q=place_id:XX">Emergency resources and information</a><br>Sep 1, 2020, 9:27:07 PM PDT</div>""",
     )
     res = _parse_subtitles(content, file_dt=None)
     assert not isinstance(res, Exception)
@@ -71,7 +73,7 @@ def test_parse_captions() -> None:
 
 def test_parse_locations() -> None:
     content = bs4_div(
-        """<div class="content-cell mdl-cell mdl-cell--12-col mdl-typography--caption"><b>Products:</b><br> Discover<br><b>Locations:</b><br> At <a href="https://www.google.com/maps/@?something">this general area</a> - From <a href="https://support.google.com/maps/answer/1">your places</a> (Home)<br></div>"""
+        """<div class="content-cell mdl-cell mdl-cell--12-col mdl-typography--caption"><b>Products:</b><br> Discover<br><b>Locations:</b><br> At <a href="http://www.google.com/maps/@?something">this general area</a> - From <a href="https://support.google.com/maps/answer/1">your places</a> (Home)<br></div>"""
     )
 
     details, locationInfos, products = _parse_caption(content)
@@ -89,7 +91,7 @@ def test_parse_locations() -> None:
     ]
 
     content = bs4_div(
-        """<div class="content-cell mdl-cell mdl-cell--12-col mdl-typography--caption"><b>Products:</b><br> Maps<br><b>Locations:</b><br> At <a href="https://www.google.com/maps/@?api=1&map_action=map&center=3,-18&zoom=11">this general area</a> - Based on your past activity<br></div>"""
+        """<div class="content-cell mdl-cell mdl-cell--12-col mdl-typography--caption"><b>Products:</b><br> Maps<br><b>Locations:</b><br> At <a href="http://www.google.com/maps/@?api=1&map_action=map&center=3,-18&zoom=11">this general area</a> - Based on your past activity<br></div>"""
     )
 
     details, locationInfos, products = _parse_caption(content)

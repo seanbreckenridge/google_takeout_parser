@@ -24,6 +24,8 @@ from dataclasses import dataclass
 from .common import Res
 from .log import logger
 
+Url = str
+
 
 def get_union_args(cls: Any) -> Optional[Tuple[Type]]:  # type: ignore[type-arg]
     if getattr(cls, "__origin__", None) != Union:
@@ -37,14 +39,14 @@ def get_union_args(cls: Any) -> Optional[Tuple[Type]]:  # type: ignore[type-arg]
 
 class Subtitles(NamedTuple):
     name: str
-    url: Optional[str]
+    url: Optional[Url]
 
 
 class LocationInfo(NamedTuple):
     name: Optional[str]
-    url: Optional[str]
+    url: Optional[Url]
     source: Optional[str]
-    sourceUrl: Optional[str]
+    sourceUrl: Optional[Url]
 
 
 class BaseEvent(Protocol):
@@ -59,7 +61,7 @@ class Activity(BaseEvent):
     title: str
     time: datetime
     description: Optional[str]
-    titleUrl: Optional[str]
+    titleUrl: Optional[Url]
     # note: in HTML exports, there is no way to tell the difference between
     # a description and a subtitle, so they end up as subtitles
     # more lines of text describing this
@@ -85,7 +87,7 @@ class Activity(BaseEvent):
 class YoutubeComment(BaseEvent):
     content: str
     dt: datetime
-    urls: List[str]
+    urls: List[Url]
 
     @property
     def key(self) -> int:
@@ -198,7 +200,7 @@ class PlaceVisit(BaseEvent):
 @dataclass
 class ChromeHistory(BaseEvent):
     title: str
-    url: str
+    url: Url
     dt: datetime
 
     @property

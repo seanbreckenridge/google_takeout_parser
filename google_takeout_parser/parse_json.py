@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Iterator, Any, Dict, Iterable, Optional, List
 
+from .http_allowlist import convert_to_https_opt
 from .time_utils import parse_datetime_millis
 from .models import (
     Subtitles,
@@ -54,7 +55,7 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
             yield Activity(
                 header=header,
                 title=blob["title"],
-                titleUrl=blob.get("titleUrl"),
+                titleUrl=convert_to_https_opt(blob.get("titleUrl")),
                 description=blob.get("description"),
                 time=parse_json_utc_date(time_str),
                 subtitles=subtitles,
@@ -66,9 +67,9 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
                 locationInfos=[
                     LocationInfo(
                         name=locinfo.get("name"),
-                        url=locinfo.get("url"),
+                        url=convert_to_https_opt(locinfo.get("url")),
                         source=locinfo.get("source"),
-                        sourceUrl=locinfo.get("sourceUrl"),
+                        sourceUrl=convert_to_https_opt(locinfo.get("sourceUrl")),
                     )
                     for locinfo in blob.get("locationInfos", [])
                 ],
@@ -215,6 +216,8 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
             time_naive = datetime.utcfromtimestamp(item["time_usec"] / 10**6)
             yield ChromeHistory(
                 title=item["title"],
+                # dont convert to https here, this is just the users history
+                # and theres likely lots of items that arent https
                 url=item["url"],
                 dt=time_naive.replace(tzinfo=timezone.utc),
             )
