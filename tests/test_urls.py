@@ -26,7 +26,7 @@ def test__convert_to_https(caplog) -> None:
 
         logger.propagate = True
 
-        # catpure logs
+        # capture logs
         url = "http://www.otherurl.com"
 
     assert len(caplog.records) == 0

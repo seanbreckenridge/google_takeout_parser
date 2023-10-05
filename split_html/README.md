@@ -35,7 +35,7 @@ mv ~/data/takeout/something/MyActivity/Youtube/MyActivity.html /tmp
 google_takeout_parser merge -a summary ~/data/takeout/something
 ```
 
-This splits the files into dozens of files about `~700K` instead of the giant HTML files
+This splits the `100MB+` HTML files into dozens of small files sized about `~700K`.
 
 I personally **created copies** of all of my HTML exports, and did:
 

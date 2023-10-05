@@ -217,7 +217,7 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
             yield ChromeHistory(
                 title=item["title"],
                 # dont convert to https here, this is just the users history
-                # and theres likely lots of items that arent https
+                # and there's likely lots of items that aren't https
                 url=item["url"],
                 dt=time_naive.replace(tzinfo=timezone.utc),
             )

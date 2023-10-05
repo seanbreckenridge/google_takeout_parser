@@ -1,3 +1,12 @@
+"""
+For context, see: https://github.com/seanbreckenridge/google_takeout_parser/issues/31
+
+This converts HTTP URLs to HTTPS, if they're from certain google domains.
+In some cases URLs in the takeout are HTTP for no reason, and converting them
+to HTTPs is nicer for downstream consumers, e.g. to dedupe, parsing from multiple
+sources
+"""
+
 import logging
 from typing import Set, Optional
 
