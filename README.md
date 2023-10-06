@@ -106,11 +106,14 @@ Counter({'Activity': 366292,
          'ChromeHistory': 4})
 ```
 
-Can also dump the info to JSON; e.g. to filter YouTube links from your Activity:
+Can also dump the info to JSON; e.g. to filter YouTube-related stuff from your Activity using [jq](https://jqlang.github.io/jq/):
 
 ```bash
-google_takeout_parser parse -a json --no-cache ./Takeout-New \
-  | jq '.[] | select(.type == "Activity") | select(.header == "YouTube") | .titleUrl'
+google_takeout_parser --quiet parse -a json -f Activity --no-cache ./Takeout-New | \
+  # select stuff like Youtube, m.youtube.com, youtube.com using jq
+  jq '.[] | select(.header | ascii_downcase | test("youtube")) | select(.titleUrl)' | \
+  # grab the titleUrl
+  jq .titleUrl -r
 ```
 
 Also contains a small utility command to help move/extract the google takeout:
@@ -167,7 +170,7 @@ If you don't want to cache the results but want to merge results from multiple t
 from google_takeout_parser.merge import merge_events, TakeoutParser
 itrs = []  # list of iterators of google events
 for path in ['path/to/Takeout-1599315526' 'path/to/Takeout-1616796262']:
-    # ignore errors
+    # ignore errors, error_policy can be 'yield', 'raise' or 'drop'
     tk = TakeoutParser(path, error_policy="drop")
     itrs.append(tk.parse(cache=False))
 res = list(merge_events(*itrs))
