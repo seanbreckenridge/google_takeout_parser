@@ -109,11 +109,11 @@ Counter({'Activity': 366292,
 Can also dump the info to JSON; e.g. to filter YouTube-related stuff from your Activity using [jq](https://jqlang.github.io/jq/):
 
 ```bash
-google_takeout_parser --quiet parse -a json -f Activity --no-cache ./Takeout-New | \
+google_takeout_parser --quiet parse -a json -f Activity --no-cache ./Takeout-New |
   # select stuff like Youtube, m.youtube.com, youtube.com using jq
-  jq '.[] | select(.header | ascii_downcase | test("youtube")) | select(.titleUrl)' | \
-  # grab the titleUrl
-  jq .titleUrl -r
+  jq '.[] | select(.header | ascii_downcase | test("youtube"))' |
+  # grab the titleUrl, ignoring nulls
+  jq 'select(.titleUrl) | .titleUrl' -r
 ```
 
 Also contains a small utility command to help move/extract the google takeout:
