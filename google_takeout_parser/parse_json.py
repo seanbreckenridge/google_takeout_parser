@@ -120,10 +120,6 @@ def _parse_timestamp_key(d: Dict[str, Any], key: str) -> datetime:
         return parse_json_utc_date(d[key])
 
 
-def _parse_location_timestamp(d: Dict[str, Any]) -> datetime:
-    return _parse_timestamp_key(d, "timestamp")
-
-
 def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
     ### HMMM, seems that all the locations are right after one another. broken? May just be all the location history that google has on me
     ### see numpy.diff(list(map(lambda yy: y.at, filter(lambda y: isinstance(Location), events()))))
@@ -136,7 +132,7 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
             yield Location(
                 lng=float(loc["longitudeE7"]) / 1e7,
                 lat=float(loc["latitudeE7"]) / 1e7,
-                dt=_parse_location_timestamp(loc),
+                dt=_parse_timestamp_key(loc, "timestamp"),
                 accuracy=None if accuracy is None else float(accuracy),
             )
         except Exception as e:
