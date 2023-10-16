@@ -9,6 +9,7 @@ from typing import Iterator, Any, Dict, Iterable, Optional, List
 
 from .http_allowlist import convert_to_https_opt
 from .time_utils import parse_datetime_millis
+from .log import logger
 from .models import (
     Subtitles,
     LocationInfo,
@@ -140,6 +141,11 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
 
 
 _sem_required_keys = ["location", "duration"]
+_sem_required_location_keys = [
+    "placeId",  # some fairly recent (as of 2023) places might miss it
+    "latitudeE7",
+    "longitudeE7",
+]
 
 
 def _check_required_keys(
@@ -169,8 +175,10 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
             continue
         try:
             location_json = placeVisit["location"]
-            if "placeId" not in location_json:
-                # even recent (as of 2023) places might miss it
+            missing_location_key = _check_required_keys(location_json, _sem_required_location_keys)
+            if missing_location_key is not None:
+                # handle these fully defensively, since nothing at all we can do if it's missing these properties
+                logger.debug(f"CandidateLocation: {p}, no key '{missing_location_key}' in {location_json}")
                 continue
             location = CandidateLocation.from_dict(location_json)
             duration = placeVisit["duration"]
