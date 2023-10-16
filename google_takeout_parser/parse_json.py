@@ -9,6 +9,7 @@ from typing import Iterator, Any, Dict, Iterable, Optional, List
 
 from .http_allowlist import convert_to_https_opt
 from .time_utils import parse_datetime_millis
+from .log import logger
 from .models import (
     Subtitles,
     LocationInfo,
@@ -140,6 +141,11 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
 
 
 _sem_required_keys = ["location", "duration"]
+_sem_required_location_keys = [
+    "placeId",  # some fairly recent (as of 2023) places might miss it
+    "latitudeE7",
+    "longitudeE7",
+]
 
 
 def _check_required_keys(
@@ -168,7 +174,13 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
             yield RuntimeError(f"PlaceVisit: no '{missing_key}' key in '{p}'")
             continue
         try:
-            location = CandidateLocation.from_dict(placeVisit["location"])
+            location_json = placeVisit["location"]
+            missing_location_key = _check_required_keys(location_json, _sem_required_location_keys)
+            if missing_location_key is not None:
+                # handle these fully defensively, since nothing at all we can do if it's missing these properties
+                logger.debug(f"CandidateLocation: {p}, no key '{missing_location_key}' in {location_json}")
+                continue
+            location = CandidateLocation.from_dict(location_json)
             duration = placeVisit["duration"]
             yield PlaceVisit(
                 name=location.name,
@@ -178,7 +190,7 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                     placeVisit.get("otherCandidateLocations", []), separators=(",", ":")
                 ),
                 sourceInfoDeviceTag=location.sourceInfoDeviceTag,
-                placeConfidence=placeVisit["placeConfidence"],
+                placeConfidence=placeVisit.get("placeConfidence"),
                 placeVisitImportance=placeVisit.get("placeVisitImportance"),
                 placeVisitType=placeVisit.get("placeVisitType"),
                 visitConfidence=placeVisit["visitConfidence"],
