@@ -168,7 +168,11 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
             yield RuntimeError(f"PlaceVisit: no '{missing_key}' key in '{p}'")
             continue
         try:
-            location = CandidateLocation.from_dict(placeVisit["location"])
+            location_json = placeVisit["location"]
+            if "placeId" not in location_json:
+                # even recent (as of 2023) places might miss it
+                continue
+            location = CandidateLocation.from_dict(location_json)
             duration = placeVisit["duration"]
             yield PlaceVisit(
                 name=location.name,
@@ -178,7 +182,7 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                     placeVisit.get("otherCandidateLocations", []), separators=(",", ":")
                 ),
                 sourceInfoDeviceTag=location.sourceInfoDeviceTag,
-                placeConfidence=placeVisit["placeConfidence"],
+                placeConfidence=placeVisit.get("placeConfidence"),
                 placeVisitImportance=placeVisit.get("placeVisitImportance"),
                 placeVisitType=placeVisit.get("placeVisitType"),
                 visitConfidence=placeVisit["visitConfidence"],

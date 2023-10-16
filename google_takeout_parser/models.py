@@ -169,7 +169,7 @@ class PlaceVisit(BaseEvent):
     sourceInfoDeviceTag: Optional[int]
     otherCandidateLocationsJSON: str
     # TODO: parse these into an enum of some kind? may be prone to breaking due to new values from google though...
-    placeConfidence: str
+    placeConfidence: Optional[str]  # older semantic history (pre-2018 didn't have it)
     placeVisitType: Optional[str]
     visitConfidence: float
     editConfirmationStatus: str
