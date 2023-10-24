@@ -74,11 +74,15 @@ Usage: google_takeout_parser parse [OPTIONS] TAKEOUT_DIR
 Options:
   -f, --filter [Activity|LikedYoutubeVideo|PlayStoreAppInstall|Location|ChromeHistory|YoutubeComment|PlaceVisit]
                                   Filter to only show events of this type
+  -l, --locale [EN|DE]            Locale to use for matching filenames [default: EN]  [env var:
+                                  GOOGLE_TAKEOUT_PARSER_LOCALE]
   -a, --action [repl|summary|json]
                                   What to do with the parsed result  [default: repl]
   --cache / --no-cache            [default: no-cache]
   -h, --help                      Show this message and exit.
 ```
+
+If you use a language this doesn't support, you can [create an issue](https://github.com/seanbreckenridge/google_takeout_parser/issues/new?title=support+new+locale) with the file structure (run `find Takeout` and/or `tree Takeout`)
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
@@ -157,6 +161,8 @@ uncached = list(tp.parse())
 cached = list(tp.parse(cache=True))
 ```
 
+To parse a custom locale, refer the typical handler map pattern in [`locales/en.py`](google_takeout_parser/locales/en.py), and pass `handlers` to the `TakeoutParser`
+
 To cache and merge takeouts (maintains a single dependency on the paths you pass -- so if you change the input paths, it does a full recompute)
 
 ```python
@@ -200,7 +206,9 @@ Just to give a brief overview, to add new functionality (parsing some new folder
 
 - Add a `model` for it in [`models.py`](google_takeout_parser/models.py) subclassing `BaseEvent` and adding it to the Union at the bottom of the file. That should have a `key` property function which describes each event uniquely (used to merge takeout events)
 - Write a function which takes the `Path` to the file you're trying to parse and converts it to the model you created (See examples in [`parse_json.py`](google_takeout_parser/parse_json.py)). Ideally extract a single raw item from the takeout file add a test for it so its obvious when/if the format changes.
-- Add a regex match for the file path to the [`DEFAULT_HANDLER_MAP`](https://github.com/seanbreckenridge/google_takeout_parser/blob/2bd64b7373e4a2ac2ace32e03b25ca3b7e901034/google_takeout_parser/path_dispatch.py#L48)
+- Add a regex match for the file path to the handler map in [`google_takeout_parser/locales/en.py`](google_takeout_parser/locales/en.py).
+
+Dont feel required to add support for all locales, its somewhat annoying to swap languages on google, request a takeout, wait for it to process and then swap back.
 
 ### Testing
 
@@ -210,5 +218,5 @@ cd ./google_takeout_parser
 pip install '.[testing]'
 mypy ./google_takeout_parser
 flake8 ./google_takeout_parser
-pytest
+pytest)
 ```

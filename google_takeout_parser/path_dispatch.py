@@ -1,6 +1,5 @@
 """
-This handles mapping the filenames in the export
-to the corresponding functions and caching the results
+This file loads and parses files according to a localized HandlerMap
 """
 
 import os
@@ -9,13 +8,13 @@ from pathlib import Path
 from typing import (
     Iterator,
     Dict,
-    Union,
     Callable,
     Any,
     Optional,
     List,
     Type,
     Tuple,
+    Union,
     Literal,
 )
 
@@ -25,27 +24,15 @@ from cachew import cachew
 
 from . import __version__ as _google_takeout_version
 from .common import Res, PathIsh
+
+from .locales.main import resolve_locale
+from .locales.common import BaseResults, HandlerFunction, HandlerMap
+
+
 from .cache import takeout_cache_path
 from .log import logger
 from .models import BaseEvent, get_union_args
 
-from .parse_html.activity import _parse_html_activity
-from .parse_html.comment import _parse_html_comment_file
-from .parse_json import (
-    _parse_likes,
-    _parse_app_installs,
-    _parse_json_activity,
-    _parse_location_history,
-    _parse_semantic_location_history,
-    _parse_chrome_history,
-)
-
-
-# anything that subclasses BaseEvent
-BaseResults = Iterator[Res[BaseEvent]]
-
-HandlerFunction = Callable[[Path], BaseResults]
-HandlerMap = Dict[str, Optional[HandlerFunction]]
 
 CacheKey = Tuple[Type[BaseEvent], ...]
 
@@ -110,114 +97,30 @@ def _cache_key_to_type(c: CacheKey) -> Any:
         return Union[c]  # type: ignore[valid-type]
 
 
-# If parsed, should mention:
-# Google Help Communities
-#   - Select JSON as Output
-# Google Play Books
-#   - Select JSON as Output
-# Google Play Games Services
-#   - Select JSON as Output
-# Google Play Movies & TV options
-#   - Select JSON as Output
-# Profile
-#   - Select JSON as Output
-
-
-# Note: when I say 'no info here' or 'not useful', is just how the
-# data appears in my export. It might be useful for you -- if so
-# feel free to make a PR or an issue to parse it
-#
-# Can also extend or overwrite these functions by passing
-# 'None' if you don't want a certain part to be parsed,
-# or by passing your own function which parses the file something from models.py
-
-# Reminder that dicts are ordered, so order here can matter
-# If you want to parse one file from a folder with lot of files, can
-# specify that file, and then on the next line specify 'None'
-# for the folder, ignoring the rest of files
-
-# Setting 'None' in the handler map specifies that we should ignore this file
-DEFAULT_HANDLER_MAP: HandlerMap = {
-    r"Chrome/BrowserHistory.json": _parse_chrome_history,
-    r"Chrome": None,  # Ignore rest of Chrome stuff
-    r"Google Play Store/Installs.json": _parse_app_installs,
-    r"Google Play Store/": None,  # ignore anything else in Play Store
-    r"Location History/Semantic Location History/.*/.*.json": _parse_semantic_location_history,
-    # optional space to handle pre-2017 data
-    r"Location History/Location( )?History.json": _parse_location_history,  # old path to Location History
-    r"Location History/Records.json": _parse_location_history,  # new path to Location History
-    r"Location History/Settings.json": None,
-    # HTML/JSON activity-like files which aren't in 'My Activity'
-    # optional " and Youtube Music" to handle pre-2017 data
-    r"YouTube( and YouTube Music)?/history/.*?.html": _parse_html_activity,
-    r"YouTube( and YouTube Music)?/history/.*?.json": _parse_json_activity,
-    # basic list item files which have chat messages/comments
-    r"YouTube( and YouTube Music)?/my-comments/.*?.html": _parse_html_comment_file,
-    r"YouTube( and YouTube Music)?/my-live-chat-messages/.*?.html": _parse_html_comment_file,
-    r"YouTube( and YouTube Music)?/playlists/likes.json": _parse_likes,
-    r"YouTube( and YouTube Music)?/playlists/": None,
-    r"YouTube( and YouTube Music)?/subscriptions": None,
-    r"YouTube( and YouTube Music)?/videos": None,
-    r"YouTube( and YouTube Music)?/music-uploads": None,
-    r"My Activity/Assistant/.*.mp3": None,  # might be interesting to extract timestamps
-    r"My Activity/Voice and Audio/.*.mp3": None,
-    r"My Activity/Takeout": None,  # activity for when you made takeouts, dont need
-    # HTML 'My Activity' Files
-    # the \d+ is for split html files, see the ./split_html directory
-    r"My Activity/.*?My\s*Activity(-\d+)?.html": _parse_html_activity,
-    r"My Activity/.*?My\s*Activity.json": _parse_json_activity,
-    # Maybe parse these?
-    r"Access Log Activity": None,
-    r"Assistant Notes and Lists/.*.csv": None,
-    r"Blogger/Comments/.*?feed.atom": None,
-    r"Blogger/Blogs/": None,
-    # Fit has possibly interesting data
-    # Fit/Daily activity metrics/2015-07-27.csv
-    # Fit/Activities/2017-10-29T23_08_59Z_PT2M5.699S_Other.tcx
-    # Fit/All Data/derived_com.google.calories.bmr_com.google.and.json
-    r"Fit/": None,
-    r"Groups": None,
-    r"Google Play Games Services/Games/.*/(Achievements|Activity|Experience|Scores).html": None,
-    r"Hangouts": None,
-    r"Keep": None,
-    r"Maps (your places)": None,
-    r"My Maps/.*.kmz": None,  # custom KML maps
-    r"Saved/.*.csv": None,  # lists with saved places from Google Maps
-    r"Shopping Lists/.*.csv": None,
-    r"Tasks": None,
-    # Files to ignore
-    r"Android Device Configuration Service/": None,
-    r"Blogger/Albums/": None,
-    r"Blogger/Profile/": None,
-    r"Calendar/": None,
-    r"Cloud Print/": None,
-    r"Contacts/": None,
-    r"Drive/": None,
-    r"Google Account/": None,
-    r"Google Business Profile/": None,
-    r"Google My Business/": None,
-    r"Google Pay/": None,
-    r"Google Photos/": None,  # has images/some metadata on each of them
-    r"Google Play Books/.*.pdf": None,
-    r"Google Play Games Services/Games/.*/(Data.bin|Metadata.html)": None,
-    r"Google Play Movies.*?/": None,
-    r"Google Shopping/": None,
-    r"Google Store/": None,
-    r"Google Translator Toolkit/": None,
-    r"Google Workspace Marketplace/": None,
-    r"Home App/": None,
-    r"Mail/": None,
-    r"Maps/": None,
-    r"News/": None,
-    r"Profile/Profile.json": None,
-    r"Saved/Favorite places.csv": None,
-    r"Search Contributions/": None,
-    r"archive_browser.html": None,  # description of takeout, not that useful
-}
-
 HandlerMatch = Res[Optional[HandlerFunction]]
 
 ErrorPolicy = Literal["yield", "raise", "drop"]
+
+
+def _handler_map_to_list(
+    passed_locale_map: Union[HandlerMap, List[HandlerMap], None]
+) -> List[HandlerMap]:
+    """
+    converts user input to a list of handler maps
+    """
+    handlers: List[HandlerMap] = []
+    if passed_locale_map is not None:
+        if isinstance(passed_locale_map, list):
+            for h in passed_locale_map:
+                assert isinstance(h, dict), f"Expected dict, got {type(h)}"
+                handlers.append(h)
+        elif isinstance(passed_locale_map, dict):
+            handlers = [passed_locale_map]
+        else:
+            raise TypeError(
+                f"Expected dict or list of dicts, got {type(passed_locale_map)}"
+            )
+    return handlers
 
 
 class TakeoutParser:
@@ -225,9 +128,10 @@ class TakeoutParser:
         self,
         takeout_dir: PathIsh,
         cachew_identifier: Optional[str] = None,
+        locale_name: Optional[str] = None,
+        handlers: Union[HandlerMap, List[HandlerMap], None] = None,
         warn_exceptions: bool = True,
         error_policy: ErrorPolicy = "yield",
-        additional_handlers: Optional[HandlerMap] = None,
     ) -> None:
         """
         takeout_dir: Path to the google takeout directory
@@ -235,6 +139,14 @@ class TakeoutParser:
             If not given, approximates using the full path. Useful if you're
             temporarily extracting the zipfile to extract events or if the
             Takeout dir path isn't at its regular location
+        locale_name:
+            The name of the locale to use. See locales/all.py for predefined locales.
+        handlers: 0-n handlers resolving Paths to a parser-functions.
+            A handler can either resolve a path to a callable function which parses the path,
+            or .
+            See locales/all.py for predefined handlers.
+            Default to 'EN', if not overriden by the user or by
+            'GOOGLE_TAKEOUT_PARSER_LOCALE' environment variable.
         error_policy: How to handle exceptions while parsing:
             "yield": return as part of the results (default)
             "raise": raise exceptions
@@ -248,16 +160,36 @@ class TakeoutParser:
         if not self.takeout_dir.exists():
             raise FileNotFoundError(f"{self.takeout_dir} does not exist!")
         self.cachew_identifier: Optional[str] = cachew_identifier
-        self.additional_handlers = (
-            {} if additional_handlers is None else additional_handlers
-        )
+
         self.error_policy: ErrorPolicy = error_policy
         self.warn_exceptions = warn_exceptions
-        self._warn_if_no_activity()
+        self.handlers = self._resolve_locale_handler_map(
+            locale_name=locale_name, passed_locale_map=handlers
+        )
+        # TODO: check if theres some directory we expect to be there based on the computed handler map instead?
+        # self._warn_if_no_activity()
+
+    @staticmethod
+    def _resolve_locale_handler_map(
+        *,
+        locale_name: Optional[str],
+        passed_locale_map: Union[HandlerMap, List[HandlerMap], None] = None,
+    ) -> List[HandlerMap]:
+        # any passed locale map overrides the environment variable, this would only
+        # really be done by someone calling this manually in python
+        handlers = _handler_map_to_list(passed_locale_map)
+
+        # if no locale is specified, use the environment variable
+        if locale_name is None:
+            locale_name = os.environ.get("GOOGLE_TAKEOUT_PARSER_LOCALE", "EN")
+
+        return resolve_locale(locale_name, handlers)
 
     def _warn_if_no_activity(self) -> None:
         # most common is probably 'My Activity'?
         # can be used as a check to see if the user passed a wrong directory
+
+        # TODO: extract activity_dir from selected DEFAULT_HANDLER_MAP
         activity_dir = "My Activity"
         expected = self.takeout_dir / activity_dir
         if not expected.exists():
@@ -276,7 +208,11 @@ class TakeoutParser:
         for prefix, h in handler.items():
             # regex match the map (e.g. above)
             if bool(re.match(prefix, sf)):
-                return h  # could be None, if chosen to ignore
+                # could be None, if chosen to ignore
+                if h is None:
+                    return None
+                elif callable(h):
+                    return h
         else:
             return RuntimeError(f"No function to handle parsing {sf}")
 
@@ -290,35 +226,30 @@ class TakeoutParser:
                 continue
             rf = f.relative_to(self.takeout_dir)
 
-            # if user overrode some function, use that
-            user_handler: HandlerMatch = self.__class__._match_handler(
-                rf, self.additional_handlers
-            )
-            # user handler matched something
-            if not isinstance(user_handler, Exception):
-                # if not explicitly ignored by the handler map
-                if user_handler is not None:
-                    res[f] = user_handler
-                continue
+            # try to resolve file to parser-function by checking all supplied handlers
 
-            # don't raise errors here since the DEFAULT_HANDLER_MAP may handle parsing it
+            # cache handler information for warning if we can't resolve the file
+            file_resolved: bool = False
+            handler_exception: Optional[Exception] = None
 
-            # try the default matchers
-            def_handler: HandlerMatch = self.__class__._match_handler(
-                rf, DEFAULT_HANDLER_MAP
-            )
-            # default handler
-            if not isinstance(def_handler, Exception):
-                # if not explicitly ignored by the handler map
-                if def_handler is not None:
-                    res[f] = def_handler
-                continue
-            else:
+            for handler in self.handlers:
+                file_handler: HandlerMatch = self.__class__._match_handler(rf, handler)
+                # file_handler matched something
+                if not isinstance(file_handler, Exception):
+                    # if not explicitly ignored by the handler map
+                    if file_handler is not None:
+                        res[f] = file_handler
+                    file_resolved = True
+                    break  # file was handled, don't check other HandlerMaps
+                else:
+                    handler_exception = file_handler
+
+            if not file_resolved:
                 # this is an exception specifying an unhandled file
                 # this shouldn't cause a fatal error, so don't check
                 # error_policy here, just warn the user
                 if self.warn_exceptions:
-                    logger.warning(str(def_handler))
+                    logger.warning(str(handler_exception))
 
         return res
 

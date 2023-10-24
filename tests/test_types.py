@@ -52,3 +52,11 @@ def test_parsing_return_type() -> None:
     assert ret_type == (Activity, PlayStoreAppInstall)
     assert _cache_key_to_str(ret_type) == "activity_playstoreappinstall"
     assert _cache_key_to_type(ret_type) == Union[Activity, PlayStoreAppInstall]
+
+
+def test_locale_names() -> None:
+    from google_takeout_parser.locales.main import LOCALES
+    from google_takeout_parser.locales.all import LOCALES as ALL_LOCALES
+
+    assert len(LOCALES) == len(ALL_LOCALES)
+    assert set(LOCALES.keys()) == set(ALL_LOCALES)
