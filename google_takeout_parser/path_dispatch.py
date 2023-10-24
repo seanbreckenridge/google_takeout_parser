@@ -6,6 +6,7 @@ import os
 import re
 from pathlib import Path
 from typing import (
+    Sequence,
     Iterator,
     Dict,
     Callable,
@@ -35,6 +36,13 @@ from .models import BaseEvent, get_union_args
 
 
 CacheKey = Tuple[Type[BaseEvent], ...]
+
+
+FilterType = Union[
+    None,
+    Type[BaseEvent],
+    Sequence[Type[BaseEvent]],
+]
 
 
 def _cache_key_to_str(c: CacheKey) -> str:
@@ -259,7 +267,7 @@ class TakeoutParser:
         func_name: str = getattr(handler, "__name__", str(handler))
         logger.info(f"Parsing '{rel_path}' using '{func_name}'")
 
-    def _parse_raw(self, filter_type: Optional[Type[BaseEvent]] = None) -> BaseResults:
+    def _parse_raw(self, filter_type: FilterType = None) -> BaseResults:
         """Parse the takeout with no cache. If a filter is specified, only parses those files"""
         handlers = self._group_by_return_type(filter_type=filter_type)
         for _, result_tuples in handlers.items():
@@ -286,7 +294,7 @@ class TakeoutParser:
                     continue
 
     def parse(
-        self, cache: bool = False, filter_type: Optional[Type[BaseEvent]] = None
+        self, cache: bool = False, filter_type: FilterType = None
     ) -> BaseResults:
         """
         Parses the Takeout
@@ -300,7 +308,7 @@ class TakeoutParser:
             yield from self._handle_errors(self._cached_parse(filter_type=filter_type))
 
     def _group_by_return_type(
-        self, filter_type: Optional[Type[BaseEvent]] = None
+        self, filter_type: FilterType = None
     ) -> Dict[CacheKey, List[Tuple[Path, BaseResults]]]:
         """
         Groups the dispatch_map by output model type
@@ -315,12 +323,18 @@ class TakeoutParser:
         ]
         """
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
+        ftype: List[Type[BaseEvent]] = []
+        if filter_type is not None:
+            if isinstance(filter_type, Sequence):
+                ftype = list(filter_type)
+            else:
+                ftype = [filter_type]
         for path, handler in self.dispatch_map().items():
             ckey: CacheKey = _handler_type_cache_key(handler)
             # don't include in the result if we're filtering to a specific type
-            if filter_type is not None and filter_type not in ckey:
+            if len(ftype) and all(t not in ftype for t in ckey):
                 logger.debug(
-                    f"Provided '{filter_type}' as filter, '{ckey}' doesn't match, ignoring '{path}'..."
+                    f"Provided '{ftype}' as filter, '{ckey}' doesn't match, ignoring '{path}'..."
                 )
                 continue
             # call the function -- since the parsers are all generators,
@@ -354,7 +368,7 @@ class TakeoutParser:
         return str(base / part / _cache_key_to_str(cache_key))
 
     def _cached_parse(
-        self, filter_type: Optional[Type[BaseEvent]] = None
+        self, filter_type: FilterType = None
     ) -> BaseResults:
         handlers = self._group_by_return_type(filter_type=filter_type)
         for cache_key, result_tuples in handlers.items():

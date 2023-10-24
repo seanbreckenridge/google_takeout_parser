@@ -71,8 +71,8 @@ SHARED = [
         "--filter",
         "filter_",
         type=click.Choice(list(FILTER_OPTIONS.keys()), case_sensitive=False),
-        multiple=False,
-        help="Filter to only show events of this type",
+        multiple=True,
+        help="Filter to only show events of this type. Can be provided multiple times",
     ),
 ]
 
@@ -118,7 +118,11 @@ def _handle_action(res: List[Any], action: str) -> None:
 @shared_options
 @click.argument("TAKEOUT_DIR", type=click.Path(exists=True), required=True)
 def parse(
-    cache: bool, locale: Optional[str], action: str, takeout_dir: str, filter_: str
+    cache: bool,
+    locale: Optional[str],
+    action: str,
+    takeout_dir: str,
+    filter_: Sequence[str],
 ) -> None:
     """
     Parse a takeout directory takeout
@@ -131,6 +135,7 @@ def parse(
         error_policy="drop",
         locale_name=locale,
     )
+    filter_type = tuple(FILTER_OPTIONS[ff] for ff in filter_)
     # note: actually no exceptions since since they're dropped
     if cache:
         if filter_:
@@ -139,10 +144,9 @@ def parse(
             )
         res = list(tp.parse(cache=True))
         if filter_:
-            filter_type = FILTER_OPTIONS[filter_]
             res = [r for r in res if isinstance(r, filter_type)]
     else:
-        res = list(tp.parse(cache=False, filter_type=FILTER_OPTIONS.get(filter_, None)))
+        res = list(tp.parse(cache=False, filter_type=filter_type))
     _handle_action(res, action)
 
 
@@ -154,7 +158,7 @@ def merge(
     locale: Optional[str],
     action: str,
     takeout_dir: Sequence[str],
-    filter_: str,
+    filter_: Sequence[str],
 ) -> None:
     """
     Parse and merge multiple takeout directories
@@ -165,7 +169,7 @@ def merge(
     from .log import logger
 
     res: List[Res[DEFAULT_MODEL_TYPE]] = []
-    filter_type: Optional[Type[DEFAULT_MODEL_TYPE]]
+    filter_type = tuple(FILTER_OPTIONS[ff] for ff in filter_)
     if cache:
         if filter_:
             logger.warn(
@@ -173,10 +177,8 @@ def merge(
             )
         res = list(cached_merge_takeouts(list(takeout_dir), locale_name=locale))
         if filter_:
-            filter_type = FILTER_OPTIONS[filter_]
             res = [r for r in res if isinstance(r, filter_type)]
     else:
-        filter_type = FILTER_OPTIONS[filter_] if filter_ else None
         res = list(
             merge_events(
                 *iter(  # type: ignore
