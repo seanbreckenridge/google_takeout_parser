@@ -2,7 +2,6 @@
 Parses the HTML MyActivity.html files that used to be the standard
 """
 
-import warnings
 from pathlib import Path
 from datetime import datetime
 from typing import List, Iterator, Optional, Tuple, Union, Dict, Iterable
@@ -11,9 +10,10 @@ from urllib.parse import urlparse, parse_qs
 import bs4
 from bs4.element import Tag, PageElement
 
-from ..models import Activity, Subtitles, Details, LocationInfo
+from ..models import Activity, Subtitles, LocationInfo
 from ..common import Res
 from ..log import logger
+from ..http_allowlist import convert_to_https_opt
 from .html_time_utils import parse_html_dt
 
 
@@ -90,11 +90,13 @@ def _parse_subtitles(
                     if "href" in tag.attrs:
                         url = tag.attrs["href"]
                 else:
-                    warnings.warn(f"Unexpected tag! {tag}")
+                    logger.warning(f"Unexpected tag! {tag}")
             else:
                 raise RuntimeError(f"Unexpected Type {tag} {type(tag)}")
 
-        parsed_subs.append((clean_latin1_chars(buf), url))
+        parsed_subs.append(
+            Subtitles(name=clean_latin1_chars(buf), url=convert_to_https_opt(url))
+        )
 
     return parsed_subs, parse_html_dt(dt_raw, file_dt=file_dt)
 
@@ -165,8 +167,8 @@ def _is_location_api_link(url: str) -> bool:
 
 def _parse_caption(
     cap_cell: bs4.element.Tag,
-) -> Tuple[List[Details], List[LocationInfo], List[str]]:
-    details: List[Details] = []
+) -> Tuple[List[str], List[LocationInfo], List[str]]:
+    details: List[str] = []
     locationInfos: List[LocationInfo] = []
     products: List[str] = []
 
@@ -223,7 +225,7 @@ def _parse_caption(
                 elif len(links) == 1:
                     if _is_location_api_link(links[0]):
                         url = links[0]
-                        # wasnt set in partition above, was only one
+                        # wasn't set in partition above, was only one
                         # phrase of text
                         if name is None:
                             name = textbuf
@@ -233,22 +235,22 @@ def _parse_caption(
                             source = textbuf
                 else:
                     # no links, just a description of the source
-                    # (since theres no URL, cant be name)
+                    # (since there's no URL, can't be name)
                     source = textbuf
 
                 locationInfos.append(
-                    (
-                        name,
-                        url,
-                        source,
-                        sourceUrl,
+                    LocationInfo(
+                        name=name,
+                        url=convert_to_https_opt(url),
+                        source=source,
+                        sourceUrl=convert_to_https_opt(sourceUrl),
                     )
                 )
             elif header == "Details:":
-                details.append(Details(clean_latin1_chars(str(value[0])).strip()))
+                details.append(str(clean_latin1_chars(str(value[0])).strip()))
 
             else:
-                warnings.warn(f"Unexpected header in caption {header} {value}")
+                logger.warning(f"Unexpected header in caption {header} {value}")
 
     return details, locationInfos, products
 
@@ -266,7 +268,7 @@ def _parse_activity_div(
     # all possible data that this div could parse
     dtime: datetime
     subtitles: List[Subtitles] = []  # more lines of text describing this
-    details: List[Details] = []
+    details: List[str] = []
     locationInfos: List[LocationInfo] = []
     products: List[str] = []
 
@@ -318,8 +320,9 @@ def _parse_activity_div(
 
     return Activity(
         header=header,
-        title=title_info[0],
-        titleUrl=title_info[1],  # could be None, matched by model
+        title=title_info.name,
+        # could be None, matched the JSON format
+        titleUrl=convert_to_https_opt(title_info.url),
         description=None,  # always none since we can't differentiate in HTML parsing
         time=dtime,
         locationInfos=locationInfos,
@@ -337,6 +340,3 @@ def _parse_html_activity(p: Path) -> Iterator[Res[Activity]]:
             yield _parse_activity_div(outer_div, file_dt=file_dt)
         except Exception as ae:
             yield ae
-
-
-_parse_html_activity.return_type = Activity  # type: ignore[attr-defined]

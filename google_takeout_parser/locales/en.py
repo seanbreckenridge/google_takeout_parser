@@ -1,5 +1,28 @@
-from .common import TakeoutFile, HandlerMap
+from .common import (
+    HandlerMap,
+    _parse_html_activity,
+    _parse_html_comment_file,
+    _parse_json_activity,
+    _parse_likes,
+    _parse_app_installs,
+    _parse_location_history,
+    _parse_semantic_location_history,
+    _parse_chrome_history,
+)
 
+
+# If parsed, should mention:
+# Google Help Communities
+#   - Select JSON as Output
+# Google Play Books
+#   - Select JSON as Output
+# Google Play Games Services
+#   - Select JSON as Output
+# Google Play Movies & TV options
+#   - Select JSON as Output
+# Profile
+#   - Select JSON as Output
+#
 # Note: when I say 'no info here' or 'not useful', is just how the
 # data appears in my export. It might be useful for you -- if so
 # feel free to make a PR or an issue to parse it
@@ -14,25 +37,25 @@ from .common import TakeoutFile, HandlerMap
 # for the folder, ignoring the rest of files
 
 # Setting 'None' in the handler map specifies that we should ignore this file
-
+#
 HANDLER_MAP: HandlerMap = {
-    r"Chrome/BrowserHistory.json": TakeoutFile.CHROME_HISTORY,
+    r"Chrome/BrowserHistory.json": _parse_chrome_history,
     r"Chrome": None,  # Ignore rest of Chrome stuff
-    r"Google Play Store/Installs.json": TakeoutFile.GPLAYSTORE_INSTALLS,
+    r"Google Play Store/Installs.json": _parse_app_installs,
     r"Google Play Store/": None,  # ignore anything else in Play Store
-    r"Location History/Semantic Location History/.*/.*.json": TakeoutFile.LOCATION_HISTORY_SEMANTIC,
+    r"Location History/Semantic Location History/.*/.*.json": _parse_semantic_location_history,
     # optional space to handle pre-2017 data
-    r"Location History/Location( )?History.json": TakeoutFile.LOCATION_HISTORY,  
-    r"Location History/Records.json": TakeoutFile.LOCATION_HISTORY,  
+    r"Location History/Location( )?History.json": _parse_location_history,  # old path to Location History
+    r"Location History/Records.json": _parse_location_history,  # new path to Location History
     r"Location History/Settings.json": None,
     # HTML/JSON activity-like files which aren't in 'My Activity'
     # optional " and Youtube Music" to handle pre-2017 data
-    r"YouTube( and YouTube Music)?/history/.*?.html": TakeoutFile.YOUTUBE_HISTORY_HTML,
-    r"YouTube( and YouTube Music)?/history/.*?.json": TakeoutFile.YOUTUBE_HISTORY_JSON,
+    r"YouTube( and YouTube Music)?/history/.*?.html": _parse_html_activity,
+    r"YouTube( and YouTube Music)?/history/.*?.json": _parse_json_activity,
     # basic list item files which have chat messages/comments
-    r"YouTube( and YouTube Music)?/my-comments/.*?.html": TakeoutFile.YOUTUBE_COMMENT,
-    r"YouTube( and YouTube Music)?/my-live-chat-messages/.*?.html": TakeoutFile.YOUTUBE_COMMENT,
-    r"YouTube( and YouTube Music)?/playlists/likes.json": TakeoutFile.YOUTUBE_LIKES,
+    r"YouTube( and YouTube Music)?/my-comments/.*?.html": _parse_html_comment_file,
+    r"YouTube( and YouTube Music)?/my-live-chat-messages/.*?.html": _parse_html_comment_file,
+    r"YouTube( and YouTube Music)?/playlists/likes.json": _parse_likes,
     r"YouTube( and YouTube Music)?/playlists/": None,
     r"YouTube( and YouTube Music)?/subscriptions": None,
     r"YouTube( and YouTube Music)?/videos": None,
@@ -41,8 +64,9 @@ HANDLER_MAP: HandlerMap = {
     r"My Activity/Voice and Audio/.*.mp3": None,
     r"My Activity/Takeout": None,  # activity for when you made takeouts, dont need
     # HTML 'My Activity' Files
-    r"My Activity/.*?My\s*Activity.html": TakeoutFile.ACTIVITY_HTML,
-    r"My Activity/.*?My\s*Activity.json": TakeoutFile.ACTIVITY_JSON,
+    # the \d+ is for split html files, see the ./split_html directory
+    r"My Activity/.*?My\s*Activity(-\d+)?.html": _parse_html_activity,
+    r"My Activity/.*?My\s*Activity.json": _parse_json_activity,
     # Maybe parse these?
     r"Access Log Activity": None,
     r"Assistant Notes and Lists/.*.csv": None,
@@ -89,5 +113,5 @@ HANDLER_MAP: HandlerMap = {
     r"Profile/Profile.json": None,
     r"Saved/Favorite places.csv": None,
     r"Search Contributions/": None,
-    r"archive_browser.html": None # description of takeout, not that useful
+    r"archive_browser.html": None,  # description of takeout, not that useful
 }

@@ -1,12 +1,13 @@
 import re
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, List
 from datetime import datetime, timezone
 
 import bs4
 
 from ..models import YoutubeComment
 from ..common import Res
+from ..http_allowlist import convert_to_https
 from .activity import _group_by_brs, clean_latin1_chars
 
 # seems to always be in UTC?
@@ -45,7 +46,10 @@ def _parse_html_li(li: bs4.element.Tag) -> YoutubeComment:
             desc += str(tag)
         elif isinstance(tag, bs4.element.Tag):
             desc += str(tag.text)
-    urls = list({link.attrs["href"] for link in li.select("a") if "href" in link.attrs})
+    urls: List[str] = []
+    for link in li.select("a"):
+        if "href" in link.attrs:
+            urls.append(convert_to_https(link.attrs["href"]))
     return YoutubeComment(
         content=clean_latin1_chars(desc).strip(), urls=urls, dt=parsed_date
     )
@@ -60,9 +64,6 @@ def _parse_html_comment_file(p: Path) -> Iterator[Res[YoutubeComment]]:
             yield e
 
 
-_parse_html_comment_file.return_type = YoutubeComment  # type: ignore[attr-defined]
-
-
 def test_parse_html_comment_file() -> None:
     li_obj = bs4.BeautifulSoup(
         """<ul><li>Sent at 2020-04-27 23:18:23 UTC while watching <a href="http://www.youtube.com/watch?v=mM">a video</a>.<br/>content here</li></ul>""",
@@ -73,5 +74,5 @@ def test_parse_html_comment_file() -> None:
     assert parsed_li == YoutubeComment(
         content="content here",
         dt=datetime(2020, 4, 27, 23, 18, 23, tzinfo=timezone.utc),
-        urls=["http://www.youtube.com/watch?v=mM"],
+        urls=["https://www.youtube.com/watch?v=mM"],
     )

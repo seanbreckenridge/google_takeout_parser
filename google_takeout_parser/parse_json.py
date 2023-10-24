@@ -5,10 +5,14 @@ Lots of functions to transform the JSON from the Takeout to useful information
 import json
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Iterator, Any, Dict, Iterable, Optional
+from typing import Iterator, Any, Dict, Iterable, Optional, List
 
+from .http_allowlist import convert_to_https_opt
 from .time_utils import parse_datetime_millis
+from .log import logger
 from .models import (
+    Subtitles,
+    LocationInfo,
     Activity,
     LikedYoutubeVideo,
     ChromeHistory,
@@ -30,12 +34,14 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
         yield RuntimeError(f"Activity: Top level item in '{p}' isn't a list")
     for blob in json_data:
         try:
-            subtitles = []
+            subtitles: List[Subtitles] = []
             for s in blob.get("subtitles", []):
-                if s == {}:
-                    # sometimes it's just empty ("My Activity/Assistant" data circa 2018)
+                if not isinstance(s, dict):
                     continue
-                subtitles.append((s["name"], s.get("url")))
+                # sometimes it's just empty ("My Activity/Assistant" data circa 2018)
+                if "name" not in s:
+                    continue
+                subtitles.append(Subtitles(name=s["name"], url=s.get("url")))
 
             # till at least 2017
             old_format = "snippet" in blob
@@ -50,17 +56,21 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
             yield Activity(
                 header=header,
                 title=blob["title"],
-                titleUrl=blob.get("titleUrl"),
+                titleUrl=convert_to_https_opt(blob.get("titleUrl")),
                 description=blob.get("description"),
                 time=parse_json_utc_date(time_str),
                 subtitles=subtitles,
-                details=[d["name"] for d in blob.get("details", [])],
+                details=[
+                    d["name"]
+                    for d in blob.get("details", [])
+                    if isinstance(d, dict) and "name" in d
+                ],
                 locationInfos=[
-                    (
-                        locinfo.get("name"),
-                        locinfo.get("url"),
-                        locinfo.get("source"),
-                        locinfo.get("sourceUrl"),
+                    LocationInfo(
+                        name=locinfo.get("name"),
+                        url=convert_to_https_opt(locinfo.get("url")),
+                        source=locinfo.get("source"),
+                        sourceUrl=convert_to_https_opt(locinfo.get("sourceUrl")),
                     )
                     for locinfo in blob.get("locationInfos", [])
                 ],
@@ -68,9 +78,6 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
             )
         except Exception as e:
             yield e
-
-
-_parse_json_activity.return_type = Activity  # type: ignore[attr-defined]
 
 
 def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
@@ -91,9 +98,6 @@ def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
             yield e
 
 
-_parse_likes.return_type = LikedYoutubeVideo  # type: ignore[attr-defined]
-
-
 def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
     json_data = json.loads(p.read_text())
     if not isinstance(json_data, list):
@@ -109,19 +113,12 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
             yield e
 
 
-_parse_app_installs.return_type = PlayStoreAppInstall  # type: ignore[attr-defined]
-
-
 def _parse_timestamp_key(d: Dict[str, Any], key: str) -> datetime:
     if f"{key}Ms" in d:
         return parse_datetime_millis(d[f"{key}Ms"])
     else:
         # else should be the isoformat
         return parse_json_utc_date(d[key])
-
-
-def _parse_location_timestamp(d: Dict[str, Any]) -> datetime:
-    return _parse_timestamp_key(d, "timestamp")
 
 
 def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
@@ -136,16 +133,19 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
             yield Location(
                 lng=float(loc["longitudeE7"]) / 1e7,
                 lat=float(loc["latitudeE7"]) / 1e7,
-                dt=_parse_location_timestamp(loc),
-                accuracy=None if accuracy is None else int(accuracy),
+                dt=_parse_timestamp_key(loc, "timestamp"),
+                accuracy=None if accuracy is None else float(accuracy),
             )
         except Exception as e:
             yield e
 
 
-_parse_location_history.return_type = Location  # type: ignore[attr-defined]
-
 _sem_required_keys = ["location", "duration"]
+_sem_required_location_keys = [
+    "placeId",  # some fairly recent (as of 2023) places might miss it
+    "latitudeE7",
+    "longitudeE7",
+]
 
 
 def _check_required_keys(
@@ -174,17 +174,28 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
             yield RuntimeError(f"PlaceVisit: no '{missing_key}' key in '{p}'")
             continue
         try:
-            location = CandidateLocation.from_dict(placeVisit["location"])
+            location_json = placeVisit["location"]
+            missing_location_key = _check_required_keys(
+                location_json, _sem_required_location_keys
+            )
+            if missing_location_key is not None:
+                # handle these fully defensively, since nothing at all we can do if it's missing these properties
+                logger.debug(
+                    f"CandidateLocation: {p}, no key '{missing_location_key}' in {location_json}"
+                )
+                continue
+            location = CandidateLocation.from_dict(location_json)
             duration = placeVisit["duration"]
             yield PlaceVisit(
                 name=location.name,
                 address=location.address,
                 # separators=(",", ":") removes whitespace from json.dumps
-                otherCandidateLocationsJSON=json.dumps(
-                    placeVisit.get("otherCandidateLocations", []), separators=(",", ":")
-                ),
+                otherCandidateLocations=[
+                    CandidateLocation.from_dict(pv)
+                    for pv in placeVisit.get("otherCandidateLocations", [])
+                ],
                 sourceInfoDeviceTag=location.sourceInfoDeviceTag,
-                placeConfidence=placeVisit["placeConfidence"],
+                placeConfidence=placeVisit.get("placeConfidence"),
                 placeVisitImportance=placeVisit.get("placeVisitImportance"),
                 placeVisitType=placeVisit.get("placeVisitType"),
                 visitConfidence=placeVisit["visitConfidence"],
@@ -209,9 +220,6 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 yield e
 
 
-_parse_semantic_location_history.return_type = PlaceVisit  # type: ignore[attr-defined]
-
-
 def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
     json_data = json.loads(p.read_text())
     if "Browser History" not in json_data:
@@ -221,11 +229,10 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
             time_naive = datetime.utcfromtimestamp(item["time_usec"] / 10**6)
             yield ChromeHistory(
                 title=item["title"],
+                # dont convert to https here, this is just the users history
+                # and there's likely lots of items that aren't https
                 url=item["url"],
                 dt=time_naive.replace(tzinfo=timezone.utc),
             )
         except Exception as e:
             yield e
-
-
-_parse_chrome_history.return_type = ChromeHistory  # type: ignore[attr-defined]

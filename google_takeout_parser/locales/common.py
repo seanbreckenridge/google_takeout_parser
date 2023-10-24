@@ -1,27 +1,19 @@
-"""
-This file defines general takout-files.
-locale HandlerMaps should match strings against these files to allow auto-parser selection.
-Parsers are mapped in google_takeout_parser/path_handler.py
-"""
+from pathlib import Path
+from typing import Dict, Optional, Callable, Iterator
 
-from enum import Enum, auto
-from typing import (
-    Dict,
-    Optional
+from ..models import BaseEvent, Res
+from ..parse_html.activity import _parse_html_activity  # noqa: F401
+from ..parse_html.comment import _parse_html_comment_file  # noqa: F401
+from ..parse_json import (  # noqa: F401
+    _parse_likes,
+    _parse_app_installs,
+    _parse_json_activity,
+    _parse_location_history,
+    _parse_semantic_location_history,
+    _parse_chrome_history,
 )
 
-class TakeoutFile(Enum):
-    CHROME_HISTORY = auto(),
-    GPLAYSTORE_INSTALLS = auto(),
-    LOCATION_HISTORY = auto(),
-    LOCATION_HISTORY_SEMANTIC = auto(),
-    YOUTUBE_HISTORY_HTML = auto(),
-    YOUTUBE_HISTORY_JSON = auto(),
-    YOUTUBE_COMMENT = auto(),
-    YOUTUBE_COMMENT_LIVECHAT = auto(),
-    YOUTUBE_LIKES = auto(),
-    # Parent Folder "My Activity"
-    ACTIVITY_HTML = auto(),
-    ACTIVITY_JSON = auto()
+BaseResults = Iterator[Res[BaseEvent]]
 
-HandlerMap = Dict[str, Optional[TakeoutFile]]
+HandlerFunction = Callable[[Path], BaseResults]
+HandlerMap = Dict[str, Optional[HandlerFunction]]

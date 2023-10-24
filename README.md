@@ -12,6 +12,7 @@ Parses data out of your [Google Takeout](https://takeout.google.com/) (History, 
 - [Usage](#usage)
   - [CLI Usage](#cli-usage)
   - [Library Usage](#library-usage)
+- [Legacy HTML Parsing](#legacy-html-parsing)
 - [Contributing](#contributing)
 - [Testing](#testing)
 
@@ -30,6 +31,8 @@ Since the Takeout slowly removes old events over time, I would recommend periodi
 - Youtube and Youtube Music
   - Select JSON as format
   - In options, deselect `music-library-songs`, `music-uploads` and `videos`
+
+**Be sure to select JSON whenever possible**. Code to parse the HTML format is included here, but it is treated as legacy code and comes with worse performance and a myriad of other issues. See [legacy html parsing](#legacy-html-parsing)
 
 The process for getting these isn't that great -- you have to manually go to [takeout.google.com](https://takeout.google.com) every few months, select what you want to export info for, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
 
@@ -51,17 +54,31 @@ This was extracted out of [my HPI](https://github.com/seanbreckenridge/HPI/tree/
 
 ## Installation
 
-Requires `python3.7+`
+Requires `python3.8+`
 
 To install with pip, run:
 
-    pip install google_takeout_parser
+    pip install google-takeout-parser
 
 ## Usage
 
 ### CLI Usage
 
 Can be accessed by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse/merge a takeout and interact with it in a REPL:
+
+```
+Usage: google_takeout_parser parse [OPTIONS] TAKEOUT_DIR
+
+  Parse a takeout directory takeout
+
+Options:
+  -f, --filter [Activity|LikedYoutubeVideo|PlayStoreAppInstall|Location|ChromeHistory|YoutubeComment|PlaceVisit]
+                                  Filter to only show events of this type
+  -a, --action [repl|summary|json]
+                                  What to do with the parsed result  [default: repl]
+  --cache / --no-cache            [default: no-cache]
+  -h, --help                      Show this message and exit.
+```
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
@@ -89,11 +106,14 @@ Counter({'Activity': 366292,
          'ChromeHistory': 4})
 ```
 
-Can also dump the info to JSON; e.g. to filter YouTube links from your Activity:
+Can also dump the info to JSON; e.g. to filter YouTube-related stuff from your Activity using [jq](https://jqlang.github.io/jq/):
 
 ```bash
-google_takeout_parser parse -a json --no-cache ./Takeout-New \
-  | jq '.[] | select(.type == "Activity") | select(.header == "YouTube") | .titleUrl'
+google_takeout_parser --quiet parse -a json -f Activity --no-cache ./Takeout-New |
+  # select stuff like Youtube, m.youtube.com, youtube.com using jq
+  jq '.[] | select(.header | ascii_downcase | test("youtube"))' |
+  # grab the titleUrl, ignoring nulls
+  jq 'select(.titleUrl) | .titleUrl' -r
 ```
 
 Also contains a small utility command to help move/extract the google takeout:
@@ -150,7 +170,7 @@ If you don't want to cache the results but want to merge results from multiple t
 from google_takeout_parser.merge import merge_events, TakeoutParser
 itrs = []  # list of iterators of google events
 for path in ['path/to/Takeout-1599315526' 'path/to/Takeout-1616796262']:
-    # ignore errors
+    # ignore errors, error_policy can be 'yield', 'raise' or 'drop'
     tk = TakeoutParser(path, error_policy="drop")
     itrs.append(tk.parse(cache=False))
 res = list(merge_events(*itrs))
@@ -168,13 +188,18 @@ len(locations)
 
 I personally exclusively use this through the [HPI google takeout](https://github.com/karlicoss/HPI/blob/master/my/google/takeout/parser.py) file, as a configuration layer to locate where my takeouts are on disk, and since that 'automatically' unzips the takeouts (I store them as the zips), i.e., doesn't require me to maintain an unpacked view
 
+### Legacy HTML Parsing
+
+I would _heavily recommend against_ using the HTML format for `My Activity`. It is not always possible to properly parse the metadata, is more prone to errors parsing dates due to local timezones, and takes much longer to parse than the JSON format.
+
+On certain machines, the giant HTML files may even take so much memory that the process is eventually killed for using too much memory. For a workaround, see [split_html](./split_html).
+
 ### Contributing
 
 Just to give a brief overview, to add new functionality (parsing some new folder that this doesn't currently support), you'd need to:
 
 - Add a `model` for it in [`models.py`](google_takeout_parser/models.py) subclassing `BaseEvent` and adding it to the Union at the bottom of the file. That should have a `key` property function which describes each event uniquely (used to merge takeout events)
 - Write a function which takes the `Path` to the file you're trying to parse and converts it to the model you created (See examples in [`parse_json.py`](google_takeout_parser/parse_json.py)). Ideally extract a single raw item from the takeout file add a test for it so its obvious when/if the format changes.
-- Set [the `return_type`](https://github.com/seanbreckenridge/google_takeout_parser/blob/7b1ee8ec3c3f36e6f279f20a9a214b6a3e8775f5/google_takeout_parser/parse_json.py#L71) property on the function, to use for caching/filtering
 - Add a regex match for the file path to the [`DEFAULT_HANDLER_MAP`](https://github.com/seanbreckenridge/google_takeout_parser/blob/2bd64b7373e4a2ac2ace32e03b25ca3b7e901034/google_takeout_parser/path_dispatch.py#L48)
 
 ### Testing

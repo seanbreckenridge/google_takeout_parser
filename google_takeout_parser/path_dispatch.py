@@ -8,14 +8,15 @@ from pathlib import Path
 from typing import (
     Iterator,
     Dict,
+    Union,
     Callable,
     Any,
     Optional,
     List,
     Type,
     Tuple,
-    cast,
-    Union
+    Union,
+    Literal,
 )
 
 from collections import defaultdict
@@ -23,46 +24,115 @@ from collections import defaultdict
 from cachew import cachew
 
 from . import __version__ as _google_takeout_version
-from .compat import Literal
 from .common import Res, PathIsh
 
 from .locales.common import HandlerMap
 from .path_handler import (
     BaseResults,
     HandlerFunction,
-    TakeoutFile,
-    TAKEOUT_PARSER, # maps localized files to parser functions
-    LocalizedHandler 
+    LocalizedHandler,
+    TAKEOUT_PARSER,  # maps localized files to parser functions
 )
-
 
 
 from .cache import takeout_cache_path
 from .log import logger
-from .models import BaseEvent
+from .models import BaseEvent, get_union_args
 
 
-_CacheKeySingle = Type[BaseEvent]
-CacheKey = _CacheKeySingle
+CacheKey = Tuple[Type[BaseEvent], ...]
 
 
 def _cache_key_to_str(c: CacheKey) -> str:
-    return str(c.__name__).casefold()
+    """Convert a cache key to a string"""
+    return "_".join(sorted(p.__name__ for p in c)).casefold()
 
 
-def _parse_handler_return_type(handler: HandlerFunction) -> CacheKey:
-    assert hasattr(
-        handler, "return_type"
-    ), f"Handler functions should have an 'return_type' property which specifies what types this produces. See parse_json.py for an example. No 'return_type' on {handler}"
-    val: Any = getattr(handler, "return_type")
-    assert isinstance(val, type), f"{val} is not  a type"
-    assert BaseEvent in val.__mro__, f"{val} not a subclass of BaseEvent"
-    return cast(_CacheKeySingle, val)
+def _handler_type_cache_key(handler: HandlerFunction) -> CacheKey:
+    # Take a function like Iterator[Union[Item, Exception]] and return Item
+
+    import inspect
+
+    sig = inspect.signature(handler)
+
+    # get the return type of the function
+    # e.g. Iterator[Union[Item, Exception]]
+    return_type = sig.return_annotation
+
+    # this must have a return type
+    if return_type == inspect.Signature.empty:
+        raise TypeError(f"Could not get return type for {handler.__name__}")
+
+    # remove top-level iterator if it has it
+    if return_type._name == "Iterator":
+        return_type = return_type.__args__[0]
+
+    args: Optional[Tuple[Type]] = get_union_args(return_type)  # type: ignore[type-arg]
+    if args is None:
+        raise TypeError(
+            f"Could not get union args for {return_type} in {handler.__name__}"
+        )
+
+    # remove exceptions
+    t_args = tuple(t for t in args if t != Exception)
+
+    for t in t_args:
+        if BaseEvent not in t.__mro__:
+            raise TypeError(
+                f"Return type {t} from {return_type} of {handler.__name__} does not contain BaseEvent"
+            )
+        if t == BaseEvent:
+            raise TypeError(
+                f"Return type {t} from {return_type} of {handler.__name__} is BaseEvent, which is not allowed"
+            )
+
+    return tuple(t_args)
+
+
+def _cache_key_to_type(c: CacheKey) -> Any:
+    """
+    If there's one item in the cache key, return that
+    If there's multiple, return a Union of them
+    """
+    assert len(c) > 0
+    if len(c) == 1:
+        return c[0]
+    else:
+        assert isinstance(c, tuple)
+
+        return Union[c]  # type: ignore[valid-type]
 
 
 HandlerMatch = Res[Optional[HandlerFunction]]
 
 ErrorPolicy = Literal["yield", "raise", "drop"]
+
+
+def _get_locale(
+    locale_name: Optional[str],
+    passed_locale_map: Union[HandlerMap, List[HandlerMap], None] = None,
+) -> List[HandlerMap]:
+    # any passed locale map overrides the environment variable, this would only
+    # really be done by someone calling this manually
+    handlers: List[HandlerMap] = []
+    if passed_locale_map is not None:
+        if isinstance(passed_locale_map, list):
+            for h in passed_locale_map:
+                assert isinstance(h, dict), f"Expected dict, got {type(h)}"
+                handlers.append(h)
+        elif isinstance(passed_locale_map, dict):
+            handlers = [passed_locale_map]
+        else:
+            raise TypeError(
+                f"Expected dict or list of dicts, got {type(passed_locale_map)}"
+            )
+        return handlers
+
+    # if no locale is specified, use the environment variable
+    if locale_name is None:
+        locale_name = os.environ.get("GOOGLE_TAKEOUT_PARSER_LOCALE", "EN")
+
+
 
 class TakeoutParser:
     def __init__(
@@ -80,9 +150,11 @@ class TakeoutParser:
             temporarily extracting the zipfile to extract events or if the
             Takeout dir path isn't at its regular location
         handlers: 0-n handlers resolving Paths to a parser-functions.
-            A handler can either resolve a string to a TakeoutFile or a callable.
-            See path_handler/LocalizedHandler for predefined handlers.
-            Default to LocalizedHandler.EN()
+            A handler can either resolve a path to a callable function which parses the path,
+            or .
+            See locales/all.py for predefined handlers.
+            Default to 'EN', if not overriden by the user or by
+            'GOOGLE_TAKEOUT_PARSER_LOCALE' environment variable.
         error_policy: How to handle exceptions while parsing:
             "yield": return as part of the results (default)
             "raise": raise exceptions
@@ -96,18 +168,6 @@ class TakeoutParser:
         if not self.takeout_dir.exists():
             raise FileNotFoundError(f"{self.takeout_dir} does not exist!")
         self.cachew_identifier: Optional[str] = cachew_identifier
-        
-        # copy handler objects or set default handler
-        self.handlers: List[HandlerMap] = []
-        if isinstance(handlers, list):
-            self.handlers: List[HandlerMap] = handlers
-        elif isinstance(handlers, dict):
-            self.handlers: List[HandlerMap] = [handlers]
-        
-        # triggers also at handlers == None 
-        if(len(self.handlers) == 0):
-            logger.warning(f"No handler specified. Fallback to EN handler.")
-            self.handlers = [LocalizedHandler.EN()]
 
         self.error_policy: ErrorPolicy = error_policy
         self.warn_exceptions = warn_exceptions
@@ -139,19 +199,19 @@ class TakeoutParser:
                 # could be None, if chosen to ignore
                 if h is None:
                     return None
-                elif type(h) is TakeoutFile:
-                    return TAKEOUT_PARSER[h] # resolve TakeoutFile to a parser function
                 elif callable(h):
                     return h
                 else:
-                    RuntimeError(f"Parser for {sf} could not be resolved. You should map either to 'None', a callable or a TakeoutFile")
+                    return RuntimeError(
+                        f"Parser for {sf} could not be resolved. You should map either to 'None', a callable or a TakeoutFile"
+                    )
         else:
             return RuntimeError(f"No function to handle parsing {sf}")
 
     # TODO: cache? may run into issues though
     def dispatch_map(self) -> Dict[Path, HandlerFunction]:
         res: Dict[Path, HandlerFunction] = {}
-        for f in self.takeout_dir.rglob("*"):
+        for f in sorted(self.takeout_dir.rglob("*")):
             if f.name.startswith("."):
                 continue
             if not f.is_file():
@@ -159,22 +219,20 @@ class TakeoutParser:
             rf = f.relative_to(self.takeout_dir)
 
             # try to resolve file to parser-function by checking all supplied handlers
-            
+
             # cache handler information for warning if we can't resolve the file
             file_resolved: bool = False
             handler_exception: Optional[Exception] = None
 
             for handler in self.handlers:
-                file_handler: HandlerMatch = self.__class__._match_handler(
-                    rf, handler
-                )
+                file_handler: HandlerMatch = self.__class__._match_handler(rf, handler)
                 # file_handler matched something
                 if not isinstance(file_handler, Exception):
                     # if not explicitly ignored by the handler map
                     if file_handler is not None:
                         res[f] = file_handler
                     file_resolved = True
-                    break # file was handled, don't check other HandlerMaps
+                    break  # file was handled, don't check other HandlerMaps
                 else:
                     handler_exception = file_handler
 
@@ -196,7 +254,7 @@ class TakeoutParser:
     def _parse_raw(self, filter_type: Optional[Type[BaseEvent]] = None) -> BaseResults:
         """Parse the takeout with no cache. If a filter is specified, only parses those files"""
         handlers = self._group_by_return_type(filter_type=filter_type)
-        for cache_key, result_tuples in handlers.items():
+        for _, result_tuples in handlers.items():
             for path, itr in result_tuples:
                 self._log_handler(path, itr)
                 yield from itr
@@ -250,9 +308,9 @@ class TakeoutParser:
         """
         handlers: Dict[CacheKey, List[Tuple[Path, BaseResults]]] = defaultdict(list)
         for path, handler in self.dispatch_map().items():
-            ckey: CacheKey = _parse_handler_return_type(handler)
+            ckey: CacheKey = _handler_type_cache_key(handler)
             # don't include in the result if we're filtering to a specific type
-            if filter_type is not None and ckey != filter_type:
+            if filter_type is not None and filter_type not in ckey:
                 logger.debug(
                     f"Provided '{filter_type}' as filter, '{ckey}' doesn't match, ignoring '{path}'..."
                 )
@@ -292,14 +350,9 @@ class TakeoutParser:
     ) -> BaseResults:
         handlers = self._group_by_return_type(filter_type=filter_type)
         for cache_key, result_tuples in handlers.items():
-            # Hmm -- I think this should work with CacheKeys that have multiple
-            # types but it may fail -- need to check if one is added
-            #
-            # create a function which groups the iterators for this return type
-            # that all gets stored in one database
-            #
-            # the return type here is purely for cachew, so it can infer the type
-            def _func() -> Iterator[Res[cache_key]]:  # type: ignore[valid-type]
+            _ret_type: Any = _cache_key_to_type(cache_key)
+
+            def _func() -> Iterator[Res[_ret_type]]:  # type: ignore[valid-type]
                 for path, itr in result_tuples:
                     self._log_handler(path, itr)
                     yield from itr
