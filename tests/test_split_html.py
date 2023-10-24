@@ -33,7 +33,7 @@ def in_golang_dir() -> Generator[None, None, None]:
     "TEST_GOLANG_SPLIT" not in os.environ,
     reason="TEST_GOLANG_SPLIT not set, skipping test",
 )
-def test_split_html(in_golang_dir) -> None:
+def test_split_html(in_golang_dir: None) -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         subprocess.run(
             [

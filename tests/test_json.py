@@ -1,5 +1,4 @@
 import json
-import dataclasses
 import datetime
 from pathlib import Path
 from typing import Iterator, Any
@@ -37,13 +36,13 @@ def test_parse_activity_json(tmp_path_f: Path) -> None:
         description=None,
         titleUrl=None,
         subtitles=[
-            ("Computer programming", None),
-            ("Computer Science", None),
-            ("PostgreSQL", None),
-            ("Technology", None),
+            models.Subtitles("Computer programming", None),
+            models.Subtitles("Computer Science", None),
+            models.Subtitles("PostgreSQL", None),
+            models.Subtitles("Technology", None),
         ],
         locationInfos=[
-            (
+            models.LocationInfo(
                 "At this general area",
                 "https://www.google.com/maps/@?api=1&map_action=map&center=lat,lon&zoom=12",
                 "From your Location History",
@@ -98,7 +97,7 @@ def test_parse_app_installs(tmp_path_f: Path) -> None:
     ]
 
 
-def test_location_old(tmp_path_f) -> None:
+def test_location_old(tmp_path_f: Path) -> None:
     contents = '{"locations": [{"timestampMs": "1512947698030", "latitudeE7": 351324213, "longitudeE7": -1122434441, "accuracy": 10}]}'
     fp = tmp_path_f / "file"
     fp.write_text(contents)
@@ -191,12 +190,9 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
     fp = tmp_path_f / "file"
     fp.write_text(json.dumps(data))
     res = list(prj._parse_semantic_location_history(fp))
-    objbase = res[0]
-    assert not isinstance(objbase, Exception)
+    obj = res[0]
+    assert not isinstance(obj, Exception)
     # remove JSON, compare manually below
-    objd = dataclasses.asdict(objbase)
-    del objd["otherCandidateLocationsJSON"]
-    obj = models.PlaceVisit(**objd, otherCandidateLocationsJSON="{}")
     assert obj == models.PlaceVisit(
         lat=55.5555555,
         lng=-106.6666666,
@@ -213,22 +209,20 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
             2017, 12, 11, 1, 20, 6, 106000, tzinfo=datetime.timezone.utc
         ),
         sourceInfoDeviceTag=987654321,
-        otherCandidateLocationsJSON="{}",
         placeConfidence="MEDIUM_CONFIDENCE",
         placeVisitImportance="MAIN",
         placeVisitType="SINGLE_PLACE",
         visitConfidence=65.45,
         editConfirmationStatus="NOT_CONFIRMED",
+        otherCandidateLocations=[
+            models.CandidateLocation(
+                lat=42.3984239,
+                lng=-156.5656565,
+                name="name2",
+                address="address2",
+                locationConfidence=24.475897,
+                placeId="XPRK4E4P",
+                sourceInfoDeviceTag=None,
+            )
+        ],
     )
-
-    assert objbase.otherCandidateLocations == [
-        models.CandidateLocation(
-            lat=42.3984239,
-            lng=-156.5656565,
-            name="name2",
-            address="address2",
-            locationConfidence=24.475897,
-            placeId="XPRK4E4P",
-            sourceInfoDeviceTag=None,
-        )
-    ]

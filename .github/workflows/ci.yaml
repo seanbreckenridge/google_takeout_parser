@@ -31,10 +31,10 @@ jobs:
           pip install '.[testing]'
       - name: Run mypy
         run: |
-          mypy --install-types --non-interactive ./google_takeout_parser
+          mypy --install-types --non-interactive ./google_takeout_parser ./tests
       - name: Run pytest
         run: |
           pytest
       - name: Run flake8
         run: |
-          flake8 ./google_takeout_parser
+          flake8 ./google_takeout_parser ./tests

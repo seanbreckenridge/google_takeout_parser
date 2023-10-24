@@ -22,7 +22,6 @@ from typing import (
 from dataclasses import dataclass
 
 from .common import Res
-from .log import logger
 
 Url = str
 
@@ -167,7 +166,7 @@ class PlaceVisit(BaseEvent):
     startTime: datetime
     endTime: datetime
     sourceInfoDeviceTag: Optional[int]
-    otherCandidateLocationsJSON: str
+    otherCandidateLocations: List[CandidateLocation]
     # TODO: parse these into an enum of some kind? may be prone to breaking due to new values from google though...
     placeConfidence: Optional[str]  # older semantic history (pre-2018 didn't have it)
     placeVisitType: Optional[str]
@@ -182,19 +181,6 @@ class PlaceVisit(BaseEvent):
     @property
     def key(self) -> Tuple[float, float, int, Optional[float]]:
         return self.lat, self.lng, int(self.startTime.timestamp()), self.visitConfidence
-
-    @property
-    def otherCandidateLocations(self) -> List[CandidateLocation]:
-        import json
-
-        loaded = json.loads(self.otherCandidateLocationsJSON)
-        if not isinstance(loaded, list):
-            logger.warning(
-                f"loading candidate locations: expected list, got {type(loaded)}, {loaded}"
-            )
-            return []
-
-        return [CandidateLocation.from_dict(x) for x in loaded]
 
 
 @dataclass
