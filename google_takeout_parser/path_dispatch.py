@@ -139,6 +139,8 @@ class TakeoutParser:
             If not given, approximates using the full path. Useful if you're
             temporarily extracting the zipfile to extract events or if the
             Takeout dir path isn't at its regular location
+        locale_name:
+            The name of the locale to use. See locales/all.py for predefined locales.
         handlers: 0-n handlers resolving Paths to a parser-functions.
             A handler can either resolve a path to a callable function which parses the path,
             or .
