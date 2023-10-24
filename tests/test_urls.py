@@ -1,8 +1,9 @@
 import logging
+from pytest import LogCaptureFixture
 from google_takeout_parser.http_allowlist import _convert_to_https
 
 
-def test__convert_to_https(caplog) -> None:
+def test_convert_to_https(caplog: LogCaptureFixture) -> None:
     with caplog.at_level(logging.DEBUG):
         url = "http://www.google.com"
         assert _convert_to_https(url) == "https://www.google.com"
@@ -22,7 +23,7 @@ def test__convert_to_https(caplog) -> None:
         url = "http://m.youtube.com/watch?v=123"
         assert _convert_to_https(url) == "https://m.youtube.com/watch?v=123"
 
-        from logzero import logger
+        from logzero import logger  # type: ignore[import]
 
         logger.propagate = True
 
