@@ -5,8 +5,6 @@ from .common import HandlerMap
 from .en import HANDLER_MAP as EN_DEFAULT_HANDLER_MAP
 from .de import HANDLER_MAP as DE_DEFAULT_HANDLER_MAP
 
-from .all import LOCALES as ALL_LOCALES
-
 LOCALES = {
     "EN": EN_DEFAULT_HANDLER_MAP,
     "DE": DE_DEFAULT_HANDLER_MAP,
