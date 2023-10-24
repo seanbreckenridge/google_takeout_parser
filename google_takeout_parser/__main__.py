@@ -44,6 +44,8 @@ FILTER_OPTIONS: Dict[str, Type[DEFAULT_MODEL_TYPE]] = {
     t.__name__: t for t in model_types
 }
 
+from .locales.all import LOCALES
+
 SHARED = [
     click.option("--cache/--no-cache", default=False, show_default=True),
     click.option(
@@ -57,10 +59,12 @@ SHARED = [
     click.option(
         "-l",
         "--locale",
-        type=click.Choice(["en", "de"]),
-        default="en",
-        help="Used DEFAULT_HANDLER_MAP resoling folder names to parser models",
-        show_default=True,
+        type=click.Choice(LOCALES, case_sensitive=False),
+        default=None,
+        help="Locale to use for matching filenames [default: EN]",
+        show_default=False,
+        envvar="GOOGLE_TAKEOUT_PARSER_LOCALE",
+        show_envvar=True,
     ),
     click.option(
         "-f",
@@ -114,21 +118,18 @@ def _handle_action(res: List[Any], action: str) -> None:
 @shared_options
 @click.argument("TAKEOUT_DIR", type=click.Path(exists=True), required=True)
 def parse(
-    cache: bool, locale: str, action: str, takeout_dir: str, filter_: str
+    cache: bool, locale: Optional[str], action: str, takeout_dir: str, filter_: str
 ) -> None:
     """
     Parse a takeout directory takeout
     """
-    from .common import Res
-    from .models import BaseEvent
     from .path_dispatch import TakeoutParser
     from .log import logger
 
     tp = TakeoutParser(
         takeout_dir,
         error_policy="drop",
-        # None if no handler found, in this case TakeoutParser defaults
-        handlers=LocalizedHandler.handler_from_string(locale),
+        locale_name=locale,
     )
     # note: actually no exceptions since since they're dropped
     if cache:
@@ -148,7 +149,13 @@ def parse(
 @main.command(short_help="merge multiple takeout directories")
 @shared_options
 @click.argument("TAKEOUT_DIR", type=click.Path(exists=True), nargs=-1, required=True)
-def merge(cache: bool, action: str, takeout_dir: Sequence[str], filter_: str) -> None:
+def merge(
+    cache: bool,
+    locale: Optional[str],
+    action: str,
+    takeout_dir: Sequence[str],
+    filter_: str,
+) -> None:
     """
     Parse and merge multiple takeout directories
     """
@@ -164,13 +171,25 @@ def merge(cache: bool, action: str, takeout_dir: Sequence[str], filter_: str) ->
             logger.warn(
                 "As it would otherwise re-compute every time, filtering happens after loading from cache"
             )
-        res = list(cached_merge_takeouts(list(takeout_dir)))
+        res = list(cached_merge_takeouts(list(takeout_dir), locale_name=locale))
         if filter_:
             filter_type = FILTER_OPTIONS[filter_]
             res = [r for r in res if isinstance(r, filter_type)]
     else:
         filter_type = FILTER_OPTIONS[filter_] if filter_ else None
-        res = list(merge_events(*iter([TakeoutParser(p).parse(cache=False, filter_type=filter_type) for p in takeout_dir])))  # type: ignore[arg-type]
+        res = list(
+            merge_events(
+                *iter(  # type: ignore
+                    [
+                        TakeoutParser(p, locale_name=locale).parse(
+                            cache=False,
+                            filter_type=filter_type,
+                        )
+                        for p in takeout_dir
+                    ]
+                )
+            )
+        )
     _handle_action(res, action)
 
 

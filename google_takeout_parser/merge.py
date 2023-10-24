@@ -3,7 +3,7 @@ Helper module to remove duplicate events when combining takeouts
 """
 
 from itertools import chain
-from typing import Set, Tuple, List, Any
+from typing import Set, Tuple, List, Any, Optional
 
 
 from cachew import cachew
@@ -28,7 +28,7 @@ from .path_dispatch import TakeoutParser
     force_file=True,
     logger=logger,
 )
-def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> CacheResults:
+def cached_merge_takeouts(takeout_paths: List[PathIsh], locale_name: Optional[str]) -> CacheResults:
     """
     Cached version of merge events, merges each of these into one cachew database
 
@@ -46,7 +46,7 @@ def cached_merge_takeouts(takeout_paths: List[PathIsh]) -> CacheResults:
     """
     itrs: List[CacheResults] = []
     for pth in takeout_paths:
-        tk = TakeoutParser(pth, warn_exceptions=True)
+        tk = TakeoutParser(pth, warn_exceptions=True, locale_name=locale_name)
         # have to ignore type conversion here -- its returns BaseEvent,
         # while CacheResults is the combined Union type
         itrs.append(tk.parse(cache=True))  # type: ignore[misc,arg-type]

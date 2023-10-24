@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import (
     Iterator,
     Dict,
-    Union,
     Callable,
     Any,
     Optional,
@@ -26,13 +25,8 @@ from cachew import cachew
 from . import __version__ as _google_takeout_version
 from .common import Res, PathIsh
 
-from .locales.common import HandlerMap
-from .path_handler import (
-    BaseResults,
-    HandlerFunction,
-    LocalizedHandler,
-    TAKEOUT_PARSER,  # maps localized files to parser functions
-)
+from .locales.main import resolve_locale
+from .locales.common import BaseResults, HandlerFunction, HandlerMap
 
 
 from .cache import takeout_cache_path
@@ -108,12 +102,12 @@ HandlerMatch = Res[Optional[HandlerFunction]]
 ErrorPolicy = Literal["yield", "raise", "drop"]
 
 
-def _get_locale(
-    locale_name: Optional[str],
-    passed_locale_map: Union[HandlerMap, List[HandlerMap], None] = None,
+def _handler_map_to_list(
+    passed_locale_map: Union[HandlerMap, List[HandlerMap], None]
 ) -> List[HandlerMap]:
-    # any passed locale map overrides the environment variable, this would only
-    # really be done by someone calling this manually
+    """
+    converts user input to a list of handler maps
+    """
     handlers: List[HandlerMap] = []
     if passed_locale_map is not None:
         if isinstance(passed_locale_map, list):
@@ -126,12 +120,7 @@ def _get_locale(
             raise TypeError(
                 f"Expected dict or list of dicts, got {type(passed_locale_map)}"
             )
-        return handlers
-
-    # if no locale is specified, use the environment variable
-    if locale_name is None:
-        locale_name = os.environ.get("GOOGLE_TAKEOUT_PARSER_LOCALE", "EN")
-
+    return handlers
 
 
 class TakeoutParser:
@@ -139,6 +128,7 @@ class TakeoutParser:
         self,
         takeout_dir: PathIsh,
         cachew_identifier: Optional[str] = None,
+        locale_name: Optional[str] = None,
         handlers: Union[HandlerMap, List[HandlerMap], None] = None,
         warn_exceptions: bool = True,
         error_policy: ErrorPolicy = "yield",
@@ -171,7 +161,27 @@ class TakeoutParser:
 
         self.error_policy: ErrorPolicy = error_policy
         self.warn_exceptions = warn_exceptions
-        self._warn_if_no_activity()
+        self.handlers = self._resolve_locale_handler_map(
+            locale_name=locale_name, passed_locale_map=handlers
+        )
+        # TODO: check if theres some directory we expect to be there based on the computed handler map instead?
+        # self._warn_if_no_activity()
+
+    @staticmethod
+    def _resolve_locale_handler_map(
+        *,
+        locale_name: Optional[str],
+        passed_locale_map: Union[HandlerMap, List[HandlerMap], None] = None,
+    ) -> List[HandlerMap]:
+        # any passed locale map overrides the environment variable, this would only
+        # really be done by someone calling this manually in python
+        handlers = _handler_map_to_list(passed_locale_map)
+
+        # if no locale is specified, use the environment variable
+        if locale_name is None:
+            locale_name = os.environ.get("GOOGLE_TAKEOUT_PARSER_LOCALE", "EN")
+
+        return resolve_locale(locale_name, handlers)
 
     def _warn_if_no_activity(self) -> None:
         # most common is probably 'My Activity'?
@@ -201,10 +211,6 @@ class TakeoutParser:
                     return None
                 elif callable(h):
                     return h
-                else:
-                    return RuntimeError(
-                        f"Parser for {sf} could not be resolved. You should map either to 'None', a callable or a TakeoutFile"
-                    )
         else:
             return RuntimeError(f"No function to handle parsing {sf}")
 

@@ -16,7 +16,9 @@ HANDLER_MAP: HandlerMap = {
     r"YouTube( und YouTube Music)?/Playlists/Liked videos.json": _parse_likes,
     r"YouTube( und Youtube Music)?/*": None,  # ignore anything else in Youtube
     # Activities
-    r"Meine Aktivitäten/.*?Meine\s*Aktivitäten.html": _parse_html_activity,
+    # parse html activity is intentionally not used here, its deprecated and for languages other
+    # than english would require restructuring the html parsing significantly
+    r"Meine Aktivitäten/.*?Meine\s*Aktivitäten.html": None,
     r"Meine Aktivitäten/.*?Meine\s*Aktivitäten.json": _parse_json_activity,
     # Ignored Google Services
     r"Google Play-Spieldienste/": None,
