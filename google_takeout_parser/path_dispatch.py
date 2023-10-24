@@ -153,7 +153,7 @@ class TakeoutParser:
             A handler can either resolve a path to a callable function which parses the path,
             or .
             See locales/all.py for predefined handlers.
-            Default to 'EN', if not overriden by the user or by
+            Default to 'EN', if not overridden by the user or by
             'GOOGLE_TAKEOUT_PARSER_LOCALE' environment variable.
         error_policy: How to handle exceptions while parsing:
             "yield": return as part of the results (default)
@@ -174,7 +174,7 @@ class TakeoutParser:
         self.handlers = self._resolve_locale_handler_map(
             locale_name=locale_name, passed_locale_map=handlers
         )
-        # TODO: check if theres some directory we expect to be there based on the computed handler map instead?
+        # TODO: check if there's some directory we expect to be there based on the computed handler map instead?
         # self._warn_if_no_activity()
 
     @staticmethod

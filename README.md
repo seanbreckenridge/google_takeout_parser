@@ -161,7 +161,7 @@ uncached = list(tp.parse())
 cached = list(tp.parse(cache=True))
 ```
 
-To parse a custom locale, refer the typical handler map pattern in [`locales/en.py`](google_takeout_parser/locales/en.py), and pass `handlers` to the `TakeoutParser`
+To parse a locale this doesn't support yet, you can create a dictionary which maps the names of the files to functions, see [`locales/en.py`](google_takeout_parser/locales/en.py) for an example. That can be passed as `handlers` to `TakeoutParser`
 
 To cache and merge takeouts (maintains a single dependency on the paths you pass -- so if you change the input paths, it does a full recompute)
 
@@ -187,6 +187,7 @@ The events this returns is a combination of all types in the [`models.py`](googl
 ```python
 from google_takeout_parser.models import Location
 from google_takeout_parser.path_dispatch import TakeoutParser
+# filter_type can be a list to filter multiple types
 locations = list(TakeoutParser("path/to/Takeout").parse(filter_type=Location))
 len(locations)
 99913
