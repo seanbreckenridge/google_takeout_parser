@@ -28,7 +28,9 @@ from .path_dispatch import TakeoutParser
     force_file=True,
     logger=logger,
 )
-def cached_merge_takeouts(takeout_paths: List[PathIsh], locale_name: Optional[str]) -> CacheResults:
+def cached_merge_takeouts(
+    takeout_paths: List[PathIsh], locale_name: Optional[str]
+) -> CacheResults:
     """
     Cached version of merge events, merges each of these into one cachew database
 

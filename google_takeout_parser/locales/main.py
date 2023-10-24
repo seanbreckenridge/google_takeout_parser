@@ -37,7 +37,9 @@ def resolve_locale(
 
     ll = locale.upper()
     if ll in LOCALES:
-        logger.debug(f"Using locale {ll}. To override set, GOOGLE_TAKEOUT_PARSER_LOCALE")
+        logger.debug(
+            f"Using locale {ll}. To override set, GOOGLE_TAKEOUT_PARSER_LOCALE"
+        )
         return [LOCALES[ll]]
     else:
         logger.warning(f"Unknown locale {locale}, using default (EN)")

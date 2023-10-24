@@ -1,4 +1,14 @@
-from .common import HandlerMap, _parse_html_activity, _parse_json_activity, _parse_html_comment_file, _parse_chrome_history, _parse_app_installs, _parse_semantic_location_history, _parse_location_history, _parse_likes
+from .common import (
+    HandlerMap,
+    _parse_html_activity,
+    _parse_json_activity,
+    _parse_html_comment_file,
+    _parse_chrome_history,
+    _parse_app_installs,
+    _parse_semantic_location_history,
+    _parse_location_history,
+    _parse_likes,
+)
 
 HANDLER_MAP: HandlerMap = {
     # Chrome
