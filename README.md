@@ -211,6 +211,8 @@ Just to give a brief overview, to add new functionality (parsing some new folder
 
 Dont feel required to add support for all locales, its somewhat annoying to swap languages on google, request a takeout, wait for it to process and then swap back.
 
+Though, if your takeout is in some language this doesn't support, you can [create an issue](https://github.com/seanbreckenridge/google_takeout_parser/issues/new?title=support+new+locale) with the file structure (run `find Takeout` and/or `tree Takeout`), or contribute a locale file by creating a `path -> function mapping`, and adding it to the global `LOCALES` variables in `locales/all.py` and `locales/main.py`
+
 ### Testing
 
 ```bash
