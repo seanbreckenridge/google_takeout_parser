@@ -32,7 +32,7 @@ Since the Takeout slowly removes old events over time, I would recommend periodi
   - Select JSON as format
   - In options, deselect `music-library-songs`, `music-uploads` and `videos`
 
-**Be sure to select JSON whenever possible**. Code to parse the HTML format is included here, but it is treated as legacy code and comes with worse performance and a myriad of other issues. See [legacy html parsing](#legacy-html-parsing)
+**Be sure to select JSON instead of HTML whenever possible**. Code to parse the HTML format is included here, but it is treated as legacy code and comes with worse performance and a myriad of other issues. See [legacy html parsing](#legacy-html-parsing)
 
 The process for getting these isn't that great -- you have to manually go to [takeout.google.com](https://takeout.google.com) every few months, select what you want to export info for, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
 
