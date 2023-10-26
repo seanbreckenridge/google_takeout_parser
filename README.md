@@ -65,7 +65,7 @@ To install with pip, run:
 The directory structure of the google takeout changes depending on your Google accounts main language. If this doesn't support your language, see [contributing](#contributing). This currently supports:
 
 - `EN`: English
-- `DE`: German
+- `DE`: German (thanks to [@parthux1](https://github.com/parthux1)!)
 
 ### CLI Usage
 
