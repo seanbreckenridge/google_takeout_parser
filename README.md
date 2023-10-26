@@ -218,6 +218,8 @@ Dont feel required to add support for all locales, its somewhat annoying to swap
 
 Though, if your takeout is in some language this doesn't support, you can [create an issue](https://github.com/seanbreckenridge/google_takeout_parser/issues/new?title=support+new+locale) with the file structure (run `find Takeout` and/or `tree Takeout`), or contribute a locale file by creating a `path -> function mapping`, and adding it to the global `LOCALES` variables in `locales/all.py` and `locales/main.py`
 
+Ideally, you would select everything when doing a takeout (not just the `My Activity`/`Chrome`/`Location History` like I suggested above), so [paths that are not parsed can be ignored properly](https://github.com/seanbreckenridge/google_takeout_parser/blob/4981c241c04b5b37265710dcc6ca00f19d1eafb4/google_takeout_parser/locales/en.py#L105C1-L113).
+
 ### Testing
 
 ```bash
