@@ -220,7 +220,7 @@ class TakeoutParser:
         )
         locale_scores: Dict[str, int] = {
             locale_name: len(
-                cls.dispatch_map_pure(
+                cls._dispatch_map_pure(
                     takeout_dir=takeout_dir,
                     handler_maps=[locale_map],
                     warn_exceptions=False,  # dont warn here, we expect a bunch of path misses
@@ -280,14 +280,14 @@ class TakeoutParser:
             return RuntimeError(f"No function to handle parsing {sf}")
 
     def dispatch_map(self) -> Dict[Path, HandlerFunction]:
-        return self.dispatch_map_pure(
+        return self._dispatch_map_pure(
             takeout_dir=self.takeout_dir,
             handler_maps=self.handlers,
             warn_exceptions=self.warn_exceptions,
         )
 
     @classmethod
-    def dispatch_map_pure(
+    def _dispatch_map_pure(
         cls,
         *,
         takeout_dir: Path,
