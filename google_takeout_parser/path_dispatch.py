@@ -232,7 +232,7 @@ class TakeoutParser:
 
         logger.debug(f"Locale scores: {locale_scores}")
 
-        # if theres multiple max values, return both of them
+        # if there's multiple max values, return both of them
         max_score = max(locale_scores.values())
 
         matched_locales = [

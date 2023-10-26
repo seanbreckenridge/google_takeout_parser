@@ -62,6 +62,11 @@ To install with pip, run:
 
 ## Usage
 
+The directory structure of the google takeout changes depending on your Google accounts main language. If this doesn't support your language, see [contributing](#contributing). This currently supports:
+
+- `EN`: English
+- `DE`: German
+
 ### CLI Usage
 
 Can be accessed by either `google_takeout_parser` or `python -m google_takeout_parser`. Offers a basic interface to list/clear the cache directory, and/or parse/merge a takeout and interact with it in a REPL:
