@@ -245,6 +245,8 @@ class TakeoutParser:
     def _warn_if_no_activity(self) -> None:
         expect_one_of = get_paths_for_functions()
 
+        logger.debug(f"Trying to match one of: {expect_one_of}")
+
         path_names = [p.name for p in self.takeout_dir.iterdir()]
 
         for activity_dir in expect_one_of:

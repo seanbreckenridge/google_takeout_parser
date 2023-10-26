@@ -1,4 +1,4 @@
-from typing import List, Sequence, Optional, Set
+from typing import List, Sequence, Optional
 from pathlib import Path
 
 from .common import HandlerFunction
@@ -13,7 +13,7 @@ LOCALES = {
 
 def get_paths_for_functions(
     functions: Optional[Sequence[HandlerFunction]] = None,
-) -> Set[str]:
+) -> List[str]:
     """
     returns the base directory name for which the json activity parses for every locale
 
@@ -52,4 +52,5 @@ def get_paths_for_functions(
                 if function == match_func:
                     paths.add(Path(path.strip("/")).parts[0])
 
-    return paths
+    # sort to prevent behaviour changing based on avaiable locales
+    return list(sorted(paths))
