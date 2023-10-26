@@ -26,8 +26,8 @@ from cachew import cachew
 from . import __version__ as _google_takeout_version
 from .common import Res, PathIsh
 
-from .locales.main import resolve_locale
 from .locales.common import BaseResults, HandlerFunction, HandlerMap
+from .locales.main import LOCALES, get_json_activity_paths
 
 
 from .cache import takeout_cache_path
@@ -118,7 +118,7 @@ def _handler_map_to_list(
     """
     handlers: List[HandlerMap] = []
     if passed_locale_map is not None:
-        if isinstance(passed_locale_map, list):
+        if isinstance(passed_locale_map, Sequence):
             for h in passed_locale_map:
                 assert isinstance(h, dict), f"Expected dict, got {type(h)}"
                 handlers.append(h)
@@ -172,38 +172,87 @@ class TakeoutParser:
         self.error_policy: ErrorPolicy = error_policy
         self.warn_exceptions = warn_exceptions
         self.handlers = self._resolve_locale_handler_map(
-            locale_name=locale_name, passed_locale_map=handlers
+            takeout_dir=self.takeout_dir,
+            locale_name=locale_name,
+            passed_locale_map=handlers,
         )
-        # TODO: check if there's some directory we expect to be there based on the computed handler map instead?
-        # self._warn_if_no_activity()
+        self._warn_if_no_activity()
 
-    @staticmethod
+    @classmethod
     def _resolve_locale_handler_map(
+        cls,
         *,
+        takeout_dir: Path,
         locale_name: Optional[str],
         passed_locale_map: Union[HandlerMap, List[HandlerMap], None] = None,
     ) -> List[HandlerMap]:
+
         # any passed locale map overrides the environment variable, this would only
         # really be done by someone calling this manually in python
         handlers = _handler_map_to_list(passed_locale_map)
+        if len(handlers) > 0:
+            return handlers
 
         # if no locale is specified, use the environment variable
         if locale_name is None:
-            locale_name = os.environ.get("GOOGLE_TAKEOUT_PARSER_LOCALE", "EN")
+            locale_name = os.environ.get("GOOGLE_TAKEOUT_PARSER_LOCALE")
 
-        return resolve_locale(locale_name, handlers)
+        if locale_name is not None:
+            logger.debug(f"User specified locale: {locale_name}")
+
+        if locale_name is not None and locale_name in LOCALES:
+            logger.debug(
+                f"Using locale {locale_name}. To override set, GOOGLE_TAKEOUT_PARSER_LOCALE"
+            )
+            return [LOCALES[locale_name]]
+
+        # if not provided, guess by using the dispatch map with all known handlers,
+        # using the one with the maximum number of matches
+        return cls._guess_locale(takeout_dir=takeout_dir)
+
+    @classmethod
+    def _guess_locale(
+        cls,
+        *,
+        takeout_dir: Path,
+    ) -> List[HandlerMap]:
+        logger.debug(
+            "No locale specified, guessing based on how many filepaths match from each locale"
+        )
+        locale_scores: Dict[str, int] = {
+            locale_name: len(
+                cls.dispatch_map_pure(
+                    takeout_dir=takeout_dir,
+                    handler_maps=[locale_map],
+                    warn_exceptions=False,  # dont warn here, we expect a bunch of path misses
+                )
+            )
+            for locale_name, locale_map in LOCALES.items()
+        }
+
+        logger.debug(f"Locale scores: {locale_scores}")
+
+        # if theres multiple max values, return both of them
+        max_score = max(locale_scores.values())
+
+        matched_locales = [
+            name for name, score in locale_scores.items() if score == max_score
+        ]
+
+        logger.debug(f"Using locales: {matched_locales}")
+
+        return [LOCALES[name] for name in matched_locales]
 
     def _warn_if_no_activity(self) -> None:
-        # most common is probably 'My Activity'?
-        # can be used as a check to see if the user passed a wrong directory
+        expect_one_of = get_json_activity_paths()
 
-        # TODO: extract activity_dir from selected DEFAULT_HANDLER_MAP
-        activity_dir = "My Activity"
-        expected = self.takeout_dir / activity_dir
-        if not expected.exists():
-            logger.warning(
-                f"Warning: given '{self.takeout_dir}', expected the '{activity_dir}' directory at '{expected}'. Perhaps you passed the wrong location?"
-            )
+        for activity_dir in expect_one_of:
+            if (self.takeout_dir / activity_dir).exists():
+                return
+
+        logger.warning(
+            f"Warning: given '{self.takeout_dir}', expected one of '{expect_one_of}' to exist, perhaps you passed the wrong location?"
+        )
 
     @staticmethod
     def _match_handler(p: Path, handler: HandlerMap) -> HandlerMatch:
@@ -224,15 +273,31 @@ class TakeoutParser:
         else:
             return RuntimeError(f"No function to handle parsing {sf}")
 
-    # TODO: cache? may run into issues though
     def dispatch_map(self) -> Dict[Path, HandlerFunction]:
+        return self.dispatch_map_pure(
+            takeout_dir=self.takeout_dir,
+            handler_maps=self.handlers,
+            warn_exceptions=self.warn_exceptions,
+        )
+
+    @classmethod
+    def dispatch_map_pure(
+        cls,
+        *,
+        takeout_dir: Path,
+        handler_maps: List[HandlerMap],
+        warn_exceptions: bool = True,
+    ) -> Dict[Path, HandlerFunction]:
+        """
+        A pure function for dispatch map so it can be used in other contexts (e.g. to detect locales by scanning the directory)
+        """
         res: Dict[Path, HandlerFunction] = {}
-        for f in sorted(self.takeout_dir.rglob("*")):
+        for f in sorted(takeout_dir.rglob("*")):
             if f.name.startswith("."):
                 continue
             if not f.is_file():
                 continue
-            rf = f.relative_to(self.takeout_dir)
+            rf = f.relative_to(takeout_dir)
 
             # try to resolve file to parser-function by checking all supplied handlers
 
@@ -240,8 +305,8 @@ class TakeoutParser:
             file_resolved: bool = False
             handler_exception: Optional[Exception] = None
 
-            for handler in self.handlers:
-                file_handler: HandlerMatch = self.__class__._match_handler(rf, handler)
+            for handler in handler_maps:
+                file_handler: HandlerMatch = cls._match_handler(rf, handler)
                 # file_handler matched something
                 if not isinstance(file_handler, Exception):
                     # if not explicitly ignored by the handler map
@@ -256,7 +321,7 @@ class TakeoutParser:
                 # this is an exception specifying an unhandled file
                 # this shouldn't cause a fatal error, so don't check
                 # error_policy here, just warn the user
-                if self.warn_exceptions:
+                if warn_exceptions:
                     logger.warning(str(handler_exception))
 
         return res
@@ -293,9 +358,7 @@ class TakeoutParser:
                 elif self.error_policy == "drop":
                     continue
 
-    def parse(
-        self, cache: bool = False, filter_type: FilterType = None
-    ) -> BaseResults:
+    def parse(self, cache: bool = False, filter_type: FilterType = None) -> BaseResults:
         """
         Parses the Takeout
 
@@ -367,9 +430,7 @@ class TakeoutParser:
             part = os.path.join(*self.takeout_dir.parts[1:])
         return str(base / part / _cache_key_to_str(cache_key))
 
-    def _cached_parse(
-        self, filter_type: FilterType = None
-    ) -> BaseResults:
+    def _cached_parse(self, filter_type: FilterType = None) -> BaseResults:
         handlers = self._group_by_return_type(filter_type=filter_type)
         for cache_key, result_tuples in handlers.items():
             _ret_type: Any = _cache_key_to_type(cache_key)

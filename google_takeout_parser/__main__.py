@@ -62,7 +62,7 @@ SHARED = [
         type=click.Choice(LOCALES, case_sensitive=False),
         default=None,
         help="Locale to use for matching filenames [default: EN]",
-        show_default=False,
+        show_default=True,
         envvar="GOOGLE_TAKEOUT_PARSER_LOCALE",
         show_envvar=True,
     ),

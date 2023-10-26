@@ -1,4 +1,5 @@
 from google_takeout_parser.path_dispatch import TakeoutParser
+from google_takeout_parser.locales.main import LOCALES
 
 from .common import testdata
 
@@ -12,6 +13,8 @@ def test_structure() -> None:
     assert len(files) == 53
     assert len(m) == 35
 
+    assert tk._guess_locale(takeout_dir=tk.takeout_dir) == [LOCALES["EN"]]
+
 
 def test_structure_ger() -> None:
     recent_takeout = testdata / "RecentTakeout_ger"
@@ -21,3 +24,5 @@ def test_structure_ger() -> None:
     m = tk.dispatch_map()
     assert len(files) == 51
     assert len(m) == 7
+
+    assert tk._guess_locale(takeout_dir=tk.takeout_dir) == [LOCALES["DE"]]

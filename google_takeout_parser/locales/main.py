@@ -1,7 +1,6 @@
-from typing import Optional, List
+from typing import List
+from pathlib import Path
 
-from ..log import logger
-from .common import HandlerMap
 from .en import HANDLER_MAP as EN_DEFAULT_HANDLER_MAP
 from .de import HANDLER_MAP as DE_DEFAULT_HANDLER_MAP
 
@@ -11,35 +10,30 @@ LOCALES = {
 }
 
 
-def _log_locale_options() -> None:
-    logger.info(
-        f"To silence this message, set the GOOGLE_TAKEOUT_PARSER_LOCALE to one of:: {', '.join(map(repr, LOCALES.keys()))}"
-    )
+def get_json_activity_paths() -> List[str]:
+    """
+    returns the base directory name for which the json activity parses for every locale
 
+    for example, the EN path is:
+    My Activity/Ads/MyActivity.json
 
-def resolve_locale(
-    locale: Optional[str],
-    additional_handlers: List[HandlerMap],
-) -> List[HandlerMap]:
-    # additional_handlers is passed by the user in python, should override
-    if additional_handlers:
-        logger.debug(
-            f"Using additional handlers (passed in python code, not based on environment variable): {additional_handlers}"
-        )
-        return additional_handlers
+    in german its
+    Meine Aktivität/Werbung/MeineAktivität.json
 
-    if locale is None:
-        logger.info("No locale specified, using default (EN)")
-        _log_locale_options()
-        return [EN_DEFAULT_HANDLER_MAP]
+    this will return ['My Activity', 'Meine Aktivität']
 
-    ll = locale.upper()
-    if ll in LOCALES:
-        logger.debug(
-            f"Using locale {ll}. To override set, GOOGLE_TAKEOUT_PARSER_LOCALE"
-        )
-        return [LOCALES[ll]]
-    else:
-        logger.warning(f"Unknown locale {locale}, using default (EN)")
-        _log_locale_options()
-        return [EN_DEFAULT_HANDLER_MAP]
+    this is used in HPI to find the correct directory to parse
+
+    note: should probably remove whitespace as well, so like:
+
+    ['My Activity', 'MyActivity', 'Meine Aktivität', 'MeineAktivität'] when testing against filepaths
+    """
+    from ..parse_json import _parse_json_activity
+
+    paths = []
+    for handler_map in LOCALES.values():
+        for path, function in handler_map.items():
+            if function == _parse_json_activity:
+                paths.append(Path(path.strip("/")).parts[0])
+
+    return paths
