@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Sequence, Optional, Set
 from pathlib import Path
 
+from .common import HandlerFunction
 from .en import HANDLER_MAP as EN_DEFAULT_HANDLER_MAP
 from .de import HANDLER_MAP as DE_DEFAULT_HANDLER_MAP
 
@@ -10,9 +11,13 @@ LOCALES = {
 }
 
 
-def get_json_activity_paths() -> List[str]:
+def get_paths_for_functions(
+    functions: Optional[Sequence[HandlerFunction]] = None,
+) -> Set[str]:
     """
     returns the base directory name for which the json activity parses for every locale
+
+    if functions are passed, uses those instead of the default ones
 
     for example, the EN path is:
     My Activity/Ads/MyActivity.json
@@ -28,12 +33,23 @@ def get_json_activity_paths() -> List[str]:
 
     ['My Activity', 'MyActivity', 'Meine Aktivität', 'MeineAktivität'] when testing against filepaths
     """
-    from ..parse_json import _parse_json_activity
+    from ..parse_json import (
+        _parse_json_activity,
+        _parse_location_history,
+        _parse_chrome_history,
+    )
 
-    paths = []
+    funcs: List[HandlerFunction] = (
+        list(functions)
+        if functions is not None
+        else [_parse_json_activity, _parse_location_history, _parse_chrome_history]
+    )
+
+    paths = set()
     for handler_map in LOCALES.values():
-        for path, function in handler_map.items():
-            if function == _parse_json_activity:
-                paths.append(Path(path.strip("/")).parts[0])
+        for path, match_func in handler_map.items():
+            for function in funcs:
+                if function == match_func:
+                    paths.add(Path(path.strip("/")).parts[0])
 
     return paths

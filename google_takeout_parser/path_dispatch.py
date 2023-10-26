@@ -27,7 +27,7 @@ from . import __version__ as _google_takeout_version
 from .common import Res, PathIsh
 
 from .locales.common import BaseResults, HandlerFunction, HandlerMap
-from .locales.main import LOCALES, get_json_activity_paths
+from .locales.main import LOCALES, get_paths_for_functions
 
 
 from .cache import takeout_cache_path
@@ -186,7 +186,6 @@ class TakeoutParser:
         locale_name: Optional[str],
         passed_locale_map: Union[HandlerMap, List[HandlerMap], None] = None,
     ) -> List[HandlerMap]:
-
         # any passed locale map overrides the environment variable, this would only
         # really be done by someone calling this manually in python
         handlers = _handler_map_to_list(passed_locale_map)
@@ -244,11 +243,16 @@ class TakeoutParser:
         return [LOCALES[name] for name in matched_locales]
 
     def _warn_if_no_activity(self) -> None:
-        expect_one_of = get_json_activity_paths()
+        expect_one_of = get_paths_for_functions()
+
+        path_names = [p.name for p in self.takeout_dir.iterdir()]
 
         for activity_dir in expect_one_of:
-            if (self.takeout_dir / activity_dir).exists():
-                return
+            # match regex path
+            for p in path_names:
+                if re.match(activity_dir, str(p)):
+                    logger.debug(f"Matched expected directory: {activity_dir}")
+                    return
 
         logger.warning(
             f"Warning: given '{self.takeout_dir}', expected one of '{expect_one_of}' to exist, perhaps you passed the wrong location?"

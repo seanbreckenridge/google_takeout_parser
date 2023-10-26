@@ -1,9 +1,14 @@
-from google_takeout_parser.locales.main import get_json_activity_paths, LOCALES
+from google_takeout_parser.locales.main import get_paths_for_functions
 
 
 def test_locale_paths() -> None:
-    jpths = get_json_activity_paths()
-    assert len(jpths) > len(LOCALES)
-
-    assert "My Activity" in jpths
-    assert "Meine Aktivitäten" in jpths
+    jpths = get_paths_for_functions()
+    assert jpths == {
+        "Chrome",
+        "Location History",
+        "Meine Aktivitäten",
+        "My Activity",
+        "Standortverlauf",
+        "YouTube( and YouTube Music)?",
+        "YouTube( und YouTube Music)?",
+    }
