@@ -58,5 +58,7 @@ def test_locale_names() -> None:
     from google_takeout_parser.locales.main import LOCALES
     from google_takeout_parser.locales.all import LOCALES as ALL_LOCALES
 
-    assert len(LOCALES) == len(ALL_LOCALES)
-    assert set(LOCALES.keys()) == set(ALL_LOCALES)
+    errmsg = "LOCALES in all.py/main.py must be the same length and have the same keys, you probably added a locale to one of these and not the other"
+
+    assert len(LOCALES) == len(ALL_LOCALES), errmsg
+    assert set(LOCALES.keys()) == set(ALL_LOCALES), errmsg

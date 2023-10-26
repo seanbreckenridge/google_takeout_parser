@@ -87,7 +87,7 @@ Options:
   -h, --help                      Show this message and exit.
 ```
 
-If you use a language this doesn't support, you can [create an issue](https://github.com/seanbreckenridge/google_takeout_parser/issues/new?title=support+new+locale) with the file structure (run `find Takeout` and/or `tree Takeout`)
+If you use a language this doesn't support, see [contributing](#contributing).
 
 To clear the `cachew` cache: `google_takeout_parser cache_dir clear`
 
