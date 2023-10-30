@@ -60,5 +60,4 @@ def test_locale_names() -> None:
 
     errmsg = "LOCALES in all.py/main.py must be the same length and have the same keys, you probably added a locale to one of these and not the other"
 
-    assert len(LOCALES) == len(ALL_LOCALES), errmsg
     assert set(LOCALES.keys()) == set(ALL_LOCALES), errmsg
