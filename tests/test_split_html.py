@@ -30,11 +30,16 @@ def in_golang_dir() -> Generator[None, None, None]:
 
 
 @pytest.mark.skipif(
+    not Path(activity_html_file).is_file(),
+    reason=f"activity_html_file at '{activity_html_file}' does not exist",
+)
+@pytest.mark.skipif(
     "TEST_GOLANG_SPLIT" not in os.environ,
     reason="TEST_GOLANG_SPLIT not set, skipping test",
 )
 def test_split_html(in_golang_dir: None) -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
+        assert Path(temp_dir).is_dir()
         subprocess.run(
             [
                 "go",
@@ -47,12 +52,11 @@ def test_split_html(in_golang_dir: None) -> None:
             check=True,
         )
 
-        assert Path(temp_dir).is_dir()
-
         from_merged = []
 
+        # parse the split files
         files = sorted(Path(temp_dir).iterdir())
-        assert len(files) > 1
+        assert len(files) > 1, f"found no split files in '{temp_dir}'"
         for file in files:
             assert file.is_file()
             assert file.stat().st_size > 0
@@ -62,6 +66,7 @@ def test_split_html(in_golang_dir: None) -> None:
                     raise x
                 from_merged.append(x)
 
+        # parse the original file
         from_original = [
             a
             for a in _parse_html_activity(Path(activity_html_file))
@@ -73,5 +78,6 @@ def test_split_html(in_golang_dir: None) -> None:
         from_merged.sort(key=lambda x: x.time)
         from_original.sort(key=lambda x: x.time)
 
+        # checks that every parsed element is the same
         for a, b in zip(from_merged, from_original):
             assert a == b
