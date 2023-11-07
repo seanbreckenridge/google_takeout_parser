@@ -136,7 +136,7 @@ class CandidateLocation:
     address: Optional[str]
     name: Optional[str]
     placeId: str
-    locationConfidence: float
+    locationConfidence: Optional[float]  # missing in older (around 2014/15) history
     sourceInfoDeviceTag: Optional[int]
 
     @classmethod
@@ -145,7 +145,7 @@ class CandidateLocation:
             address=data.get("address"),
             name=data.get("name"),
             placeId=data["placeId"],
-            locationConfidence=data["locationConfidence"],
+            locationConfidence=data.get("locationConfidence"),
             lat=data["latitudeE7"] / 1e7,
             lng=data["longitudeE7"] / 1e7,
             sourceInfoDeviceTag=data.get("sourceInfo", {}).get("deviceTag"),
@@ -161,7 +161,7 @@ class PlaceVisit(BaseEvent):
     centerLng: Optional[float]
     address: Optional[str]
     name: Optional[str]
-    locationConfidence: float
+    locationConfidence: Optional[float]  # missing in older (around 2014/15) history
     placeId: str
     startTime: datetime
     endTime: datetime
@@ -170,8 +170,8 @@ class PlaceVisit(BaseEvent):
     # TODO: parse these into an enum of some kind? may be prone to breaking due to new values from google though...
     placeConfidence: Optional[str]  # older semantic history (pre-2018 didn't have it)
     placeVisitType: Optional[str]
-    visitConfidence: float
-    editConfirmationStatus: str
+    visitConfidence: Optional[float]  # missing in older (around 2014/15) history
+    editConfirmationStatus: Optional[str]  # missing in older (around 2014/15) history
     placeVisitImportance: Optional[str] = None
 
     @property
