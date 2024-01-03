@@ -18,7 +18,7 @@ HANDLER_MAP: HandlerMap = {
     r"Google Play Store/": None,  # ignore anything else in Play Store
     r"Location History \(Timeline\)/Semantic Location History/.*/.*.json": _parse_semantic_location_history,
     r"Location History \(Timeline\)/Records.json": _parse_location_history,
-    r"Location History \(Timeline\)/": None, # ignore anything else in Location History
+    r"Location History \(Timeline\)/": None,  # ignore anything else in Location History
     # Youtube
     r"YouTube( und YouTube Music)?/Verlauf/.*?.html": _parse_html_activity,
     r"YouTube( und YouTube Music)?/Verlauf/.*?.json": _parse_json_activity,
@@ -37,12 +37,12 @@ HANDLER_MAP: HandlerMap = {
     r"Google Developers/": None,
     r"Google Play/": None,
     r"Google Pay": None,
-    r"Google Finanzen/": None, # stock watchlist
+    r"Google Finanzen/": None,  # stock watchlist
     r"Home App/": None,
     r"Google Shopping": None,
     r"Google Workspace Marketplace": None,
     r"Google Play Filme _ Serien/": None,
-    r"Google Play Bücher/": None, # books
+    r"Google Play Bücher/": None,  # books
     r"Google News/": None,
     r"Discover/": None,
     r"Google Kontakte/": None,
