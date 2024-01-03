@@ -6,9 +6,9 @@ def test_locale_paths() -> None:
     assert jpths == [
         "Chrome",
         "Location History",
+        "Location History \\(Timeline\\)",
         "Meine Aktivitäten",
         "My Activity",
-        "Standortverlauf",
         "YouTube( and YouTube Music)?",
         "YouTube( und YouTube Music)?",
     ]

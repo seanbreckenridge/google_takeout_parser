@@ -22,7 +22,7 @@ def test_structure_ger() -> None:
     files = [f for f in recent_takeout.rglob("*") if f.is_file()]
     tk = TakeoutParser(recent_takeout, locale_name="de")
     m = tk.dispatch_map()
-    assert len(files) == 51
-    assert len(m) == 7
+    assert len(files) == 148
+    assert len(m) == 19
 
     assert tk._guess_locale(takeout_dir=tk.takeout_dir) == [LOCALES["DE"]]
