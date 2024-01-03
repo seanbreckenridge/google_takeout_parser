@@ -6,7 +6,7 @@ def test_locale_paths() -> None:
     assert jpths == [
         "Chrome",
         "Location History",
-        "Location History \\(Timeline\\)",
+        r"Location History \(Timeline\)",  # using "Location History \\(Timeline\\)" fails on windows.
         "Meine Aktivitäten",
         "My Activity",
         "YouTube( and YouTube Music)?",
