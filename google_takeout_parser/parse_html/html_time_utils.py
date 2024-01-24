@@ -86,7 +86,7 @@ def test_parse_dt() -> None:
         2020, 1, 22, 20, 34, 0, tzinfo=pytz.utc
     )
 
-    parse_html_dt("Sep 10, 2019, 8:51:45 PM MSK", file_dt=None) == pytz.timezone(
+    assert parse_html_dt("Sep 10, 2019, 8:51:45 PM MSK", file_dt=None) == pytz.timezone(
         "Europe/Moscow"
     ).localize(datetime(2019, 9, 10, 20, 51, 45))
 
