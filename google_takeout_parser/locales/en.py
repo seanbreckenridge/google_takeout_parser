@@ -4,6 +4,8 @@ from .common import (
     _parse_html_comment_file,
     _parse_json_activity,
     _parse_likes,
+    _parse_youtube_comments_csv,
+    _parse_youtube_live_chats_csv,
     _parse_app_installs,
     _parse_location_history,
     _parse_semantic_location_history,
@@ -48,18 +50,22 @@ HANDLER_MAP: HandlerMap = {
     r"Location History/Location( )?History.json": _parse_location_history,  # old path to Location History
     r"Location History/Records.json": _parse_location_history,  # new path to Location History
     r"Location History/Settings.json": None,
+    r"Location History \(Timeline\)/Settings.json": None,
     # HTML/JSON activity-like files which aren't in 'My Activity'
     # optional " and Youtube Music" to handle pre-2017 data
     r"YouTube( and YouTube Music)?/history/.*?.html": _parse_html_activity,
     r"YouTube( and YouTube Music)?/history/.*?.json": _parse_json_activity,
     # basic list item files which have chat messages/comments
     r"YouTube( and YouTube Music)?/my-comments/.*?.html": _parse_html_comment_file,
+    r"YouTube( and YouTube Music)?/comments/comments.csv": _parse_youtube_comments_csv,
+    r"YouTube( and YouTube Music)?/live\s*chats/live\s*chats.csv": _parse_youtube_live_chats_csv,
     r"YouTube( and YouTube Music)?/my-live-chat-messages/.*?.html": _parse_html_comment_file,
     r"YouTube( and YouTube Music)?/playlists/likes.json": _parse_likes,
     r"YouTube( and YouTube Music)?/playlists/": None,
     r"YouTube( and YouTube Music)?/subscriptions": None,
     r"YouTube( and YouTube Music)?/videos": None,
     r"YouTube( and YouTube Music)?/music-uploads": None,
+    r"YouTube( and YouTube Music)?/channels/": None,
     r"My Activity/Assistant/.*.mp3": None,  # might be interesting to extract timestamps
     r"My Activity/Voice and Audio/.*.mp3": None,
     r"My Activity/Takeout": None,  # activity for when you made takeouts, dont need
