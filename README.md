@@ -46,7 +46,11 @@ This currently parses:
   - Location History `Location History/Location History.json`, `Location History/Records.json`
 - Youtube:
   - History - `YouTube and YouTube Music/history/*.html|*.json`
-  - Comments - `YouTube and YouTube Music/my-comments/*.html`
+  - Comments
+    - Legacy HTML Comment format: `YouTube and YouTube Music/my-comments/*.html`
+    - New CSV/JSON format (mostly CSV, but the comment contents itself are a JSON blob):
+      - `Youtube/comments/comments.csv`
+      - `Youtube/live chats/live chats.csv`
   - Live Chat Messages - `YouTube and YouTube Music/my-live-chat-messages/*.html`
   - Likes: `YouTube and YouTube Music/playlists/likes.json`
 
@@ -217,6 +221,8 @@ Just to give a brief overview, to add new functionality (parsing some new folder
 Dont feel required to add support for all locales, its somewhat annoying to swap languages on google, request a takeout, wait for it to process and then swap back.
 
 Though, if your takeout is in some language this doesn't support, you can [create an issue](https://github.com/seanbreckenridge/google_takeout_parser/issues/new?title=support+new+locale) with the file structure (run `find Takeout` and/or `tree Takeout`), or contribute a locale file by creating a `path -> function mapping`, and adding it to the global `LOCALES` variables in `locales/all.py` and `locales/main.py`
+
+This is a pretty difficult to maintain, as it requires a lot of manual testing from people who have access to these takeouts, and who actively use the language that the takeout is in. My google accounts main language is English, so I upkeep that locale whenever I notice changes, but its not trivial to port those changes to other locales without swapping my language, making an export, waiting, and then switching back. I keep track of mismatched changes [in this board](https://github.com/users/seanbreckenridge/projects/1/views/1)
 
 Ideally, you would select everything when doing a takeout (not just the `My Activity`/`Chrome`/`Location History` like I suggested above), so [paths that are not parsed can be ignored properly](https://github.com/seanbreckenridge/google_takeout_parser/blob/4981c241c04b5b37265710dcc6ca00f19d1eafb4/google_takeout_parser/locales/en.py#L105C1-L113).
 

@@ -12,6 +12,10 @@ from ..parse_json import (  # noqa: F401
     _parse_semantic_location_history,
     _parse_chrome_history,
 )
+from ..parse_csv import (  # noqa: F401
+    _parse_youtube_comments_csv,
+    _parse_youtube_live_chats_csv,
+)
 
 BaseResults = Iterator[Res[BaseEvent]]
 

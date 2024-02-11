@@ -48,10 +48,12 @@ class LocationInfo(NamedTuple):
     sourceUrl: Optional[Url]
 
 
+# fmt: off
 class BaseEvent(Protocol):
     @property
     def key(self) -> Any:
         ...
+# fmt: on
 
 
 @dataclass
@@ -84,9 +86,50 @@ class Activity(BaseEvent):
 
 @dataclass
 class YoutubeComment(BaseEvent):
+    """
+    NOTE: this was the old format, the takeout.google.com returns a CSV file now instead, which is the model CSVYoutubeComment below
+    """
+
     content: str
     dt: datetime
     urls: List[Url]
+
+    @property
+    def key(self) -> int:
+        return int(self.dt.timestamp())
+
+
+@dataclass
+class CSVYoutubeComment(BaseEvent):
+    commentId: str
+    channelId: str
+    dt: datetime
+    price: Optional[str]
+    parentCommentId: Optional[str]
+    videoId: str
+    contentJSON: str
+
+    @property
+    def key(self) -> int:
+        return int(self.dt.timestamp())
+
+
+# considered re-using model above, but might be confusing
+# and its useful to know if a message was from a livestream
+# or a VOD
+@dataclass
+class CSVYoutubeLiveChat(BaseEvent):
+    """
+    this is very similar to CSVYoutubeComment, but chatId instead of commentId
+    and it cant have a parentCommentId
+    """
+
+    liveChatId: str
+    channelId: str
+    dt: datetime
+    price: Optional[str]
+    videoId: str
+    contentJSON: str
 
     @property
     def key(self) -> int:
@@ -203,6 +246,8 @@ DEFAULT_MODEL_TYPE = Union[
     Location,
     ChromeHistory,
     YoutubeComment,
+    CSVYoutubeComment,
+    CSVYoutubeLiveChat,
     PlaceVisit,
 ]
 
