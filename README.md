@@ -46,12 +46,11 @@ This currently parses:
   - Location History `Location History/Location History.json`, `Location History/Records.json`
 - Youtube:
   - History - `YouTube and YouTube Music/history/*.html|*.json`
-  - Comments
-    - Legacy HTML Comment format: `YouTube and YouTube Music/my-comments/*.html`
-    - New CSV/JSON format (mostly CSV, but the comment contents itself are a JSON blob):
+  - Comments:
+    - Legacy HTML Comment/Live chats: `YouTube and YouTube Music/my-comments/*.html` and `YouTube and YouTube Music/my-live-chat-messages/*.html`
+    - CSV/JSON (comment text is stored as a [JSON blob](https://github.com/seanbreckenridge/google_takeout_parser/issues/64)):
       - `Youtube/comments/comments.csv`
       - `Youtube/live chats/live chats.csv`
-  - Live Chat Messages - `YouTube and YouTube Music/my-live-chat-messages/*.html`
   - Likes: `YouTube and YouTube Music/playlists/likes.json`
 
 This was extracted out of [my HPI](https://github.com/seanbreckenridge/HPI/tree/4bb1f174bdbd693ab29e744413424d18b8667b1f/my/google) modules, which was in turn modified from the google files in [karlicoss/HPI](https://github.com/karlicoss/HPI/blob/4a04c09f314e10a4db8f35bf1ecc10e4d0203223/my/google/takeout/html.py)
