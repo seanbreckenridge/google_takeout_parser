@@ -1,6 +1,8 @@
 import csv
+import json
+import io
 from pathlib import Path
-from typing import List, TextIO, Iterator
+from typing import List, TextIO, Iterator, Literal, Union, Any, Dict
 
 from .models import CSVYoutubeComment, CSVYoutubeLiveChat
 from .common import Res
@@ -109,3 +111,64 @@ def _parse_youtube_live_chats_buffer(
 def _parse_youtube_live_chats_csv(path: Path) -> Iterator[Res[CSVYoutubeLiveChat]]:
     with path.open("r", newline="") as f:
         yield from _parse_youtube_live_chats_buffer(f)
+
+
+CSVOutputFormat = Literal["text", "markdown"]
+
+
+def _validate_content(content: Union[str, Dict[Any, Any]]) -> Res[List[Dict[str, Any]]]:
+    if isinstance(content, dict):
+        data = content
+    else:
+        if not isinstance(content, str):
+            return ValueError(f"Expected str or dict, got {type(content)} {content}")  # type: ignore[unreachable]
+        data = json.loads(content)
+    if "takeoutSegments" not in data:
+        return ValueError(f"Expected 'takeoutSegments' in content, got {data.keys()}")
+
+    takeout_segments = data["takeoutSegments"]
+    if not isinstance(takeout_segments, list):
+        return ValueError(f"Expected a list, got {type(takeout_segments)}")
+
+    return takeout_segments
+
+
+def reconstruct_comment_content(
+    content: Union[str, Dict[Any, Any]], format: CSVOutputFormat
+) -> Res[str]:
+    takeout_segments = _validate_content(content)
+    if isinstance(takeout_segments, Exception):
+        return takeout_segments
+    if format == "text":
+        buf = io.StringIO()
+        for segment in takeout_segments:
+            if "text" in segment:
+                buf.write(segment["text"])
+        return buf.getvalue()
+    elif format == "markdown":
+        buf = io.StringIO()
+        for segment in takeout_segments:
+            if "link" in segment and "linkUrl" in segment["link"]:
+                if "text" in segment:
+                    buf.write(f'[{segment["text"]}]({segment["link"]["linkUrl"]})')
+                else:
+                    buf.write(segment["link"]["linkUrl"])
+            elif "text" in segment:
+                buf.write(segment["text"])
+            else:
+                return ValueError(f"Expected 'text' or 'link' in segment, got {segment}")
+        return buf.getvalue()
+    else:
+        # this is not a user-facing error, its misconfiguration, so we raise it
+        raise ValueError(f"Unknown format {format}")
+
+
+def extract_comment_links(content: Union[str, Dict[Any, Any]]) -> Res[List[str]]:
+    takeout_segments = _validate_content(content)
+    if isinstance(takeout_segments, Exception):
+        return takeout_segments
+    links = []
+    for segment in takeout_segments:
+        if "link" in segment and "linkUrl" in segment["link"]:
+            links.append(segment["link"]["linkUrl"])
+    return links

@@ -203,12 +203,16 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 placeId=location.placeId,
                 lng=location.lng,
                 lat=location.lat,
-                centerLat=float(placeVisit["centerLatE7"]) / 1e7
-                if "centerLatE7" in placeVisit
-                else None,
-                centerLng=float(placeVisit["centerLngE7"]) / 1e7
-                if "centerLngE7" in placeVisit
-                else None,
+                centerLat=(
+                    float(placeVisit["centerLatE7"]) / 1e7
+                    if "centerLatE7" in placeVisit
+                    else None
+                ),
+                centerLng=(
+                    float(placeVisit["centerLngE7"]) / 1e7
+                    if "centerLngE7" in placeVisit
+                    else None
+                ),
                 startTime=_parse_timestamp_key(duration, "startTimestamp"),
                 endTime=_parse_timestamp_key(duration, "endTimestamp"),
                 locationConfidence=location.locationConfidence,

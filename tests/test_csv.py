@@ -56,5 +56,5 @@ def test_parse_youtube_live_chat_buffer() -> None:
         dt=datetime(2018, 9, 2, 5, 16, 35, 510381, tzinfo=timezone.utc),
         price="0",
         videoId="0vGCh85obuI",
-        contentJSON='{"takeoutSegments":[{"text":"\"think the right thing\" jeez"}]}',
+        contentJSON='{"takeoutSegments":[{"text":""think the right thing" jeez"}]}',
     )

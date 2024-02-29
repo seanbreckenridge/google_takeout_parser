@@ -48,7 +48,7 @@ This currently parses:
   - History - `YouTube and YouTube Music/history/*.html|*.json`
   - Comments:
     - Legacy HTML Comment/Live chats: `YouTube and YouTube Music/my-comments/*.html` and `YouTube and YouTube Music/my-live-chat-messages/*.html`
-    - CSV/JSON (comment text is stored as a [JSON blob](https://github.com/seanbreckenridge/google_takeout_parser/issues/64)):
+    - CSV/JSON (comment text is stored as a JSON blob, [see below](#youtube-comment-json)
       - `Youtube/comments/comments.csv`
       - `Youtube/live chats/live chats.csv`
   - Likes: `YouTube and YouTube Music/playlists/likes.json`
@@ -202,6 +202,48 @@ len(locations)
 ```
 
 I personally exclusively use this through the [HPI google takeout](https://github.com/karlicoss/HPI/blob/master/my/google/takeout/parser.py) file, as a configuration layer to locate where my takeouts are on disk, and since that 'automatically' unzips the takeouts (I store them as the zips), i.e., doesn't require me to maintain an unpacked view
+
+#### Youtube Comment JSON
+
+The CSV youtube comment files' content are stored as a JSON blob, which look like:
+
+```json
+{
+  "takeoutSegments": [
+    {
+      "text": "I symlink /bin/sh to dash, its a very minimal/posix compliant implementation. see "
+    },
+    {
+      "text": "https://wiki.archlinux.org/index.php/Dash",
+      "link": {
+        "linkUrl": "https://wiki.archlinux.org/index.php/Dash"
+      }
+    }
+  ]
+}
+```
+
+This exposes some functions to help parse those, into text, markdown, or just extract the links:
+
+```python
+from google_takeout_parser.path_dispatch import TakeoutParser
+from google_takeout_parser.models import CSVYoutubeComment
+from google_takeout_parser.parse_csv import extract_comment_links, reconstruct_comment_content
+
+
+path = "./Takeout-1599315526"
+# merge all files
+events = list(
+    TakeoutParser(path, error_policy="raise").parse(
+        cache=False, filter_type=CSVYoutubeComment
+    )
+)
+for e in events:
+    links = extract_comment_links(e.contentJSON)
+    print(links)
+    print(reconstruct_comment_content(e.contentJSON, "markdown"))
+    print(reconstruct_comment_content(e.contentJSON, "text"))
+```
 
 ### Legacy HTML Parsing
 

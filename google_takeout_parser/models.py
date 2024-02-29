@@ -110,6 +110,14 @@ class CSVYoutubeComment(BaseEvent):
     contentJSON: str
 
     @property
+    def url(self) -> str:
+        return f"https://www.youtube.com/watch?v={self.videoId}&lc={self.commentId}"
+
+    @property
+    def video_url(self) -> str:
+        return f"https://www.youtube.com/watch?v={self.videoId}"
+
+    @property
     def key(self) -> int:
         return int(self.dt.timestamp())
 
@@ -130,6 +138,14 @@ class CSVYoutubeLiveChat(BaseEvent):
     price: Optional[str]
     videoId: str
     contentJSON: str
+
+    @property
+    def url(self) -> str:
+        return f"https://www.youtube.com/watch?v={self.videoId}&lc={self.liveChatId}"
+
+    @property
+    def video_url(self) -> str:
+        return f"https://www.youtube.com/watch?v={self.videoId}"
 
     @property
     def key(self) -> int:
