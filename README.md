@@ -232,13 +232,12 @@ from google_takeout_parser.parse_csv import extract_comment_links, reconstruct_c
 
 
 path = "./Takeout-1599315526"
-# merge all files
-events = list(
+comments = list(
     TakeoutParser(path, error_policy="raise").parse(
         cache=False, filter_type=CSVYoutubeComment
     )
 )
-for e in events:
+for e in comments:
     print(extract_comment_links(e.contentJSON))
     print(reconstruct_comment_content(e.contentJSON, "text"))
     print(reconstruct_comment_content(e.contentJSON, "markdown"))
