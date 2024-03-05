@@ -239,10 +239,9 @@ events = list(
     )
 )
 for e in events:
-    links = extract_comment_links(e.contentJSON)
-    print(links)
-    print(reconstruct_comment_content(e.contentJSON, "markdown"))
+    print(extract_comment_links(e.contentJSON))
     print(reconstruct_comment_content(e.contentJSON, "text"))
+    print(reconstruct_comment_content(e.contentJSON, "markdown"))
 ```
 
 ### Legacy HTML Parsing
