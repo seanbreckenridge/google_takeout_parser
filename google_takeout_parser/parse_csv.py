@@ -156,7 +156,9 @@ def reconstruct_comment_content(
             elif "text" in segment:
                 buf.write(segment["text"])
             else:
-                return ValueError(f"Expected 'text' or 'link' in segment, got {segment}")
+                return ValueError(
+                    f"Expected 'text' or 'link' in segment, got {segment}"
+                )
         return buf.getvalue()
     else:
         # this is not a user-facing error, its misconfiguration, so we raise it
