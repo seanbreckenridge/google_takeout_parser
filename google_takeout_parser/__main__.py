@@ -88,7 +88,7 @@ def _serialize_default(obj: Any) -> Any:
     if isinstance(obj, Exception):
         return {"type": type(obj).__name__, "value": str(obj)}
     elif dataclasses.is_dataclass(obj):
-        d = dataclasses.asdict(obj)
+        d = dataclasses.asdict(obj)  # type: ignore[call-overload]  # see https://github.com/python/mypy/issues/17550
         assert "type" not in d
         d["type"] = type(obj).__name__
         return d
