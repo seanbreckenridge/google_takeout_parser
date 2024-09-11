@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Iterator, Any, Dict, Iterable, Optional, List
+import warnings
 
 from .http_allowlist import convert_to_https_opt
 from .time_utils import parse_datetime_millis
@@ -23,6 +24,16 @@ from .models import (
 )
 from .common import Res
 from .time_utils import parse_json_utc_date
+
+
+def _read_json_data(p: Path) -> Any:
+    try:
+        import orjson
+    except ModuleNotFoundError:
+        warnings.warn("orjson not found, it can significantly speed up json parsing. Consider installing via 'pip install orjson'. Falling back onto stdlib json")
+        return json.loads(p.read_text())
+    else:
+        return orjson.loads(p.read_bytes())
 
 
 # "YouTube and YouTube Music/history/search-history.json"
@@ -124,7 +135,7 @@ def _parse_timestamp_key(d: Dict[str, Any], key: str) -> datetime:
 def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
     ### HMMM, seems that all the locations are right after one another. broken? May just be all the location history that google has on me
     ### see numpy.diff(list(map(lambda yy: y.at, filter(lambda y: isinstance(Location), events()))))
-    json_data = json.loads(p.read_text())
+    json_data = _read_json_data(p)
     if "locations" not in json_data:
         yield RuntimeError(f"Locations: no 'locations' key in '{p}'")
     for loc in json_data.get("locations", []):
