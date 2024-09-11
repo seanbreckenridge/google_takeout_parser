@@ -4,7 +4,7 @@ Parses the HTML MyActivity.html files that used to be the standard
 
 from pathlib import Path
 from datetime import datetime
-from typing import List, Iterator, Optional, Tuple, Union, Dict, Iterable
+from typing import Any, List, Iterator, Optional, Tuple, Union, Dict, Iterable
 from urllib.parse import urlparse, parse_qs
 
 import bs4
@@ -260,7 +260,7 @@ def _parse_activity_div(
     *,
     file_dt: Optional[datetime],
 ) -> Res[Activity]:
-    header_el = div.select_one("p.mdl-typography--title")
+    header_el = div.find("p", class_="mdl-typography--title")
     if header_el is None:
         return ValueError(f"Could not find header in {div}")
     header = header_el.text.strip()
@@ -282,7 +282,7 @@ def _parse_activity_div(
     # iterate over content-cells (contain all the info in this cell)
     # and categorize the cells. Pretty sure there should only be one
     # of each, but doing this to be safe
-    for d in div.select(".content-cell"):
+    for d in div.find_all(class_="content-cell"):
         div_classes = d.attrs["class"]
         # these are used for spacing on the right
         if "mdl-typography--text-right" in div_classes:
@@ -334,8 +334,15 @@ def _parse_activity_div(
 
 def _parse_html_activity(p: Path) -> Iterator[Res[Activity]]:
     file_dt = datetime.fromtimestamp(p.stat().st_mtime)
-    soup = bs4.BeautifulSoup(p.read_text(), "lxml")
-    for outer_div in soup.select("div.outer-cell"):
+    data = p.read_text()
+
+    def soup_filter(tag: str, data: Dict[str, Any]) -> bool:
+        return tag == 'div' and 'outer-cell' in data.get('class', '')
+
+    soup = bs4.BeautifulSoup(data, "lxml", parse_only=bs4.SoupStrainer(soup_filter))  # type: ignore[arg-type]  # this overload is missing from stubs
+
+    outer_divs: Iterable[bs4.element.Tag] = soup.children  # type: ignore[assignment]  # mypy can't guess they will actually be tags..
+    for outer_div in outer_divs:
         try:
             yield _parse_activity_div(outer_div, file_dt=file_dt)
         except Exception as ae:
