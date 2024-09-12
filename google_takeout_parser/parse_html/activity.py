@@ -337,7 +337,7 @@ def _parse_html_activity(p: Path) -> Iterator[Res[Activity]]:
     data = p.read_text()
 
     def soup_filter(tag: str, data: Dict[str, Any]) -> bool:
-        return tag == 'div' and 'outer-cell' in data.get('class', '')
+        return tag == "div" and "outer-cell" in data.get("class", "")
 
     soup = bs4.BeautifulSoup(data, "lxml", parse_only=bs4.SoupStrainer(soup_filter))  # type: ignore[arg-type]  # this overload is missing from stubs
 

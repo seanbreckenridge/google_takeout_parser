@@ -30,7 +30,9 @@ def _read_json_data(p: Path) -> Any:
     try:
         import orjson
     except ModuleNotFoundError:
-        warnings.warn("orjson not found, it can significantly speed up json parsing. Consider installing via 'pip install orjson'. Falling back onto stdlib json")
+        warnings.warn(
+            "orjson not found, it can significantly speed up json parsing. Consider installing via 'pip install orjson'. Falling back onto stdlib json"
+        )
         return json.loads(p.read_text())
     else:
         return orjson.loads(p.read_bytes())
