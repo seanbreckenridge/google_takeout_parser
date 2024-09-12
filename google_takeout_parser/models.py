@@ -194,16 +194,33 @@ class CandidateLocation:
     lng: float
     address: Optional[str]
     name: Optional[str]
-    placeId: str
+
+    placeId: Optional[str]
+    """
+    Sometimes missing, in this case semanticType is set
+    """
+
+    semanticType: Optional[str]
+    """
+    Something like TYPE_HOME or TYPE_WORK or TYPE_ALIAS
+    """
+
     locationConfidence: Optional[float]  # missing in older (around 2014/15) history
     sourceInfoDeviceTag: Optional[int]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> CandidateLocation:
+        placeId = data.get("placeId")
+        semanticType = data.get("semanticType")
+        if placeId is None:
+            # at least one of them should be present
+            assert semanticType is not None, data
+
         return cls(
             address=data.get("address"),
             name=data.get("name"),
-            placeId=data["placeId"],
+            placeId=placeId,
+            semanticType=semanticType,
             locationConfidence=data.get("locationConfidence"),
             lat=data["latitudeE7"] / 1e7,
             lng=data["longitudeE7"] / 1e7,
