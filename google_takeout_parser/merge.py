@@ -3,7 +3,7 @@ Helper module to remove duplicate events when combining takeouts
 """
 
 from itertools import chain
-from typing import Set, Tuple, List, Any, Optional
+from typing import Set, Tuple, List, Any, Optional, Type
 
 
 from cachew import cachew
@@ -76,8 +76,11 @@ def merge_events(*sources: CacheResults) -> CacheResults:
     )
 
 
-def _create_key(e: BaseEvent) -> Tuple[str, Any]:
-    return (type(e).__name__, e.key)
+Key = Tuple[Type[Any], Any]
+
+
+def _create_key(e: BaseEvent) -> Key:
+    return (type(e), e.key)
 
 
 # This is so that its easier to use this logic in other
@@ -88,7 +91,7 @@ class GoogleEventSet:
     """
 
     def __init__(self) -> None:
-        self.keys: Set[Tuple[str, Any]] = set()
+        self.keys: Set[Key] = set()
 
     def __contains__(self, other: BaseEvent) -> bool:
         return _create_key(other) in self.keys
@@ -98,3 +101,14 @@ class GoogleEventSet:
 
     def add(self, other: BaseEvent) -> None:
         self.keys.add(_create_key(other))
+
+    def add_if_not_present(self, other: BaseEvent) -> bool:
+        """
+        Returns False if element already existed, True if it didn't and we added it.
+        More efficient than checking membership and adding separately, since we only compute key once.
+        """
+        key = _create_key(other)
+        if key in self.keys:
+            return False
+        self.keys.add(key)
+        return True
