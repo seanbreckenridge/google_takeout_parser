@@ -147,6 +147,7 @@ def test_chrome_history(tmp_path_f: Path) -> None:
     ]
 
 
+# FIXME add test here
 def test_semantic_location_history(tmp_path_f: Path) -> None:
     data = {
         "timelineObjects": [
@@ -177,7 +178,12 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
                             "address": "address2",
                             "name": "name2",
                             "locationConfidence": 24.475897,
-                        }
+                        },
+                        {
+                            "latitudeE7": 910000000,
+                            "longitudeE7": -1000,
+                            "semanticType": "TYPE_WORK",
+                        },
                     ],
                     "editConfirmationStatus": "NOT_CONFIRMED",
                     "locationConfidence": 55,
@@ -222,7 +228,18 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
                 address="address2",
                 locationConfidence=24.475897,
                 placeId="XPRK4E4P",
+                semanticType=None,
                 sourceInfoDeviceTag=None,
-            )
+            ),
+            models.CandidateLocation(
+                lat=91.0,
+                lng=-0.0001,
+                name=None,
+                address=None,
+                locationConfidence=None,
+                placeId=None,
+                semanticType='TYPE_WORK',
+                sourceInfoDeviceTag=None,
+            ),
         ],
     )

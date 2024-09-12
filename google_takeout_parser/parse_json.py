@@ -198,6 +198,8 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 )
                 continue
             location = CandidateLocation.from_dict(location_json)
+            placeId = location.placeId
+            assert placeId is not None, location_json  # this is always present for the actual location
             duration = placeVisit["duration"]
             yield PlaceVisit(
                 name=location.name,
@@ -213,7 +215,7 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 placeVisitType=placeVisit.get("placeVisitType"),
                 visitConfidence=placeVisit.get("visitConfidence"),
                 editConfirmationStatus=placeVisit.get("editConfirmationStatus"),
-                placeId=location.placeId,
+                placeId=placeId,
                 lng=location.lng,
                 lat=location.lat,
                 centerLat=(
