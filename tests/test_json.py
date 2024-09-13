@@ -147,7 +147,6 @@ def test_chrome_history(tmp_path_f: Path) -> None:
     ]
 
 
-# FIXME add test here
 def test_semantic_location_history(tmp_path_f: Path) -> None:
     data = {
         "timelineObjects": [
