@@ -7,11 +7,13 @@ import re
 from pathlib import Path
 from typing import (
     Sequence,
+    Iterable,
     Iterator,
     Dict,
     Callable,
     Any,
     Optional,
+    Pattern,
     List,
     Type,
     Tuple,
@@ -261,16 +263,15 @@ class TakeoutParser:
         )
 
     @staticmethod
-    def _match_handler(p: Path, handler: HandlerMap) -> HandlerMatch:
+    def _match_handler(relative_path: str, handler: Iterable[Tuple[Pattern[str], Optional[HandlerFunction]]]) -> HandlerMatch:
         """
         Match one of the handler regexes to a function which parses the file
         """
-        assert not p.is_absolute(), p  # should be relative to Takeout dir
         # replace OS-specific (e.g. windows) path separator to match the handler
-        sf = str(p).replace(os.sep, "/")
-        for prefix, h in handler.items():
+        sf = relative_path.replace(os.sep, "/")
+        for prefix_re, h in handler:
             # regex match the map (e.g. above)
-            if bool(re.match(prefix, sf)):
+            if prefix_re.match(sf) is not None:
                 # could be None, if chosen to ignore
                 if h is None:
                     return None
@@ -297,26 +298,54 @@ class TakeoutParser:
         """
         A pure function for dispatch map so it can be used in other contexts (e.g. to detect locales by scanning the directory)
         """
-        res: Dict[Path, HandlerFunction] = {}
-        for f in sorted(takeout_dir.rglob("*")):
-            if f.name.startswith("."):
-                continue
-            if not f.is_file():
-                continue
-            rf = f.relative_to(takeout_dir)
 
+        # precompile regexes to avoid compiling every time we try to match a file
+        # normally re.match caches them, but it's an lru cache, so we overwhelm it with so many handlers/locales
+        compiled_handlers = [
+            [(re.compile(prefix), handler) for prefix, handler in handler_map.items()]
+            for handler_map in handler_maps
+        ]
+
+        def iter_relative_paths() -> Iterator[str]:
+            # we use walk rather than .glob to avoid instantiating too many Path objects
+            # many of them will get rejected by the regexes in handlers anyway
+
+            takeout_dir_walk: Callable[..., Iterator[Tuple[Path, List[str], List[str]]]]
+            if hasattr(takeout_dir, 'walk'):
+                # this codepath is used from python 3.12 that has Path.walk
+                # , or other implementations that support it (e.g. zipfile wrappers)
+                takeout_dir_walk = takeout_dir.walk
+            else:
+                def takeout_dir_walk() -> Iterator[Tuple[Path, List[str], List[str]]]:
+                    for root, dirs, files in os.walk(takeout_dir):
+                        yield Path(root), dirs, files
+
+            for root, dirs, files in takeout_dir_walk():
+                dirs.sort()
+                files.sort()
+
+                # compute relative path of parent dir once, this saves a lot of time when takeout has tens of thousands of files
+                root_relative = root.relative_to(takeout_dir)
+                for f in files:
+                    if f[0] == '.':
+                        continue
+                    yield os.path.join(root_relative, f)
+
+        res: Dict[Path, HandlerFunction] = {}
+        for rf in iter_relative_paths():
             # try to resolve file to parser-function by checking all supplied handlers
 
             # cache handler information for warning if we can't resolve the file
             file_resolved: bool = False
             handler_exception: Optional[Exception] = None
 
-            for handler in handler_maps:
-                file_handler: HandlerMatch = cls._match_handler(rf, handler)
+            for compiled_handler in compiled_handlers:
+                file_handler: HandlerMatch = cls._match_handler(rf, compiled_handler)
                 # file_handler matched something
                 if not isinstance(file_handler, Exception):
                     # if not explicitly ignored by the handler map
                     if file_handler is not None:
+                        f = takeout_dir / rf
                         res[f] = file_handler
                     file_resolved = True
                     break  # file was handled, don't check other HandlerMaps
