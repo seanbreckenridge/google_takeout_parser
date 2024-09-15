@@ -20,7 +20,7 @@ This doesn't handle all cases, but I have yet to find a parser that does, so her
 
 This can take a few minutes to parse depending on what you have in your Takeout (especially while using the old HTML format), so this uses [cachew](https://github.com/karlicoss/cachew) to cache the function result for each Takeout you may have. That means this'll take a few minutes the first time parsing a takeout, but then only a few seconds every subsequent time.
 
-Since the Takeout slowly removes old events over time, I would recommend periodically (personally I do it once every few months) backing up your data, to not lose any old events and get data from new ones. To use, go to [takeout.google.com](https://takeout.google.com/); For Reference, once on that page, I hit `Deselect All`, then select:
+Since google slowly removes your old data over time, I would recommend periodically backing up your data (personally I do it once every few months), to not lose any old events and get access to data from new ones. To do that, go to [takeout.google.com](https://takeout.google.com/); For Reference, once on that page, I hit `Deselect All`, then select:
 
 - Chrome
 - Google Play Store
@@ -34,7 +34,7 @@ Since the Takeout slowly removes old events over time, I would recommend periodi
 
 **Be sure to select JSON instead of HTML whenever possible**. Code to parse the HTML format is included here, but it is treated as legacy code and comes with worse performance and a myriad of other issues. See [legacy html parsing](#legacy-html-parsing)
 
-The process for getting these isn't that great -- you have to manually go to [takeout.google.com](https://takeout.google.com) every few months, select what you want to export info for, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
+The process for obtaining these isn't that great -- you have to manually go to [takeout.google.com](https://takeout.google.com) every few months, select what you want to export info for, and then it puts the zipped file into your google drive. You can tell it to run it at specific intervals, but I personally haven't found that to be that reliable.
 
 This currently parses:
 
