@@ -4,7 +4,7 @@ Parses data out of your [Google Takeout](https://takeout.google.com/) (History, 
 
 - parses both the Historical HTML and new JSON format for Google Takeouts
 - caches individual takeout results behind [`cachew`](https://github.com/karlicoss/cachew)
-- merge multiple takeouts into unique events
+- merges multiple takeouts into unique events
 
 ---
 
