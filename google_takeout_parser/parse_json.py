@@ -63,7 +63,14 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
                 header = "YouTube"  # didn't have header
                 time_str = blob["publishedAt"]
             else:
-                header = blob["header"]
+                _header = blob.get("header")
+                if _header is None:
+                    # some pre-2021 MyActivity/Chrome/MyActivty.json contain a few items without header
+                    # they always seem to be originating from viewing page source
+                    if blob["title"].startswith("Visited view-source:"):
+                        _header = "Chrome"
+                assert _header is not None, blob
+                header = _header
                 time_str = blob["time"]
 
             yield Activity(
