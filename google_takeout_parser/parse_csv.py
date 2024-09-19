@@ -9,19 +9,16 @@ from .common import Res
 from .time_utils import parse_json_utc_date
 
 
-def _parse_youtube_comment_row(row: List[str]) -> Res[CSVYoutubeComment]:
-    # Comment ID,Channel ID,Comment Create Timestamp,Price,Parent Comment ID,Video ID,Comment Text
+def _parse_youtube_comment_row(row: Dict[str, Any]) -> Res[CSVYoutubeComment]:
     try:
-        (
-            comment_id,
-            channel_id,
-            created_at,
-            price,
-            parent_comment_id,
-            video_id,
-            textJSON,
-        ) = row
-    except ValueError as e:
+        comment_id = row['Comment ID']
+        channel_id = row['Channel ID']
+        created_at = row['Comment Create Timestamp']
+        price = row['Price']
+        parent_comment_id = row['Parent Comment ID']
+        video_id = row['Video ID']
+        textJSON = row['Comment Text']
+    except KeyError as e:
         return e
     return CSVYoutubeComment(
         commentId=comment_id,
@@ -46,19 +43,9 @@ def is_empty_row(row: List[str]) -> bool:
     return True
 
 
-def _parse_youtube_comments_buffer(
-    buf: TextIO,
-    skip_first: bool = True,
-) -> Iterator[Res[CSVYoutubeComment]]:
-    reader = csv.reader(buf)
-    if skip_first:
-        next(reader)
+def _parse_youtube_comments_buffer(buf: TextIO) -> Iterator[Res[CSVYoutubeComment]]:
+    reader = csv.DictReader(buf)
     for row in reader:
-        if is_empty_row(row):
-            continue
-        if len(row) != 7:
-            yield ValueError(f"Expected 7 columns, got {len(row)}: {row}")
-            continue
         yield _parse_youtube_comment_row(row)
 
 
