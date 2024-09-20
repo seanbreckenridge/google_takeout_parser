@@ -170,6 +170,7 @@ def test_chrome_history(tmp_path_f: Path) -> None:
             dt=datetime.datetime(
                 2021, 4, 2, 23, 4, 50, 134513, tzinfo=datetime.timezone.utc
             ),
+            pageTransition="LINK"
         ),
     ]
 

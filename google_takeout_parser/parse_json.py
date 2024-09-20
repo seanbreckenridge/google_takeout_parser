@@ -266,6 +266,7 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
                 # and there's likely lots of items that aren't https
                 url=item["url"],
                 dt=time_naive.replace(tzinfo=timezone.utc),
+                pageTransition=item["page_transition"] if "page_transition" in item else None
             )
         except Exception as e:
             yield e

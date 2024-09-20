@@ -269,6 +269,7 @@ class ChromeHistory(BaseEvent):
     title: str
     url: Url
     dt: datetime
+    pageTransition: Optional[str]
 
     @property
     def key(self) -> Tuple[str, int]:
