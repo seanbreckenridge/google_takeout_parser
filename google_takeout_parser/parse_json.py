@@ -126,11 +126,11 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
         try:
             yield PlayStoreAppInstall(
                 title=japp["install"]["doc"]["title"],
-                device_name=japp["install"]["deviceAttribute"].get("deviceDisplayName"),
-                device_carrier=japp["install"]["deviceAttribute"]["carrier"],
-                device_manufacturer=japp["install"]["deviceAttribute"]["manufacturer"],
+                deviceName=japp["install"]["deviceAttribute"].get("deviceDisplayName"),
+                deviceCarrier=japp["install"]["deviceAttribute"]["carrier"],
+                deviceManufacturer=japp["install"]["deviceAttribute"]["manufacturer"],
                 dt=parse_json_utc_date(japp["install"]["lastUpdateTime"]),
-                first_installation_dt=parse_json_utc_date(japp['install']['firstInstallationTime']),
+                firstInstallationDt=parse_json_utc_date(japp['install']['firstInstallationTime']),
             )
         except Exception as e:
             yield e
@@ -152,7 +152,7 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
         yield RuntimeError(f"Locations: no 'locations' key in '{p}'")
     for loc in json_data.get("locations", []):
         accuracy = loc.get("accuracy")
-        device_tag = loc.get("deviceTag")
+        deviceTag = loc.get("deviceTag")
         source = loc.get("source")
         try:
             yield Location(
@@ -160,7 +160,7 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
                 lat=float(loc["latitudeE7"]) / 1e7,
                 dt=_parse_timestamp_key(loc, "timestamp"),
                 accuracy=None if accuracy is None else float(accuracy),
-                device_tag=None if device_tag is None else device_tag,
+                deviceTag=None if deviceTag is None else deviceTag,
                 source=None if source is None else str(source)
             )
         except Exception as e:

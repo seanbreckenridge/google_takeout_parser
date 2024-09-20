@@ -168,10 +168,10 @@ class LikedYoutubeVideo(BaseEvent):
 class PlayStoreAppInstall(BaseEvent):
     title: str
     dt: datetime
-    first_installation_dt: datetime
-    device_name: Optional[str]
-    device_carrier: Optional[str]
-    device_manufacturer: Optional[str]
+    firstInstallationDt: datetime
+    deviceName: Optional[str]
+    deviceCarrier: Optional[str]
+    deviceManufacturer: Optional[str]
 
     @property
     def key(self) -> int:
@@ -183,7 +183,7 @@ class Location(BaseEvent):
     lat: float
     lng: float
     accuracy: Optional[float]
-    device_tag: Optional[int]
+    deviceTag: Optional[int]
     source: Optional[str]
     dt: datetime
 

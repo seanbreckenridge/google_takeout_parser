@@ -92,12 +92,12 @@ def test_parse_app_installs(tmp_path_f: Path) -> None:
             dt=datetime.datetime(
                 2024, 8, 27, 22, 55, 15, 184610, tzinfo=datetime.timezone.utc
             ),
-            first_installation_dt=datetime.datetime(
+            firstInstallationDt=datetime.datetime(
                 2022, 3, 14, 7, 6, 12, 70725, tzinfo=datetime.timezone.utc
             ),
-            device_name="samsung SM-S901E",
-            device_carrier="Vodafone",
-            device_manufacturer="samsung",
+            deviceName="samsung SM-S901E",
+            deviceCarrier="Vodafone",
+            deviceManufacturer="samsung",
         )
     ]
 
@@ -115,7 +115,7 @@ def test_location_old(tmp_path_f: Path) -> None:
                 2017, 12, 10, 23, 14, 58, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
-            device_tag=None,
+            deviceTag=None,
             source=None,
         ),
     ]
@@ -134,7 +134,7 @@ def test_location_new(tmp_path_f: Path) -> None:
                 2017, 12, 10, 23, 14, 58, 30000, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
-            device_tag=-80241446968629135069,
+            deviceTag=-80241446968629135069,
             source=None,
         ),
     ]
@@ -152,7 +152,7 @@ def test_location_2024(tmp_path_f: Path) -> None:
                 2014, 7, 18, 14, 59, 59, 914000, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
-            device_tag=1978796627,
+            deviceTag=1978796627,
             source="WIFI",
         ),
     ]
