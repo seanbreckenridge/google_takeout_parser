@@ -115,6 +115,8 @@ def test_location_old(tmp_path_f: Path) -> None:
                 2017, 12, 10, 23, 14, 58, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
+            device_tag=None,
+            source=None,
         ),
     ]
 
@@ -132,6 +134,26 @@ def test_location_new(tmp_path_f: Path) -> None:
                 2017, 12, 10, 23, 14, 58, 30000, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
+            device_tag=-80241446968629135069,
+            source=None,
+        ),
+    ]
+    
+def test_location_2024(tmp_path_f: Path) -> None:
+    contents = '{"locations":[{"latitudeE7":351324213,"longitudeE7":-1122434441,"accuracy":10,"activity":[{"activity":[{"type":"UNKNOWN","confidence":65},{"type":"IN_VEHICLE","confidence":27},{"type":"STILL","confidence":6},{"type":"ON_BICYCLE","confidence":2}],"timestamp":"2014-07-18T15:00:04.403Z"}],"source":"WIFI","deviceTag":1978796627,"timestamp":"2014-07-18T14:59:59.914Z"}]}'
+    fp = tmp_path_f / "file"
+    fp.write_text(contents)
+    res = list(prj._parse_location_history(fp))
+    assert res == [
+        models.Location(
+            lng=-112.2434441,
+            lat=35.1324213,
+            dt=datetime.datetime(
+                2014, 7, 18, 14, 59, 59, 914000, tzinfo=datetime.timezone.utc
+            ),
+            accuracy=10.0,
+            device_tag=1978796627,
+            source="WIFI",
         ),
     ]
 

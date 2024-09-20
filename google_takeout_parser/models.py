@@ -183,6 +183,8 @@ class Location(BaseEvent):
     lat: float
     lng: float
     accuracy: Optional[float]
+    device_tag: Optional[int]
+    source: Optional[str]
     dt: datetime
 
     @property
