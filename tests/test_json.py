@@ -81,18 +81,23 @@ def test_parse_likes_json(tmp_path_f: Path) -> None:
 
 
 def test_parse_app_installs(tmp_path_f: Path) -> None:
-    contents = """[{"install": {"doc": {"documentType": "Android Apps", "title": "Discord - Talk, Video Chat & Hang Out with Friends"}, "firstInstallationTime": "2020-05-25T03:11:53.055Z", "deviceAttribute": {"manufacturer": "motorola", "deviceDisplayName": "motorola moto g(7) play"}, "lastUpdateTime": "2020-08-27T02:55:33.259Z"}}]"""
+    contents = """[{"install":{"doc":{"documentType":"Android Apps","title":"ClickUp - Manage Teams & Tasks"},"firstInstallationTime":"2022-03-14T07:06:12.070725Z","deviceAttribute":{"model":"SM-S901E","carrier":"Vodafone","manufacturer":"samsung","deviceDisplayName":"samsung SM-S901E"},"lastUpdateTime":"2024-08-27T22:55:15.184610Z"}}]"""
 
     fp = tmp_path_f / "file"
     fp.write_text(contents)
     res = list(prj._parse_app_installs(fp))
     assert res == [
         models.PlayStoreAppInstall(
-            title="Discord - Talk, Video Chat & Hang Out with Friends",
+            title="ClickUp - Manage Teams \u0026 Tasks",
             dt=datetime.datetime(
-                2020, 5, 25, 3, 11, 53, 55000, tzinfo=datetime.timezone.utc
+                2024, 8, 27, 22, 55, 15, 184610, tzinfo=datetime.timezone.utc
             ),
-            device_name="motorola moto g(7) play",
+            first_installation_dt=datetime.datetime(
+                2022, 3, 14, 7, 6, 12, 70725, tzinfo=datetime.timezone.utc
+            ),
+            device_name="samsung SM-S901E",
+            device_carrier="Vodafone",
+            device_manufacturer="samsung",
         )
     ]
 
