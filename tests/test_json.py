@@ -89,10 +89,10 @@ def test_parse_app_installs(tmp_path_f: Path) -> None:
     assert res == [
         models.PlayStoreAppInstall(
             title="ClickUp - Manage Teams \u0026 Tasks",
-            dt=datetime.datetime(
+            lastUpdateTime=datetime.datetime(
                 2024, 8, 27, 22, 55, 15, 184610, tzinfo=datetime.timezone.utc
             ),
-            firstInstallationDt=datetime.datetime(
+            firstInstallationTime=datetime.datetime(
                 2022, 3, 14, 7, 6, 12, 70725, tzinfo=datetime.timezone.utc
             ),
             deviceName="samsung SM-S901E",

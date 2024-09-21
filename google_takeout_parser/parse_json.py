@@ -129,8 +129,8 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
                 deviceName=japp["install"]["deviceAttribute"].get("deviceDisplayName"),
                 deviceCarrier=japp["install"]["deviceAttribute"]["carrier"],
                 deviceManufacturer=japp["install"]["deviceAttribute"]["manufacturer"],
-                dt=parse_json_utc_date(japp["install"]["lastUpdateTime"]),
-                firstInstallationDt=parse_json_utc_date(japp['install']['firstInstallationTime']),
+                lastUpdateTime=parse_json_utc_date(japp["install"]["lastUpdateTime"]),
+                firstInstallationTime=parse_json_utc_date(japp['install']['firstInstallationTime']),
             )
         except Exception as e:
             yield e
