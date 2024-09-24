@@ -167,18 +167,18 @@ class LikedYoutubeVideo(BaseEvent):
 @dataclass
 class PlayStoreAppInstall(BaseEvent):
     title: str
-    lastUpdateTime: datetime # timestamp for when the installation event occurred
-    firstInstallationTime: datetime # timetamp for when you first installed the app on the given device
+    lastUpdateTime: datetime  # timestamp for when the installation event occurred
+    firstInstallationTime: datetime  # timetamp for when you first installed the app on the given device
     deviceName: Optional[str]
     deviceCarrier: Optional[str]
     deviceManufacturer: Optional[str]
-    
+
     # noticed that lastUpdateTime was more accurate timestamp for the dt field
     # since different installation events of the same app had pretty close firstInstallation times
     # but the lastUpdate time was always at a later timestamp so I assumed it was the installation event
     @property
     def dt(self) -> datetime:
-        return self.lastUpdateTime # previously returned the firstInstallationTime
+        return self.lastUpdateTime  # previously returned the firstInstallationTime
 
     @property
     def key(self) -> int:

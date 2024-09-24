@@ -42,7 +42,7 @@ from .common import (
 #
 HANDLER_MAP: HandlerMap = {
     r"Chrome/BrowserHistory.json": _parse_chrome_history,
-    r"Chrome/History.json": _parse_chrome_history, # Seems to have been renamed from BrowserHistory.json to History.json sometime between Oct 2023 to Sep 2024
+    r"Chrome/History.json": _parse_chrome_history,  # Seems to have been renamed from BrowserHistory.json to History.json sometime between Oct 2023 to Sep 2024
     r"Chrome": None,  # Ignore rest of Chrome stuff
     r"Google Play Store/Installs.json": _parse_app_installs,
     r"Google Play Store/": None,  # ignore anything else in Play Store
