@@ -138,7 +138,8 @@ def test_location_new(tmp_path_f: Path) -> None:
             source=None,
         ),
     ]
-    
+
+
 def test_location_2024(tmp_path_f: Path) -> None:
     contents = '{"locations":[{"latitudeE7":351324213,"longitudeE7":-1122434441,"accuracy":10,"activity":[{"activity":[{"type":"UNKNOWN","confidence":65},{"type":"IN_VEHICLE","confidence":27},{"type":"STILL","confidence":6},{"type":"ON_BICYCLE","confidence":2}],"timestamp":"2014-07-18T15:00:04.403Z"}],"source":"WIFI","deviceTag":1978796627,"timestamp":"2014-07-18T14:59:59.914Z"}]}'
     fp = tmp_path_f / "file"
@@ -271,6 +272,7 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
         ],
     )
 
+
 def test_semantic_location_history_2024(tmp_path_f: Path) -> None:
     data = {
         "timelineObjects": [
@@ -369,9 +371,9 @@ def test_semantic_location_history_2024(tmp_path_f: Path) -> None:
                             "longitudeE7": 1210000500,
                             "accuracyMetres": 163
                         },
-                    "method": "END_OF_ACTIVITY_SEGMENT",
-                    "locationSource": "UNKNOWN",
-                    "timestamp": "2017-12-11T01:40:06Z"
+                        "method": "END_OF_ACTIVITY_SEGMENT",
+                        "locationSource": "UNKNOWN",
+                        "timestamp": "2017-12-11T01:40:06Z"
                     }
                 }
             }
