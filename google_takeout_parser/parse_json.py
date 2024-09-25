@@ -54,34 +54,34 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
                 # sometimes it's just empty ("My Activity/Assistant" data circa 2018)
                 if "name" not in s:
                     continue
-                subtitles.append(Subtitles(name=str(s.get("name")), url=s.get("url")))
+                subtitles.append(Subtitles(name=s["name"], url=s.get("url")))
 
             # till at least 2017
             old_format = "snippet" in blob
             if old_format:
-                blob = blob.get("snippet")
+                blob = blob["snippet"]
                 header = "YouTube"  # didn't have header
-                time_str = blob.get("publishedAt")
+                time_str = blob["publishedAt"]
             else:
                 _header = blob.get("header")
                 if _header is None:
                     # some pre-2021 MyActivity/Chrome/MyActivty.json contain a few items without header
                     # they always seem to be originating from viewing page source
-                    if blob.get("title").startswith("Visited view-source:"):
+                    if blob["title"].startswith("Visited view-source:"):
                         _header = "Chrome"
                 assert _header is not None, blob
                 header = _header
-                time_str = blob.get("time")
+                time_str = blob["time"]
 
             yield Activity(
                 header=header,
-                title=blob.get("title"),
+                title=blob["title"],
                 titleUrl=convert_to_https_opt(blob.get("titleUrl")),
                 description=blob.get("description"),
                 time=parse_json_utc_date(time_str),
                 subtitles=subtitles,
                 details=[
-                    str(d.get("name"))
+                    d.get("name", "")
                     for d in blob.get("details", [])
                     if isinstance(d, dict) and "name" in d
                 ],
@@ -107,12 +107,12 @@ def _parse_likes(p: Path) -> Iterator[Res[LikedYoutubeVideo]]:
     for jlike in json_data:
         try:
             yield LikedYoutubeVideo(
-                title=jlike.get("snippet", {}).get("title"),
-                desc=jlike.get("snippet", {}).get("description"),
+                title=jlike["snippet"]["title"],
+                desc=jlike["snippet"]["description"],
                 link="https://youtube.com/watch?v={}".format(
-                    jlike.get("contentDetails", {}).get("videoId")
+                    jlike["contentDetails"]["videoId"]
                 ),
-                dt=parse_json_utc_date(jlike.get("snippet", {}).get("publishedAt")),
+                dt=parse_json_utc_date(jlike["snippet"]["publishedAt"]),
             )
         except Exception as e:
             yield e
@@ -125,12 +125,12 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
     for japp in json_data:
         try:
             yield PlayStoreAppInstall(
-                title=japp.get("install", {}).get("doc", {}).get("title"),
+                title=japp["install"]["doc"]["title"],
                 deviceName=japp.get("install", {}).get("deviceAttribute", {}).get("deviceDisplayName"),
                 deviceCarrier=japp.get("install", {}).get("deviceAttribute", {}).get("carrier"),
                 deviceManufacturer=japp.get("install", {}).get("deviceAttribute", {}).get("manufacturer"),
-                lastUpdateTime=parse_json_utc_date(japp.get("install", {}).get("lastUpdateTime")),
-                firstInstallationTime=parse_json_utc_date(japp.get('install', {}).get('firstInstallationTime')),
+                lastUpdateTime=parse_json_utc_date(japp["install"]["lastUpdateTime"]),
+                firstInstallationTime=parse_json_utc_date(japp['install']['firstInstallationTime']),
             )
         except Exception as e:
             yield e
@@ -156,12 +156,12 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
         source = loc.get("source")
         try:
             yield Location(
-                lng=float(loc.get("longitudeE7")) / 1e7,
-                lat=float(loc.get("latitudeE7")) / 1e7,
+                lng=float(loc["longitudeE7"]) / 1e7,
+                lat=float(loc["latitudeE7"]) / 1e7,
                 dt=_parse_timestamp_key(loc, "timestamp"),
                 accuracy=None if accuracy is None else float(accuracy),
                 deviceTag=None if deviceTag is None else int(deviceTag),
-                source=None if source is None else source
+                source=None if source is None else str(source),
             )
         except Exception as e:
             yield e
@@ -192,10 +192,10 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
         yield RuntimeError(f"Locations: no 'timelineObjects' key in '{p}'")
     timelineObjects = json_data.get("timelineObjects", [])
     for timelineObject in timelineObjects:
-        if "placeVisit" not in timelineObject:
-            # yield RuntimeError(f"PlaceVisit: no 'placeVisit' key in '{p}'")
-            continue
         placeVisit = timelineObject.get("placeVisit")
+        if placeVisit is None:
+            yield RuntimeError(f"PlaceVisit: no 'placeVisit' key in '{p}'")
+            continue
         missing_key = _check_required_keys(placeVisit, _sem_required_keys)
         if missing_key is not None:
             yield RuntimeError(f"PlaceVisit: no '{missing_key}' key in '{p}'")
@@ -214,7 +214,7 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
             location = CandidateLocation.from_dict(location_json)
             placeId = location.placeId
             assert placeId is not None, location_json  # this is always present for the actual location
-            duration = placeVisit.get("duration")
+            duration = placeVisit["duration"]
             yield PlaceVisit(
                 name=location.name,
                 address=location.address,
@@ -233,12 +233,12 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
                 lng=location.lng,
                 lat=location.lat,
                 centerLat=(
-                    float(placeVisit.get("centerLatE7")) / 1e7
+                    float(placeVisit["centerLatE7"]) / 1e7
                     if "centerLatE7" in placeVisit
                     else None
                 ),
                 centerLng=(
-                    float(placeVisit.get("centerLngE7")) / 1e7
+                    float(placeVisit["centerLngE7"]) / 1e7
                     if "centerLngE7" in placeVisit
                     else None
                 ),
@@ -261,12 +261,12 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
         try:
             time_naive = datetime.utcfromtimestamp(item.get("time_usec") / 10**6)
             yield ChromeHistory(
-                title=item.get("title"),
+                title=item["title"],
                 # dont convert to https here, this is just the users history
                 # and there's likely lots of items that aren't https
-                url=item.get("url"),
+                url=item["url"],
                 dt=time_naive.replace(tzinfo=timezone.utc),
-                pageTransition=item.get("page_transition") if "page_transition" in item else None
+                pageTransition=item.get("page_transition")
             )
         except Exception as e:
             yield e
