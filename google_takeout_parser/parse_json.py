@@ -192,10 +192,10 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
         yield RuntimeError(f"Locations: no 'timelineObjects' key in '{p}'")
     timelineObjects = json_data.get("timelineObjects", [])
     for timelineObject in timelineObjects:
-        placeVisit = timelineObject.get("placeVisit")
-        if placeVisit is None:
+        if "placeVisit" not in timelineObject:
             yield RuntimeError(f"PlaceVisit: no 'placeVisit' key in '{p}'")
             continue
+        placeVisit = timelineObject["placeVisit"]
         missing_key = _check_required_keys(placeVisit, _sem_required_keys)
         if missing_key is not None:
             yield RuntimeError(f"PlaceVisit: no '{missing_key}' key in '{p}'")
