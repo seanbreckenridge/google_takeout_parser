@@ -122,7 +122,7 @@ def test_location_old(tmp_path_f: Path) -> None:
 
 
 def test_location_new(tmp_path_f: Path) -> None:
-    contents = '{"locations": [{"latitudeE7": 351324213, "longitudeE7": -1122434441, "accuracy": 10, "deviceTag": -80241446968629135069, "deviceDesignation": "PRIMARY", "timestamp": "2017-12-10T23:14:58.030Z"}]}'
+    contents = '{"locations": [{"latitudeE7": 351324213, "longitudeE7": -1122434441, "accuracy": 10, "deviceTag": -8024144696862913506, "deviceDesignation": "PRIMARY", "timestamp": "2017-12-10T23:14:58.030Z"}]}'
     fp = tmp_path_f / "file"
     fp.write_text(contents)
     res = list(prj._parse_location_history(fp))
@@ -134,7 +134,7 @@ def test_location_new(tmp_path_f: Path) -> None:
                 2017, 12, 10, 23, 14, 58, 30000, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
-            deviceTag=-80241446968629135069,
+            deviceTag=-8024144696862913506,
             source=None,
         ),
     ]
