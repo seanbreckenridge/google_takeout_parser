@@ -1,5 +1,4 @@
 from typing import List, Sequence, Optional
-from pathlib import Path
 
 from .common import HandlerFunction
 from .en import HANDLER_MAP as EN_DEFAULT_HANDLER_MAP
@@ -50,7 +49,8 @@ def get_paths_for_functions(
         for path, match_func in handler_map.items():
             for function in funcs:
                 if function == match_func:
-                    paths.add(Path(path.strip("/")).parts[0])
+                    # no need to use os.sep here since paths in handler map always use /
+                    paths.add(path.split("/")[0])
 
     # sort to prevent behaviour changing based on avaiable locales
-    return list(sorted(paths))
+    return sorted(paths)
