@@ -81,7 +81,7 @@ def _parse_json_activity(p: Path) -> Iterator[Res[Activity]]:
                 time=parse_json_utc_date(time_str),
                 subtitles=subtitles,
                 details=[
-                    d.get("name", "")
+                    d["name"]
                     for d in blob.get("details", [])
                     if isinstance(d, dict) and "name" in d
                 ],
@@ -201,7 +201,7 @@ def _parse_semantic_location_history(p: Path) -> Iterator[Res[PlaceVisit]]:
             yield RuntimeError(f"PlaceVisit: no '{missing_key}' key in '{p}'")
             continue
         try:
-            location_json = placeVisit.get("location")
+            location_json = placeVisit["location"]
             missing_location_key = _check_required_keys(
                 location_json, _sem_required_location_keys
             )
@@ -259,7 +259,7 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
         yield RuntimeError(f"Chrome/BrowserHistory: no 'Browser History' key in '{p}'")
     for item in json_data.get("Browser History", []):
         try:
-            time_naive = datetime.utcfromtimestamp(item.get("time_usec") / 10**6)
+            time_naive = datetime.utcfromtimestamp(item["time_usec"] / 10**6)
             yield ChromeHistory(
                 title=item["title"],
                 # dont convert to https here, this is just the users history
