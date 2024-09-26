@@ -25,7 +25,6 @@ Since google slowly removes your old data over time, I would recommend periodica
 - Chrome
 - Google Play Store
 - Location History
-  - Select JSON as format
 - My Activity
   - Select JSON as format
 - Youtube and Youtube Music
