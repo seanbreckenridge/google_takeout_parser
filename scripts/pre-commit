@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -e
+
+pip install .
+
+export TAKEOUT_LOGS=5
+
+mypy ./google_takeout_parser ./tests/
+flake8 ./google_takeout_parser ./tests/
+pytest
+if [[ -d ~/.cache/gt/Takeout-New/ ]]; then
+	google_takeout_parser parse --action summary --no-cache ~/.cache/gt/Takeout-New
+else
+	echo 'No Takeout data found in ~/.cache/gt/Takeout-New' >&2
+fi
