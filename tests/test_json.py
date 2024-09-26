@@ -81,18 +81,23 @@ def test_parse_likes_json(tmp_path_f: Path) -> None:
 
 
 def test_parse_app_installs(tmp_path_f: Path) -> None:
-    contents = """[{"install": {"doc": {"documentType": "Android Apps", "title": "Discord - Talk, Video Chat & Hang Out with Friends"}, "firstInstallationTime": "2020-05-25T03:11:53.055Z", "deviceAttribute": {"manufacturer": "motorola", "deviceDisplayName": "motorola moto g(7) play"}, "lastUpdateTime": "2020-08-27T02:55:33.259Z"}}]"""
+    contents = """[{"install":{"doc":{"documentType":"Android Apps","title":"ClickUp - Manage Teams & Tasks"},"firstInstallationTime":"2022-03-14T07:06:12.070725Z","deviceAttribute":{"model":"SM-S901E","carrier":"Vodafone","manufacturer":"samsung","deviceDisplayName":"samsung SM-S901E"},"lastUpdateTime":"2024-08-27T22:55:15.184610Z"}}]"""
 
     fp = tmp_path_f / "file"
     fp.write_text(contents)
     res = list(prj._parse_app_installs(fp))
     assert res == [
         models.PlayStoreAppInstall(
-            title="Discord - Talk, Video Chat & Hang Out with Friends",
-            dt=datetime.datetime(
-                2020, 5, 25, 3, 11, 53, 55000, tzinfo=datetime.timezone.utc
+            title="ClickUp - Manage Teams \u0026 Tasks",
+            lastUpdateTime=datetime.datetime(
+                2024, 8, 27, 22, 55, 15, 184610, tzinfo=datetime.timezone.utc
             ),
-            device_name="motorola moto g(7) play",
+            firstInstallationTime=datetime.datetime(
+                2022, 3, 14, 7, 6, 12, 70725, tzinfo=datetime.timezone.utc
+            ),
+            deviceName="samsung SM-S901E",
+            deviceCarrier="Vodafone",
+            deviceManufacturer="samsung",
         )
     ]
 
@@ -110,12 +115,14 @@ def test_location_old(tmp_path_f: Path) -> None:
                 2017, 12, 10, 23, 14, 58, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
+            deviceTag=None,
+            source=None,
         ),
     ]
 
 
 def test_location_new(tmp_path_f: Path) -> None:
-    contents = '{"locations": [{"latitudeE7": 351324213, "longitudeE7": -1122434441, "accuracy": 10, "deviceTag": -80241446968629135069, "deviceDesignation": "PRIMARY", "timestamp": "2017-12-10T23:14:58.030Z"}]}'
+    contents = '{"locations": [{"latitudeE7": 351324213, "longitudeE7": -1122434441, "accuracy": 10, "deviceTag": -8024144696862913506, "deviceDesignation": "PRIMARY", "timestamp": "2017-12-10T23:14:58.030Z"}]}'
     fp = tmp_path_f / "file"
     fp.write_text(contents)
     res = list(prj._parse_location_history(fp))
@@ -127,6 +134,27 @@ def test_location_new(tmp_path_f: Path) -> None:
                 2017, 12, 10, 23, 14, 58, 30000, tzinfo=datetime.timezone.utc
             ),
             accuracy=10.0,
+            deviceTag=-8024144696862913506,
+            source=None,
+        ),
+    ]
+
+
+def test_location_2024(tmp_path_f: Path) -> None:
+    contents = '{"locations":[{"latitudeE7":351324213,"longitudeE7":-1122434441,"accuracy":10,"activity":[{"activity":[{"type":"UNKNOWN","confidence":65},{"type":"IN_VEHICLE","confidence":27},{"type":"STILL","confidence":6},{"type":"ON_BICYCLE","confidence":2}],"timestamp":"2014-07-18T15:00:04.403Z"}],"source":"WIFI","deviceTag":1978796627,"timestamp":"2014-07-18T14:59:59.914Z"}]}'
+    fp = tmp_path_f / "file"
+    fp.write_text(contents)
+    res = list(prj._parse_location_history(fp))
+    assert res == [
+        models.Location(
+            lng=-112.2434441,
+            lat=35.1324213,
+            dt=datetime.datetime(
+                2014, 7, 18, 14, 59, 59, 914000, tzinfo=datetime.timezone.utc
+            ),
+            accuracy=10.0,
+            deviceTag=1978796627,
+            source="WIFI",
         ),
     ]
 
@@ -143,6 +171,7 @@ def test_chrome_history(tmp_path_f: Path) -> None:
             dt=datetime.datetime(
                 2021, 4, 2, 23, 4, 50, 134513, tzinfo=datetime.timezone.utc
             ),
+            pageTransition="LINK"
         ),
     ]
 
@@ -188,6 +217,164 @@ def test_semantic_location_history(tmp_path_f: Path) -> None:
                     "locationConfidence": 55,
                     "placeVisitType": "SINGLE_PLACE",
                     "placeVisitImportance": "MAIN",
+                }
+            }
+        ]
+    }
+    fp = tmp_path_f / "file"
+    fp.write_text(json.dumps(data))
+    res = list(prj._parse_semantic_location_history(fp))
+    obj = res[0]
+    assert not isinstance(obj, Exception)
+    # remove JSON, compare manually below
+    assert obj == models.PlaceVisit(
+        lat=55.5555555,
+        lng=-106.6666666,
+        centerLat=55.5555555,
+        centerLng=-166.6666666,
+        name="name",
+        address="address",
+        locationConfidence=60.45,
+        placeId="JK4E4P",
+        startTime=datetime.datetime(
+            2017, 12, 10, 23, 29, 25, 26000, tzinfo=datetime.timezone.utc
+        ),
+        endTime=datetime.datetime(
+            2017, 12, 11, 1, 20, 6, 106000, tzinfo=datetime.timezone.utc
+        ),
+        sourceInfoDeviceTag=987654321,
+        placeConfidence="MEDIUM_CONFIDENCE",
+        placeVisitImportance="MAIN",
+        placeVisitType="SINGLE_PLACE",
+        visitConfidence=65.45,
+        editConfirmationStatus="NOT_CONFIRMED",
+        otherCandidateLocations=[
+            models.CandidateLocation(
+                lat=42.3984239,
+                lng=-156.5656565,
+                name="name2",
+                address="address2",
+                locationConfidence=24.475897,
+                placeId="XPRK4E4P",
+                semanticType=None,
+                sourceInfoDeviceTag=None,
+            ),
+            models.CandidateLocation(
+                lat=91.0,
+                lng=-0.0001,
+                name=None,
+                address=None,
+                locationConfidence=None,
+                placeId=None,
+                semanticType='TYPE_WORK',
+                sourceInfoDeviceTag=None,
+            ),
+        ],
+    )
+
+
+def test_semantic_location_history_2024(tmp_path_f: Path) -> None:
+    data = {
+        "timelineObjects": [
+            {
+                "placeVisit": {
+                    "location": {
+                        "latitudeE7": 555555555,
+                        "longitudeE7": -1066666666,
+                        "placeId": "JK4E4P",
+                        "address": "address",
+                        "name": "name",
+                        "sourceInfo": {"deviceTag": 987654321},
+                        "locationConfidence": 60.45,
+                    },
+                    "duration": {
+                        "startTimestamp": "2017-12-10T23:29:25.026Z",
+                        "endTimestamp": "2017-12-11T01:20:06.106Z",
+                    },
+                    "placeConfidence": "MEDIUM_CONFIDENCE",
+                    "centerLatE7": 555555555,
+                    "centerLngE7": -1666666666,
+                    "visitConfidence": 65.45,
+                    "otherCandidateLocations": [
+                        {
+                            "latitudeE7": 423984239,
+                            "longitudeE7": -1565656565,
+                            "placeId": "XPRK4E4P",
+                            "address": "address2",
+                            "name": "name2",
+                            "locationConfidence": 24.475897,
+                        },
+                        {
+                            "latitudeE7": 910000000,
+                            "longitudeE7": -1000,
+                            "semanticType": "TYPE_WORK",
+                        },
+                    ],
+                    "editConfirmationStatus": "NOT_CONFIRMED",
+                    "locationConfidence": 55,
+                    "placeVisitType": "SINGLE_PLACE",
+                    "placeVisitImportance": "MAIN",
+                }
+            },
+            {
+                "activitySegment": {
+                    "startLocation": {
+                        "latitudeE7": 555555555,
+                        "longitudeE7": -1066666666
+                    },
+                    "endLocation": {
+                        "latitudeE7": 555555567,
+                        "longitudeE7": -1066666678
+                    },
+                    "duration": {
+                        "startTimestamp": "2017-12-11T01:20:06.106Z",
+                        "endTimestamp": "2017-12-11T01:40:06.106Z"
+                    },
+                    "distance": 13071,
+                    "activityType": "IN_PASSENGER_VEHICLE",
+                    "confidence": "MEDIUM",
+                    "activities": [{
+                        "activityType": "IN_PASSENGER_VEHICLE",
+                        "probability": 85.514968640442
+                    }, {
+                        "activityType": "MOTORCYCLING",
+                        "probability": 8.858836042221917
+                    }, {
+                        "activityType": "WALKING",
+                        "probability": 4.7803567526550035
+                    }],
+                    "waypointPath": {
+                        "waypoints": [{
+                            "latE7": 123456789,
+                            "lngE7": 1210000000
+                        }, {
+                            "latE7": 123456089,
+                            "lngE7": 1210000200
+                        }, {
+                            "latE7": 123456289,
+                            "lngE7": 1210000500
+                        }],
+                        "source": "INFERRED"
+                    },
+                    "simplifiedRawPath": {
+                        "points": [{
+                            "latE7": 123456489,
+                            "lngE7": 1210000240,
+                            "accuracyMeters": 10,
+                            "timestamp": "2017-12-11T01:35:04Z"
+                        }]
+                    },
+                    "editConfirmationStatus": "NOT_CONFIRMED",
+                    "parkingEvent": {
+                        "location": {
+                            "latitudeE7": 123456289,
+                            "longitudeE7": 1210000500,
+                            "accuracyMetres": 163
+                        },
+                        "method": "END_OF_ACTIVITY_SEGMENT",
+                        "locationSource": "UNKNOWN",
+                        "timestamp": "2017-12-11T01:40:06Z"
+                    }
                 }
             }
         ]

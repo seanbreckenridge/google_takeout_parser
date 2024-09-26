@@ -126,8 +126,11 @@ def _parse_app_installs(p: Path) -> Iterator[Res[PlayStoreAppInstall]]:
         try:
             yield PlayStoreAppInstall(
                 title=japp["install"]["doc"]["title"],
-                device_name=japp["install"]["deviceAttribute"].get("deviceDisplayName"),
-                dt=parse_json_utc_date(japp["install"]["firstInstallationTime"]),
+                deviceName=japp.get("install", {}).get("deviceAttribute", {}).get("deviceDisplayName"),
+                deviceCarrier=japp.get("install", {}).get("deviceAttribute", {}).get("carrier"),
+                deviceManufacturer=japp.get("install", {}).get("deviceAttribute", {}).get("manufacturer"),
+                lastUpdateTime=parse_json_utc_date(japp["install"]["lastUpdateTime"]),
+                firstInstallationTime=parse_json_utc_date(japp['install']['firstInstallationTime']),
             )
         except Exception as e:
             yield e
@@ -149,12 +152,16 @@ def _parse_location_history(p: Path) -> Iterator[Res[Location]]:
         yield RuntimeError(f"Locations: no 'locations' key in '{p}'")
     for loc in json_data.get("locations", []):
         accuracy = loc.get("accuracy")
+        deviceTag = loc.get("deviceTag")
+        source = loc.get("source")
         try:
             yield Location(
                 lng=float(loc["longitudeE7"]) / 1e7,
                 lat=float(loc["latitudeE7"]) / 1e7,
                 dt=_parse_timestamp_key(loc, "timestamp"),
                 accuracy=None if accuracy is None else float(accuracy),
+                deviceTag=None if deviceTag is None else int(deviceTag),
+                source=None if source is None else str(source),
             )
         except Exception as e:
             yield e
@@ -259,6 +266,7 @@ def _parse_chrome_history(p: Path) -> Iterator[Res[ChromeHistory]]:
                 # and there's likely lots of items that aren't https
                 url=item["url"],
                 dt=time_naive.replace(tzinfo=timezone.utc),
+                pageTransition=item.get("page_transition")
             )
         except Exception as e:
             yield e
