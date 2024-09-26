@@ -104,6 +104,24 @@ CSVOutputFormat = Literal["text", "markdown"]
 
 
 def _validate_content(content: Union[str, Dict[Any, Any]]) -> Res[List[Dict[str, Any]]]:
+    if isinstance(content, str) and content.startswith('{"text":"'):
+        # new format (since 2024)
+        # this is a sequence of comma-separated serialized jsons...
+        json_end = '"}'
+        json_start = '{"'
+        split = content.split(json_end + "," + json_start)
+        segments = []
+        for i, js in enumerate(split):
+            if i != 0:
+                js = json_start + js
+            if i != len(split) - 1:
+                js = js + json_end
+            # we get \n as a result of csv parser... but json parser can't handle them!
+            js = js.replace('\n', '\\n')
+            segments.append(json.loads(js))
+        return segments
+    # old format
+
     if isinstance(content, dict):
         data = content
     else:

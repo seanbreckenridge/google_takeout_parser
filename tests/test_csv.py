@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from google_takeout_parser.parse_csv import (
     _parse_youtube_comments_buffer,
     _parse_youtube_live_chats_buffer,
+    reconstruct_comment_content,
 )
 from google_takeout_parser.models import CSVYoutubeComment, CSVYoutubeLiveChat
 
@@ -24,9 +25,11 @@ UgwDN8UeMxW4NDFbvY54AaABAg.9iwJkUYNcXa9u0lv3j3Abh,UCA6DtnbZ2KJckyTYfXOwQNA,2023-
     buf = StringIO(text_content)
 
     res = list(_parse_youtube_comments_buffer(buf))
-    assert len(res) == 2
+    assert len(res) == 2, res
+    [res0, res1] = res
 
-    assert res[0] == CSVYoutubeComment(
+    assert not isinstance(res0, Exception)
+    assert res0 == CSVYoutubeComment(
         commentId="UgxtiXQkY7gqHbldJ1F4AaABAg",
         channelId="UCA6DtnbZ2KJckyTYfXOwQNA",
         dt=datetime(2023, 9, 19, 17, 42, 53, 434647, tzinfo=timezone.utc),
@@ -35,8 +38,10 @@ UgwDN8UeMxW4NDFbvY54AaABAg.9iwJkUYNcXa9u0lv3j3Abh,UCA6DtnbZ2KJckyTYfXOwQNA,2023-
         videoId="WtOskFeLmr4",
         contentJSON='{"takeoutSegments":[{"text":"coalowl the legend"}]}',
     )
+    assert reconstruct_comment_content(res0.contentJSON, format="text") == "coalowl the legend"
 
-    assert res[1] == CSVYoutubeComment(
+    assert not isinstance(res1, Exception)
+    assert res1 == CSVYoutubeComment(
         commentId="UgwDN8UeMxW4NDFbvY54AaABAg.9iwJkUYNcXa9u0lv3j3Abh",
         channelId="UCA6DtnbZ2KJckyTYfXOwQNA",
         dt=datetime(2023, 8, 30, 1, 54, 46, 801024, tzinfo=timezone.utc),
@@ -45,6 +50,7 @@ UgwDN8UeMxW4NDFbvY54AaABAg.9iwJkUYNcXa9u0lv3j3Abh,UCA6DtnbZ2KJckyTYfXOwQNA,2023-
         videoId="jH39c5-y6kg",
         contentJSON='{"takeoutSegments":[{"text":"Ah, this is the reason why Ive never seen concurrent write failures myself, python\'s default timeout value is 5s, so it just waits in a busy loop if I have \'concurrent writers\'"}]}',
     )
+    assert reconstruct_comment_content(res1.contentJSON, format="text") == "Ah, this is the reason why Ive never seen concurrent write failures myself, python\'s default timeout value is 5s, so it just waits in a busy loop if I have \'concurrent writers\'"
 
 
 def test_parse_youtube_comment_buffer_new() -> None:
@@ -60,9 +66,11 @@ UCYnl1cugi7Lw1h8j6JNqNEg,2016-01-29T18:26:53.255+00:00,0,UgiNMzGz_nAsjXfCoAEC,,Z
 
     buf = StringIO(text_content)
     res = list(_parse_youtube_comments_buffer(buf))
-    assert len(res) == 2
+    assert len(res) == 2, res
+    [res0, res1] = res
 
-    assert res[0] == CSVYoutubeComment(
+    assert not isinstance(res0, Exception)
+    assert res0 == CSVYoutubeComment(
         commentId="UgytHqobEtqoKm_-pYB4AaABAg",
         channelId="UCYnl1cugi7Lw1h8j6JNqNEg",
         dt=datetime(2023, 4, 14, 7, 39, 35, 956042, tzinfo=timezone.utc),
@@ -71,7 +79,10 @@ UCYnl1cugi7Lw1h8j6JNqNEg,2016-01-29T18:26:53.255+00:00,0,UgiNMzGz_nAsjXfCoAEC,,Z
         videoId="rWVAzS6duAs",
         contentJSON='{"text":"> I am about to get buried in the concrete"},{"text":"\n"},{"text":"the most normal  Veritasium video!"}',
     )
-    assert res[1] == CSVYoutubeComment(
+    assert reconstruct_comment_content(res0.contentJSON, format="text") == "> I am about to get buried in the concrete\nthe most normal  Veritasium video!"
+
+    assert not isinstance(res1, Exception)
+    assert res1 == CSVYoutubeComment(
         commentId="UgiNMzGz_nAsjXfCoAEC",
         channelId="UCYnl1cugi7Lw1h8j6JNqNEg",
         dt=datetime(2016, 1, 29, 18, 26, 53, 255000, tzinfo=timezone.utc),
@@ -80,6 +91,7 @@ UCYnl1cugi7Lw1h8j6JNqNEg,2016-01-29T18:26:53.255+00:00,0,UgiNMzGz_nAsjXfCoAEC,,Z
         videoId="ZuvK-oe647c",
         contentJSON='{"text":"Great illustration of Bell inequality!"}',
     )
+    assert reconstruct_comment_content(res1.contentJSON, format="text") == "Great illustration of Bell inequality!"
 
 
 def test_parse_youtube_live_chat_buffer() -> None:
