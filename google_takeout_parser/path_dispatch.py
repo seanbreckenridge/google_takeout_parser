@@ -178,7 +178,6 @@ class TakeoutParser:
             locale_name=locale_name,
             passed_locale_map=handlers,
         )
-        self._warn_if_no_activity()
 
     @classmethod
     def _resolve_locale_handler_map(

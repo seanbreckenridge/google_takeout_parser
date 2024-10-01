@@ -135,6 +135,7 @@ def parse(
         error_policy="drop",
         locale_name=locale,
     )
+    tp._warn_if_no_activity()
     filter_type = tuple(FILTER_OPTIONS[ff] for ff in filter_)
     # note: actually no exceptions since since they're dropped
     if cache:
