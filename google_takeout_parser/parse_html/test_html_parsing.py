@@ -30,6 +30,40 @@ def test_parse_subtitles() -> None:
     ]
     assert dt is not None
 
+    # Current exports add a trailing break after the timestamp.
+    content = bs4_div(
+        """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">Searched for&nbsp;<a href="https://www.google.com/search?q=example">example</a><br/>Jul 18, 2026, 9:53:27 AM EDT<br/></div>"""
+    )
+    res = _parse_subtitles(content, file_dt=None)
+    assert not isinstance(res, Exception)
+    subs, dt = res
+    assert subs == [
+        (
+            "Searched for example",
+            "https://www.google.com/search?q=example",
+        )
+    ]
+    assert int(dt.timestamp()) == 1784382807
+
+    # AI search activity can append structured prompt/response markup after
+    # the timestamp. It should remain available as an additional subtitle.
+    content = bs4_div(
+        """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">Searched for&nbsp;<a href="https://www.google.com/search?q=example">example</a><br/>Jul 18, 2026, 9:53:27 AM EDT<br/><p><strong>Your prompt:</strong><br/>example prompt</p><p><strong>Search's response:</strong><br/>example response with <a href="https://example.com">a source</a></p></div>"""
+    )
+    res = _parse_subtitles(content, file_dt=None)
+    assert not isinstance(res, Exception)
+    subs, dt = res
+    assert subs[0] == (
+        "Searched for example",
+        "https://www.google.com/search?q=example",
+    )
+    assert "Your prompt:" in subs[1].name
+    assert "example prompt" in subs[1].name
+    assert "Search's response:" in subs[1].name
+    assert "example response" in subs[1].name
+    assert subs[1].url == "https://example.com"
+    assert int(dt.timestamp()) == 1784382807
+
     content = bs4_div(
         """<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">6 cards in your feed<br/>Sep 4, 2020, 11:01:46 AM PDT</div>"""
     )

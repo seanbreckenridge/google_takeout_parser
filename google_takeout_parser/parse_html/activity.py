@@ -65,18 +65,29 @@ def _parse_subtitles(
     file_dt: datetime | None,
 ) -> Res[tuple[list[Subtitles], datetime]]:
     parsed_subs: list[Subtitles] = []
+    parsed_dt: datetime | None = None
 
-    # iterate over direct children, and remove the last
-    # one (the date)
-    sub_children: list[PageElement] = list(subtitle_cell.children)
-    dt_raw_el = sub_children.pop(-1)
-    if not isinstance(dt_raw_el, str):
-        return ValueError(
-            f"Could not extract datetime (should be last element) from {subtitle_cell}"
-        )
-    dt_raw = dt_raw_el.strip()
+    # Current Takeout HTML terminates the datetime with a trailing <br/> and
+    # may append AI prompt/response markup after it. Older exports put the
+    # datetime directly at the end of the cell. Split into logical lines and
+    # identify the standalone datetime instead of relying on child position.
+    subtitle_groups: ListOfTags = []
+    for group in _group_by_brs(list(subtitle_cell.children)):
+        if parsed_dt is None and group and all(isinstance(tag, str) for tag in group):
+            dt_raw = "".join(str(tag) for tag in group).strip()
+            try:
+                parsed_dt = parse_html_dt(dt_raw, file_dt=file_dt)
+            except ValueError:
+                pass
+            else:
+                continue
+        if group:
+            subtitle_groups.append(group)
 
-    for group in _group_by_brs(sub_children):
+    if parsed_dt is None:
+        return ValueError(f"Could not extract datetime from {subtitle_cell}")
+
+    for group in subtitle_groups:
         # loop vars
         buf: str = ""  # current text, till we hit a br (next group)
         url: str | None = None  # a URL, if this subtitle contains one
@@ -87,8 +98,16 @@ def _parse_subtitles(
             elif isinstance(tag, bs4.element.Tag):
                 if tag.name == "a":
                     buf += str(tag.text)
-                    if "href" in tag.attrs:
-                        v = tag.attrs["href"]
+                else:
+                    # AI activity adds paragraphs and formatting after the
+                    # datetime. Preserve their text as subtitles instead of
+                    # dropping the entire event.
+                    buf += tag.get_text(" ", strip=False)
+
+                if url is None:
+                    anchor = tag if tag.name == "a" else tag.find("a")
+                    if isinstance(anchor, bs4.element.Tag) and "href" in anchor.attrs:
+                        v = anchor.attrs["href"]
                         if isinstance(v, str):
                             url = v
                         elif isinstance(v, list) and len(v) > 0:
@@ -97,8 +116,6 @@ def _parse_subtitles(
                             assert (
                                 False
                             ), f"Could not parse href into valid value, {type(v)} {v}"
-                else:
-                    logger.warning(f"Unexpected tag! {tag}")
             else:
                 raise RuntimeError(f"Unexpected Type {tag} {type(tag)}")
 
@@ -106,7 +123,7 @@ def _parse_subtitles(
             Subtitles(name=clean_latin1_chars(buf), url=convert_to_https_opt(url))
         )
 
-    return parsed_subs, parse_html_dt(dt_raw, file_dt=file_dt)
+    return parsed_subs, parsed_dt
 
 
 def _split_by_caption_headers(groups: ListOfTags) -> dict[str, ListOfTags]:
