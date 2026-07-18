@@ -52,7 +52,7 @@ def _group_by_brs(els: Iterable[PageElement]) -> ListOfTags:
                 cur.append(tag)
         else:
             logger.warning(
-                f"While parsing subtitle {els}, found unexpected type: {type(tag)} {tag}"
+                f"While parsing subtitle, found unexpected type: {type(tag)}"
             )
     if cur:
         res.append(cur)
@@ -72,7 +72,8 @@ def _parse_subtitles(
     dt_raw_el = sub_children.pop(-1)
     if not isinstance(dt_raw_el, str):
         return ValueError(
-            f"Could not extract datetime (should be last element) from {subtitle_cell}"
+            "Could not extract datetime: expected the final activity HTML child "
+            f"to be text, found {type(dt_raw_el)}"
         )
     dt_raw = dt_raw_el.strip()
 
@@ -98,9 +99,9 @@ def _parse_subtitles(
                                 False
                             ), f"Could not parse href into valid value, {type(v)} {v}"
                 else:
-                    logger.warning(f"Unexpected tag! {tag}")
+                    logger.warning(f"Unexpected subtitle tag: {tag.name}")
             else:
-                raise RuntimeError(f"Unexpected Type {tag} {type(tag)}")
+                raise RuntimeError(f"Unexpected subtitle type: {type(tag)}")
 
         parsed_subs.append(
             Subtitles(name=clean_latin1_chars(buf), url=convert_to_https_opt(url))
@@ -145,7 +146,7 @@ def _split_by_caption_headers(groups: ListOfTags) -> dict[str, ListOfTags]:
             # add non-header key to values
             assert (
                 k
-            ), f"While parsing caption; Found value while key has no value {groups}"
+            ), "While parsing caption, found a value before any caption header"
             vals.append(g)
 
     # add last key/val pair
@@ -275,7 +276,7 @@ def _parse_activity_div(
 ) -> Res[Activity]:
     header_el = div.find("p", class_="mdl-typography--title")
     if header_el is None:
-        return ValueError(f"Could not find header in {div}")
+        return ValueError("Could not find header in activity HTML")
     header = header_el.text.strip()
 
     # all possible data that this div could parse
@@ -311,7 +312,7 @@ def _parse_activity_div(
 
     assert (
         len(subtitle_cells) == 1
-    ), f"Expected one body cell in {div}, found {len(subtitle_cells)}"
+    ), f"Expected one activity body cell, found {len(subtitle_cells)}"
     sub_cell = subtitle_cells[0]
 
     subs = _parse_subtitles(sub_cell, file_dt=file_dt)
@@ -321,13 +322,13 @@ def _parse_activity_div(
 
     assert (
         len(caption_cells) == 1
-    ), f"Expected one body cell in {div}, found {len(subtitle_cells)}"
+    ), f"Expected one activity caption cell, found {len(caption_cells)}"
     cap_cell = caption_cells[0]
 
     details, locationInfos, products = _parse_caption(cap_cell)
 
     # the first subtitle is the title/titleUrl
-    assert len(subtitles) >= 0, f"Could not extract a title from {div}"
+    assert len(subtitles) >= 0, "Could not extract a title from activity HTML"
 
     title_info = subtitles.pop(0)
 

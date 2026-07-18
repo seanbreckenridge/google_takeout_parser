@@ -1,6 +1,11 @@
 import bs4
 
-from .activity import _parse_subtitles, _parse_caption, _is_location_api_link
+from .activity import (
+    _parse_activity_div,
+    _parse_subtitles,
+    _parse_caption,
+    _is_location_api_link,
+)
 
 # NOTE: some of the URLs here have been converted to http from https to test the http_allowlist.py conversion
 
@@ -57,6 +62,21 @@ def test_parse_subtitles() -> None:
         ),
     ]
     assert dt is not None
+
+
+def test_activity_errors_do_not_include_source_html() -> None:
+    private_text = "private-search-query"
+    content = bs4_div(
+        f"""<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">{private_text}<br/></div>"""
+    )
+    res = _parse_subtitles(content, file_dt=None)
+    assert isinstance(res, Exception)
+    assert private_text not in str(res)
+
+    outer = bs4_div(f"<div><p>{private_text}</p></div>")
+    activity_res = _parse_activity_div(outer, file_dt=None)
+    assert isinstance(activity_res, Exception)
+    assert private_text not in str(activity_res)
 
 
 def test_parse_captions() -> None:
